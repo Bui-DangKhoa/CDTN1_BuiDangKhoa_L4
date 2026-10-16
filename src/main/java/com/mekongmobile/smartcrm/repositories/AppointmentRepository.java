@@ -20,7 +20,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByTechnician_TechnicianId(Long technicianId);
 
     /**
-     * Kiểm tra kỹ thuật viên đã có lịch hẹn trùng giờ mà chưa bị hủy hay không.
+     * QT-L4-01 / NFR2: Kiểm tra KTV đã có lịch hẹn còn hiệu lực (status &lt;&gt; 'DA_HUY')
+     * tại đúng thời điểm {@code appointmentTime} hay chưa.
+     * Tương ứng UNIQUE INDEX (technician_id, active_tech_time) ở CSDL.
      */
     @Query("""
         SELECT COUNT(a) > 0 FROM Appointment a
@@ -30,6 +32,21 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     """)
     boolean existsActiveAppointmentAtTime(@Param("technicianId") Long technicianId, 
                                           @Param("appointmentTime") LocalDateTime appointmentTime);
+
+    /**
+     * QT-L4-01 / NFR2: Kiểm tra KTV có lịch hẹn còn hiệu lực (loại trừ 'DA_HUY')
+     * rơi vào khung giờ [windowStart, windowEnd) hay không.
+     */
+    @Query("""
+        SELECT COUNT(a) > 0 FROM Appointment a
+        WHERE a.technician.technicianId = :technicianId
+          AND a.appointmentTime >= :windowStart
+          AND a.appointmentTime < :windowEnd
+          AND a.status <> 'DA_HUY'
+    """)
+    boolean existsActiveAppointmentInWindow(@Param("technicianId") Long technicianId,
+                                            @Param("windowStart") LocalDateTime windowStart,
+                                            @Param("windowEnd") LocalDateTime windowEnd);
 
     List<Appointment> findByTechnician_TechnicianIdAndAppointmentTimeBetween(
             Long technicianId, LocalDateTime start, LocalDateTime end);
