@@ -7,9 +7,11 @@ import java.time.LocalDateTime;
 
 /**
  * Thực thể Nhật ký chuyển đổi trạng thái ticket (ticket_status_log).
+ * QT-06: ghi mỗi khi đổi status hoặc technician_id; QT-07: change_reason &gt;= 10 ký tự khi đổi KTV.
  */
 @Entity
-@Table(name = "ticket_status_log")
+@Table(name = "ticket_status_log",
+        indexes = @Index(name = "idx_log_ticket", columnList = "ticket_id, changed_at"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -38,7 +40,7 @@ public class TicketStatusLog {
     @Column(name = "change_reason", length = 500)
     private String changeReason;
 
-    @Column(name = "changed_at", nullable = false)
+    @Column(name = "changed_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime changedAt = LocalDateTime.now();
 }

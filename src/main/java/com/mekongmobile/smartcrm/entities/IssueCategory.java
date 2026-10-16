@@ -26,7 +26,7 @@ public class IssueCategory {
     @Column(name = "default_priority", nullable = false, length = 10)
     private String defaultPriority;
 
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "is_active", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 1")
     @Builder.Default
     private Boolean isActive = true;
 }
