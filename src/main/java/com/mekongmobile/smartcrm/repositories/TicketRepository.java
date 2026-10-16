@@ -19,6 +19,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findByCenterId(Long centerId);
 
+    /**
+     * Hàng đợi điều phối: phiếu theo trạng thái của một trung tâm, ưu tiên hạn SLA (due_date) gần nhất.
+     * Tận dụng index idx_ticket_status_due (status, due_date).
+     */
+    List<Ticket> findByStatusAndCenterIdOrderByDueDateAsc(String status, Long centerId);
+
     List<Ticket> findByTechnician_TechnicianId(Long technicianId);
 
     List<Ticket> findAllByOrderByReceivedAtDesc();
