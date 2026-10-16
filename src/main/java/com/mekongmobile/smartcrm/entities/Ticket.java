@@ -9,7 +9,10 @@ import java.time.LocalDateTime;
  * Thực thể Phiếu yêu cầu sửa chữa/bảo hành (ticket).
  */
 @Entity
-@Table(name = "ticket")
+@Table(name = "ticket", indexes = {
+        @Index(name = "idx_ticket_status_due", columnList = "status, due_date"),
+        @Index(name = "idx_ticket_tech_due", columnList = "technician_id, due_date")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,7 +38,8 @@ public class Ticket {
     @Column(name = "center_id", nullable = false)
     private Long centerId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    /** KTV phụ trách – có thể NULL khi phiếu chưa được phân công. */
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "technician_id")
     private Technician technician;
 
@@ -53,7 +57,7 @@ public class Ticket {
     @Builder.Default
     private String status = "MOI";
 
-    @Column(name = "received_at", nullable = false)
+    @Column(name = "received_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime receivedAt = LocalDateTime.now();
 
