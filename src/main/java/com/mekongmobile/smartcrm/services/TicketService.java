@@ -55,6 +55,14 @@ public interface TicketService {
     List<TicketResponseDto> getTicketsByStatus(String status);
 
     /**
+     * QT-08 & QT-07: Phân công hoặc thay đổi kỹ thuật viên phụ trách ticket:
+     * - QT-08: KTV phải cùng centerId và có tay nghề (proficiency >= 3) thuộc categoryId của ticket.
+     * - QT-07: Bắt buộc lý do đổi KTV (>= 10 ký tự) nếu thay đổi KTV đã gán.
+     * - QT-06: Chuyển trạng thái sang DA_PHAN_CONG và ghi nhật ký status log.
+     */
+    Ticket assignTechnician(Long ticketId, Long technicianId, Long assignedBy, String changeReason);
+
+    /**
      * QT-08: Cập nhật trạng thái tiến độ ticket và ghi nhật ký kiểm toán.
      */
     TicketResponseDto updateTicketStatus(Long ticketId, UpdateTicketStatusDto updateDto);

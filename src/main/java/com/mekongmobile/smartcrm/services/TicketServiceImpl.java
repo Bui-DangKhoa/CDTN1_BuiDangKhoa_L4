@@ -5,12 +5,15 @@ import com.mekongmobile.smartcrm.dto.TicketResponseDto;
 import com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto;
 import com.mekongmobile.smartcrm.entities.Device;
 import com.mekongmobile.smartcrm.entities.IssueCategory;
+import com.mekongmobile.smartcrm.entities.Technician;
 import com.mekongmobile.smartcrm.entities.Ticket;
 import com.mekongmobile.smartcrm.entities.TicketStatusLog;
+import com.mekongmobile.smartcrm.exceptions.AppException;
 import com.mekongmobile.smartcrm.exceptions.BusinessRuleException;
 import com.mekongmobile.smartcrm.exceptions.ResourceNotFoundException;
 import com.mekongmobile.smartcrm.repositories.DeviceRepository;
 import com.mekongmobile.smartcrm.repositories.IssueCategoryRepository;
+import com.mekongmobile.smartcrm.repositories.TechnicianRepository;
 import com.mekongmobile.smartcrm.repositories.TicketRepository;
 import com.mekongmobile.smartcrm.repositories.TicketStatusLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,7 @@ public class TicketServiceImpl implements TicketService {
     private final DeviceRepository deviceRepository;
     private final IssueCategoryRepository categoryRepository;
     private final TicketStatusLogRepository statusLogRepository;
+    private final TechnicianRepository technicianRepository;
 
     @Override
     public LocalDateTime calculateDueDate(LocalDateTime receivedAt, Priority priority) {
@@ -174,6 +178,44 @@ public class TicketServiceImpl implements TicketService {
                 updateDto.getChangeReason() != null ? updateDto.getChangeReason() : "Cập nhật tiến độ ticket (QT-08)");
 
         return mapToDto(updatedTicket);
+    }
+
+    @Override
+    public Ticket assignTechnician(Long ticketId, Long technicianId, Long assignedBy, String changeReason) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
+
+        Technician technician = technicianRepository.findById(technicianId)
+                .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy kỹ thuật viên với ID: " + technicianId));
+
+        // QT-08 (Kiểm tra tay nghề): KTV phải cùng centerId với phiếu và có proficiency >= 3 đối với categoryId của phiếu
+        boolean isQualified = technicianRepository.findEligibleTechnicians(ticket.getCenterId(), ticket.getCategory().getCategoryId())
+                .stream()
+                .anyMatch(tech -> tech.getTechnicianId().equals(technicianId));
+
+        if (!isQualified) {
+            throw new AppException("KTV_NOT_QUALIFIED", "KTV không cùng trung tâm hoặc tay nghề chưa đạt mức 3");
+        }
+
+        // QT-07 (Bắt buộc lý do đổi KTV): Nếu phiếu đã được gán KTV trước đó và KTV mới khác KTV cũ
+        if (ticket.getTechnician() != null && !ticket.getTechnician().getTechnicianId().equals(technicianId)) {
+            if (changeReason == null || changeReason.trim().length() < 10) {
+                throw new AppException("INVALID_CHANGE_REASON", "Lý do thay đổi KTV phải từ 10 ký tự trở lên");
+            }
+        }
+
+        String fromStatus = ticket.getStatus();
+        ticket.setTechnician(technician);
+        ticket.setStatus("DA_PHAN_CONG");
+
+        Ticket savedTicket = ticketRepository.save(ticket);
+
+        String reasonToLog = (changeReason != null && !changeReason.isBlank())
+                ? changeReason
+                : "Phân công kỹ thuật viên " + technician.getFullName() + " cho phiếu";
+        logStatusChange(savedTicket, fromStatus, "DA_PHAN_CONG", assignedBy, reasonToLog);
+
+        return savedTicket;
     }
 
     private void validateStatusTransition(String current, String next) {
