@@ -4,6 +4,10 @@ import com.mekongmobile.smartcrm.dto.TicketRequestDto;
 import com.mekongmobile.smartcrm.dto.TicketResponseDto;
 import com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto;
 
+import com.mekongmobile.smartcrm.entities.Ticket;
+import com.mekongmobile.smartcrm.entities.TicketStatusLog;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -11,6 +15,24 @@ import java.util.List;
  * Quản lý quy trình QT-04 (Tiếp nhận & Phân loại sự cố) và QT-08 (Cập nhật tiến độ ticket).
  */
 public interface TicketService {
+
+    /**
+     * QT-04: Tự động tính hạn xử lý (due_date) theo mức độ ưu tiên:
+     * - CAO: +24 giờ
+     * - TRUNG_BINH: +72 giờ
+     * - THAP: +120 giờ
+     */
+    LocalDateTime calculateDueDate(LocalDateTime receivedAt, Priority priority);
+
+    /**
+     * Overload tính due_date theo String priority.
+     */
+    LocalDateTime calculateDueDate(LocalDateTime receivedAt, String priority);
+
+    /**
+     * QT-06: Ghi nhật ký chuyển đổi trạng thái ticket (TicketStatusLog).
+     */
+    TicketStatusLog logStatusChange(Ticket ticket, String fromStatus, String toStatus, Long changedBy, String reason);
 
     /**
      * QT-04: Tiếp nhận và tự động phân loại sự cố kỹ thuật.

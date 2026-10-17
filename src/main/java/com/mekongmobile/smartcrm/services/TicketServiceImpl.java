@@ -34,6 +34,45 @@ public class TicketServiceImpl implements TicketService {
     private final TicketStatusLogRepository statusLogRepository;
 
     @Override
+    public LocalDateTime calculateDueDate(LocalDateTime receivedAt, Priority priority) {
+        if (receivedAt == null) {
+            receivedAt = LocalDateTime.now();
+        }
+        if (priority == null) {
+            priority = Priority.TRUNG_BINH;
+        }
+        return switch (priority) {
+            case CAO -> receivedAt.plusHours(24);
+            case TRUNG_BINH -> receivedAt.plusHours(72);
+            case THAP -> receivedAt.plusHours(120);
+        };
+    }
+
+    @Override
+    public LocalDateTime calculateDueDate(LocalDateTime receivedAt, String priorityStr) {
+        Priority priority;
+        try {
+            priority = (priorityStr != null) ? Priority.valueOf(priorityStr.toUpperCase()) : Priority.TRUNG_BINH;
+        } catch (IllegalArgumentException e) {
+            priority = Priority.TRUNG_BINH;
+        }
+        return calculateDueDate(receivedAt, priority);
+    }
+
+    @Override
+    public TicketStatusLog logStatusChange(Ticket ticket, String fromStatus, String toStatus, Long changedBy, String reason) {
+        TicketStatusLog statusLog = TicketStatusLog.builder()
+                .ticket(ticket)
+                .fromStatus(fromStatus)
+                .toStatus(toStatus)
+                .changedBy(changedBy)
+                .changeReason(reason)
+                .changedAt(LocalDateTime.now())
+                .build();
+        return statusLogRepository.save(statusLog);
+    }
+
+    @Override
     public TicketResponseDto createTicket(TicketRequestDto requestDto) {
         // Kiểm tra mã ticket duy nhất
         if (ticketRepository.findByTicketCode(requestDto.getTicketCode()).isPresent()) {
@@ -57,11 +96,7 @@ public class TicketServiceImpl implements TicketService {
         LocalDateTime receivedAt = LocalDateTime.now();
         LocalDateTime dueDate = requestDto.getDueDate();
         if (dueDate == null) {
-            dueDate = switch (priority.toUpperCase()) {
-                case "KHAN_CAP", "CAO" -> receivedAt.plusHours(24);
-                case "TRUNG_BINH" -> receivedAt.plusHours(48);
-                default -> receivedAt.plusHours(72);
-            };
+            dueDate = calculateDueDate(receivedAt, priority);
         }
 
         Ticket ticket = Ticket.builder()
@@ -79,16 +114,9 @@ public class TicketServiceImpl implements TicketService {
 
         Ticket savedTicket = ticketRepository.save(ticket);
 
-        // Ghi nhật ký trạng thái ban đầu (TicketStatusLog)
-        TicketStatusLog initialLog = TicketStatusLog.builder()
-                .ticket(savedTicket)
-                .fromStatus(null)
-                .toStatus("MOI")
-                .changedBy(requestDto.getCustomerId())
-                .changeReason("Tiếp nhận phiếu yêu cầu sửa chữa/bảo hành mới (QT-04)")
-                .changedAt(receivedAt)
-                .build();
-        statusLogRepository.save(initialLog);
+        // QT-06: Ghi nhật ký trạng thái ban đầu (TicketStatusLog)
+        logStatusChange(savedTicket, null, "MOI", requestDto.getCustomerId(),
+                "Tiếp nhận phiếu yêu cầu sửa chữa/bảo hành mới (QT-04)");
 
         return mapToDto(savedTicket);
     }
@@ -141,16 +169,9 @@ public class TicketServiceImpl implements TicketService {
 
         Ticket updatedTicket = ticketRepository.save(ticket);
 
-        // QT-08: Lưu nhật ký kiểm toán thay đổi tiến độ
-        TicketStatusLog statusLog = TicketStatusLog.builder()
-                .ticket(updatedTicket)
-                .fromStatus(fromStatus)
-                .toStatus(toStatus)
-                .changedBy(updateDto.getChangedBy())
-                .changeReason(updateDto.getChangeReason() != null ? updateDto.getChangeReason() : "Cập nhật tiến độ ticket (QT-08)")
-                .changedAt(LocalDateTime.now())
-                .build();
-        statusLogRepository.save(statusLog);
+        // QT-06 & QT-08: Lưu nhật ký kiểm toán thay đổi tiến độ
+        logStatusChange(updatedTicket, fromStatus, toStatus, updateDto.getChangedBy(),
+                updateDto.getChangeReason() != null ? updateDto.getChangeReason() : "Cập nhật tiến độ ticket (QT-08)");
 
         return mapToDto(updatedTicket);
     }
