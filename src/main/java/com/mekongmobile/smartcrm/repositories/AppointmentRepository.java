@@ -20,6 +20,13 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByTechnician_TechnicianId(Long technicianId);
 
     /**
+     * QT-L4-01 / NFR2: Kiểm tra KTV đã có lịch hẹn còn hiệu lực (status <> statusNot)
+     * tại thời điểm appointmentTime bằng derived query method của Spring Data JPA.
+     */
+    boolean existsByTechnician_TechnicianIdAndAppointmentTimeAndStatusNot(
+            Long technicianId, LocalDateTime appointmentTime, String status);
+
+    /**
      * QT-L4-01 / NFR2: Kiểm tra KTV đã có lịch hẹn còn hiệu lực (status &lt;&gt; 'DA_HUY')
      * tại đúng thời điểm {@code appointmentTime} hay chưa.
      * Tương ứng UNIQUE INDEX (technician_id, active_tech_time) ở CSDL.
