@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Đặt Lịch Hẹn Kỹ Thuật Viên - Smart CRM</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Header phong cách Smart CRM -->
+    <header class="crm-header">
+        <a th:href="@{/tickets/unassigned}" class="crm-header-brand">
+            <span>⚙️</span> Smart CRM
+        </a>
+        <div class="crm-header-user">
+            <span>Quản lý: <strong>Nguyễn Văn A</strong> | Trung tâm Bảo hành Quận 10</span>
+            <a th:href="@{/tickets/unassigned}">[Quay lại danh sách]</a>
+        </div>
+    </header>
+
+    <main class="container" style="max-width: 680px;">
+
+        <!-- Card Đặt lịch hẹn (Màn hình 3) -->
+        <div class="card" style="box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15);">
+            <div class="card-header" style="background: rgba(15, 23, 42, 0.7); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 class="card-title" style="font-size: 1.15rem; font-weight: 700;">
+                        Đặt Lịch Hẹn Kỹ Thuật Viên (QT-L4-01 / NFR2)
+                    </h2>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                        Chống gán trùng lịch hẹn cho cùng KTV trong cùng khung giờ
+                    </p>
+                </div>
+                <a th:href="@{/tickets/unassigned}" style="color: var(--text-secondary); text-decoration: none; font-size: 1.25rem; line-height: 1;" title="Đóng">&times;</a>
+            </div>
+
+            <div class="card-body" style="padding: 1.75rem 2rem;">
+
+                <!-- TRẠNG THÁI LỖI (Error alert) theo yêu cầu Bước 4 -->
+                <div th:if="${errorMessage}" class="alert alert-danger" id="errorAlertBox">
+                    <span class="alert-icon">❌</span>
+                    <div>
+                        <strong style="display: block; margin-bottom: 0.25rem;">Xung đột lịch hẹn hoặc vi phạm quy tắc:</strong>
+                        <span th:text="${errorMessage}">KTV đã có lịch hẹn trong cùng khung giờ này (QT-L4-01). Vui lòng chọn khung giờ khác!</span>
+                    </div>
+                </div>
+
+                <!-- Thông tin phiếu được chọn nếu có ticketId -->
+                <div th:if="${ticket != null}" class="info-summary-box">
+                    <div>
+                        Phiếu: <strong style="color: #60a5fa;" th:text="${'#' + ticket.ticketCode}">#BH-00125</strong>
+                        | Thiết bị: <strong th:text="${ticket.deviceName}">iPhone 13</strong>
+                        <span th:if="${ticket.serialNo != null}" th:text="${' (SN: ' + ticket.serialNo + ')'}">(SN: SER-001)</span>
+                    </div>
+                    <div style="margin-top: 0.35rem;">
+                        Nhóm sự cố: <strong th:text="${ticket.categoryName}">Màn hình</strong>
+                        | Hạn SLA: <strong style="color: #f87171;" th:text="${ticket.dueDate != null ? #temporals.format(ticket.dueDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">30/10/2026 08:00</strong>
+                    </div>
+                </div>
+
+                <!-- Form Đặt lịch hẹn -->
+                <form th:action="@{/appointments}"
+                      th:object="${appointmentRequest}"
+                      method="post"
+                      class="form-with-loading"
+                      id="appointmentForm">
+
+                    <!-- ID Phiếu yêu cầu -->
+                    <div class="form-group">
+                        <label class="form-label" for="ticketId">
+                            Mã ID Phiếu yêu cầu bảo hành: <span style="color: #f87171;">*</span>
+                        </label>
+                        <input type="number" id="ticketId" th:field="*{ticketId}" class="form-control"
+                               placeholder="Nhập ID phiếu bảo hành" required
+                               th:readonly="${ticket != null}">
+                        <div th:if="${#fields.hasErrors('ticketId')}" class="field-error" th:errors="*{ticketId}">
+                            ID phiếu yêu cầu không được để trống
+                        </div>
+                    </div>
+
+                    <!-- Chọn Kỹ thuật viên -->
+                    <div class="form-group" style="margin-top: 1.25rem;">
+                        <label class="form-label" for="technicianId">
+                            Chọn Kỹ thuật viên phụ trách: <span style="color: #f87171;">*</span>
+                        </label>
+
+                        <!-- TRẠNG THÁI RỖNG (Empty State) nếu danh sách KTV trống -->
+                        <div th:if="${technicians != null and technicians.empty}" class="alert alert-warning">
+                            <span class="alert-icon">⚠️</span>
+                            <div>Hiện chưa có kỹ thuật viên nào khả dụng hoặc đủ tay nghề trong cùng trung tâm.</div>
+                        </div>
+
+                        <select id="technicianId" th:field="*{technicianId}" class="form-control" required>
+                            <option value="">-- Chọn Kỹ thuật viên --</option>
+                            <th:block th:if="${technicians != null}">
+                                <option th:each="tech : ${technicians}"
+                                        th:value="${tech.technicianId}"
+                                        th:text="${tech.fullName + ' (Mã NV: ' + tech.employeeId + ' - Bậc ' + tech.level + ')'}">
+                                    Nguyễn Văn B (Mã NV: 201 - Bậc 4)
+                                </option>
+                            </th:block>
+                            <!-- Tùy chọn mặc định nếu form mở tự do không kèm context -->
+                            <th:block th:if="${technicians == null}">
+                                <option value="1">KTV Nguyễn Văn A (Mã NV: 101 - Bậc 3)</option>
+                                <option value="2">KTV Trần Văn B (Mã NV: 102 - Bậc 4)</option>
+                                <option value="3">KTV Lê Thị C (Mã NV: 103 - Bậc 5)</option>
+                            </th:block>
+                        </select>
+                        <div th:if="${#fields.hasErrors('technicianId')}" class="field-error" th:errors="*{technicianId}">
+                            Vui lòng chọn kỹ thuật viên
+                        </div>
+                    </div>
+
+                    <!-- Chọn ngày giờ hẹn (datetime-local) -->
+                    <div class="form-group" style="margin-top: 1.25rem;">
+                        <label class="form-label" for="appointmentTime">
+                            Thời gian hẹn tiếp nhận / sửa chữa: <span style="color: #f87171;">*</span>
+                        </label>
+                        <input type="datetime-local" id="appointmentTime" th:field="*{appointmentTime}"
+                               class="form-control" required>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                            Quy tắc QT-L4-01: Hệ thống tự động kiểm tra chống trùng lịch với các lịch hẹn khác của KTV.
+                        </div>
+                        <div th:if="${#fields.hasErrors('appointmentTime')}" class="field-error" th:errors="*{appointmentTime}">
+                            Thời gian hẹn phải ở trong tương lai
+                        </div>
+                    </div>
+
+                    <!-- Nút hành động với Trạng thái Đang tải (Loading state) -->
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1.25rem;">
+                        <a th:href="@{/tickets/unassigned}" class="btn btn-secondary">Hủy</a>
+                        <button type="submit" class="btn btn-primary" id="btnSubmitAppointment">
+                            Lưu Lịch Hẹn &amp; Xác Nhận
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script th:src="@{/js/app.js}"></script>
+    <script>
+        // Thiết lập min datetime-local là thời gian hiện tại
+        document.addEventListener('DOMContentLoaded', () => {
+            const timeInput = document.getElementById('appointmentTime');
+            if (timeInput && !timeInput.value) {
+                const now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                timeInput.min = now.toISOString().slice(0, 16);
+                
+                // Mặc định ngày mai 09:00
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(9, 0, 0, 0);
+                tomorrow.setMinutes(tomorrow.getMinutes() - tomorrow.getTimezoneOffset());
+                timeInput.value = tomorrow.toISOString().slice(0, 16);
+            }
+        });
+    </script>
+</body>
+</html>

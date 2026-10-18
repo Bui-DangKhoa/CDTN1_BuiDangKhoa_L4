@@ -81,3 +81,51 @@ async function submitSchedule() {
         alert('Lỗi kết nối tới hệ thống điều phối');
     }
 }
+
+// BƯỚC 4: Trạng thái Đang tải (Loading state) cho các form submit
+document.addEventListener('DOMContentLoaded', () => {
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function (e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn && !submitBtn.classList.contains('btn-loading')) {
+                const originalText = submitBtn.innerHTML;
+                submitBtn.dataset.originalText = originalText;
+                submitBtn.classList.add('btn-loading');
+                submitBtn.innerHTML = '<span class="spinner"></span> Đang xử lý...';
+            }
+        });
+    });
+});
+
+// Bộ lọc danh sách phiếu chưa gán (Màn hình 1)
+function applyTicketFilter() {
+    const categoryFilter = document.getElementById('categoryFilter') ? document.getElementById('categoryFilter').value.toLowerCase() : 'all';
+    const priorityFilter = document.getElementById('priorityFilter') ? document.getElementById('priorityFilter').value.toUpperCase() : 'ALL';
+    const slaFilter = document.getElementById('slaFilter') ? document.getElementById('slaFilter').value.toUpperCase() : 'ALL';
+
+    const rows = document.querySelectorAll('.ticket-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const cat = (row.dataset.category || '').toLowerCase();
+        const prio = (row.dataset.priority || '').toUpperCase();
+        const sla = (row.dataset.sla || '').toUpperCase();
+
+        const matchCat = (categoryFilter === 'all' || cat.includes(categoryFilter));
+        const matchPrio = (priorityFilter === 'ALL' || prio === priorityFilter);
+        const matchSla = (slaFilter === 'ALL' || sla === slaFilter);
+
+        if (matchCat && matchPrio && matchSla) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const emptyFilterRow = document.getElementById('emptyFilterRow');
+    if (emptyFilterRow) {
+        emptyFilterRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+    }
+}
