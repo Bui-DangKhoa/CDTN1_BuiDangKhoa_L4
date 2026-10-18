@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Phân công Kỹ thuật viên - Smart CRM</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Header phong cách Smart CRM -->
+    <header class="crm-header">
+        <a th:href="@{/tickets/unassigned}" class="crm-header-brand">
+            <span>⚙️</span> Smart CRM
+        </a>
+        <div class="crm-header-user">
+            <span>Quản lý: <strong>Nguyễn Văn A</strong> | Trung tâm Bảo hành Quận 10</span>
+            <a th:href="@{/tickets/unassigned}">[Quay lại danh sách]</a>
+        </div>
+    </header>
+
+    <main class="container" style="max-width: 720px;">
+
+        <!-- Card Container Form Modal Wireframe MH2 -->
+        <div class="card" style="box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15);">
+            <div class="card-header" style="background: rgba(15, 23, 42, 0.7); display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="card-title" style="font-size: 1.15rem; font-weight: 700;">
+                    Phân công Kỹ thuật viên &amp; Đặt lịch hẹn - Phiếu <span style="color: #60a5fa;" th:text="${'#' + ticket.ticketCode}">#BH-00125</span>
+                </h2>
+                <a th:href="@{/tickets/unassigned}" style="color: var(--text-secondary); text-decoration: none; font-size: 1.25rem; line-height: 1;" title="Đóng">&times;</a>
+            </div>
+
+            <div class="card-body" style="padding: 1.75rem 2rem;">
+
+                <!-- TRẠNG THÁI LỖI (Error alert) theo yêu cầu Bước 4 -->
+                <div th:if="${errorMessage}" class="alert alert-danger">
+                    <span class="alert-icon">❌</span>
+                    <div>
+                        <strong style="display: block; margin-bottom: 0.25rem;">Không thể thực hiện phân công:</strong>
+                        <span th:text="${errorMessage}">Ngoại lệ nghiệp vụ AppException</span>
+                    </div>
+                </div>
+
+                <!-- Khung tóm tắt thông tin Phiếu & Thiết bị -->
+                <div class="info-summary-box">
+                    <div>
+                        Thiết bị: <strong th:text="${ticket.deviceName != null ? ticket.deviceName : 'iPhone'}">iPhone 13</strong>
+                        <span th:if="${ticket.serialNo != null}" th:text="${' (SN: ' + ticket.serialNo + ')'}">(SN: SER-001)</span>
+                        | Nhóm sự cố: <strong th:text="${ticket.categoryName != null ? ticket.categoryName : 'Màn hình'}">Màn hình</strong>
+                        | Hạn SLA: <strong style="color: #f87171;" th:text="${ticket.dueDate != null ? #temporals.format(ticket.dueDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">30/10/2026 08:00</strong>
+                    </div>
+                </div>
+
+                <!-- CẢNH BÁO LẶP SỰ CỐ (Theo Wireframe MH2) -->
+                <div th:if="${ticket.repeatCount != null and ticket.repeatCount > 0}" class="alert alert-warning" style="margin-bottom: 1.5rem;">
+                    <span class="alert-icon">⚠️</span>
+                    <div>
+                        Cảnh báo: Thiết bị đã lặp lại sự cố <strong th:text="${ticket.categoryName}">Màn hình</strong> 
+                        <span th:text="${ticket.repeatCount}">2</span> lần trước đó.
+                    </div>
+                </div>
+
+                <!-- Form Phân công KTV -->
+                <form th:action="@{/tickets/{id}/assign(id=${ticket.ticketId})}"
+                      th:object="${assignRequest}"
+                      method="post"
+                      class="form-with-loading">
+
+                    <!-- PHẦN 1 — Gán Kỹ thuật viên (FR2 / QT-08, QT-07) -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 0.95rem; font-weight: 700; color: #60a5fa; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+                            Phần 1 — Gán Kỹ thuật viên (FR2 / QT-08, QT-07)
+                        </h3>
+
+                        <!-- Dropdown Chọn KTV (Lọc tay nghề >= 3 theo QT-08) -->
+                        <div class="form-group">
+                            <label class="form-label" for="technicianId">
+                                Chọn Kỹ thuật viên (Lọc tay nghề &ge; 3): <span style="color: #f87171;">*</span>
+                            </label>
+                            
+                            <!-- TRẠNG THÁI RỖNG (Empty State) nếu không có KTV đủ điều kiện -->
+                            <div th:if="${technicians == null or technicians.empty}" class="alert alert-warning" style="margin-bottom: 0.75rem;">
+                                <span class="alert-icon">⚠️</span>
+                                <div>Không tìm thấy Kỹ thuật viên nào trong cùng trung tâm đạt tay nghề &ge; 3 đối với nhóm sự cố này (QT-08).</div>
+                            </div>
+
+                            <select id="technicianId" th:field="*{technicianId}" class="form-control" required>
+                                <option value="">-- Chọn Kỹ thuật viên phù hợp --</option>
+                                <option th:each="tech : ${technicians}"
+                                        th:value="${tech.technicianId}"
+                                        th:text="${tech.fullName + ' (Bậc ' + tech.level + ' - Đang giữ ' + (tech.activeTicketsCount != null ? tech.activeTicketsCount : 0) + ' phiếu)'}">
+                                    Nguyễn Văn B (Bậc 4 - Đang giữ 3 phiếu)
+                                </option>
+                            </select>
+                            <div th:if="${#fields.hasErrors('technicianId')}" class="field-error" th:errors="*{technicianId}">
+                                Vui lòng chọn kỹ thuật viên
+                            </div>
+                        </div>
+
+                        <!-- Ô nhập Lý do thay đổi KTV (QT-07) -->
+                        <div class="form-group" style="margin-top: 1.25rem;">
+                            <label class="form-label" for="changeReason">
+                                Lý do thay đổi KTV (Bắt buộc nếu đổi KTV cũ - QT-07):
+                                <span th:if="${ticket.technicianId != null}" style="color: #f87171;">*</span>
+                            </label>
+                            <textarea id="changeReason" th:field="*{changeReason}" rows="3" class="form-control"
+                                      placeholder="Ví dụ: KTV A bận ca đột xuất, đổi sang KTV B để xử lý gấp đúng cam kết SLA."></textarea>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                Quy tắc QT-07: Bắt buộc tối thiểu 10 ký tự khi thay đổi kỹ thuật viên đã được gán trước đó.
+                            </div>
+                            <div th:if="${#fields.hasErrors('changeReason')}" class="field-error" th:errors="*{changeReason}">
+                                Lý do thay đổi KTV phải tối thiểu 10 ký tự
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nút hành động -->
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1.25rem;">
+                        <a th:href="@{/tickets/unassigned}" class="btn btn-secondary">Hủy</a>
+                        <button type="submit" class="btn btn-primary" id="btnSubmitAssign">
+                            Lưu phân công KTV
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script th:src="@{/js/app.js}"></script>
+</body>
+</html>
