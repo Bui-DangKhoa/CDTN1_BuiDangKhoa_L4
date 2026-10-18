@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title != null ? title : 'Mekong Mobile Smart CRM - Màn hình Kỹ thuật viên'}">Mekong Mobile Smart CRM - Màn hình Kỹ thuật viên</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="crm-body">
+
+    <!-- Header bar theo Wireframe MH3: Nền xanh #1976D2 -->
+    <header class="crm-top-bar">
+        <div class="d-flex align-items-center gap-2">
+            <span style="font-size: 1.25rem;">⚙️</span>
+            <span class="fw-semibold">Kỹ thuật viên: <strong th:text="${technician != null ? technician.fullName : 'Nguyễn Văn B'}">Nguyễn Văn B</strong> | Trung tâm Bảo hành Quận 10</span>
+        </div>
+        <div class="crm-user-info">
+            <a href="#">[Đăng xuất]</a>
+        </div>
+    </header>
+
+    <main class="container-fluid px-4 py-3" style="max-width: 1200px;">
+
+        <!-- Thông báo Thành công / Lỗi (Alert States) -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span class="me-2">✓</span>
+            <span th:text="${successMessage}">Cập nhật thành công!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span class="me-2">❌</span>
+            <span th:text="${errorMessage}">Đã xảy ra lỗi!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="row g-3">
+
+            <!-- =========================================================================
+                 CỘT TRÁI: Khung 1 — Phiếu của tôi (US4)
+                 ========================================================================= -->
+            <div class="col-12 col-lg-5">
+                <div class="card shadow-sm border" style="border-color: #9E9E9E !important; border-radius: 8px; min-height: 520px;">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold mb-1" style="color: #1976D2; font-size: 0.95rem;">
+                            Khung 1 — Phiếu của tôi (US4)
+                        </h6>
+                        <p class="fst-italic text-secondary mb-3" style="font-size: 0.8rem;">
+                            Sắp xếp theo hạn xử lý (due_date) ▲
+                        </p>
+
+                        <!-- Bảng danh sách phiếu gán cho KTV -->
+                        <div class="table-responsive">
+                            <table class="crm-table mb-2">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">Mã phiếu</th>
+                                        <th style="width: 80px;">Thiết bị</th>
+                                        <th style="width: 75px;">Nhóm sự cố</th>
+                                        <th style="width: 105px;">Hạn (due_date) ▲</th>
+                                        <th style="width: 75px;">Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Hiển thị dynamic nếu Controller truyền danh sách myTickets -->
+                                    <th:block th:if="${myTickets != null and not myTickets.empty}">
+                                        <tr th:each="t, iter : ${myTickets}"
+                                            th:classappend="${(selectedTicket != null and selectedTicket.ticketId == t.ticketId) or (selectedTicket == null and iter.index == 0) ? 'row-selected' : ''}"
+                                            style="cursor: pointer;"
+                                            th:onclick="'window.location.href=\'/technician/my-tickets?ticketId=' + ${t.ticketId} + '\''">
+                                            <td><strong th:text="${'#' + t.ticketCode}">#BH-00125</strong></td>
+                                            <td th:text="${t.deviceName}">iPhone 13</td>
+                                            <td th:text="${t.categoryName}">Màn hình</td>
+                                            <td th:text="${t.dueDate != null ? #temporals.format(t.dueDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">30/10/2026 08:00</td>
+                                            <td>
+                                                <span th:text="${t.status == 'DANG_XU_LY' ? 'ĐANG XỬ LÝ' : (t.status == 'DA_PHAN_CONG' ? 'ĐÃ PHÂN CÔNG' : (t.status == 'HOAN_TAT' or t.status == 'HOAN_THANH' ? 'HOÀN TẤT' : t.status))}">ĐANG XỬ LÝ</span>
+                                            </td>
+                                        </tr>
+                                    </th:block>
+
+                                    <!-- DỮ LIỆU MẪU THEO ĐÚNG 100% WIREFRAME MH3 (Fallback khi chưa có DB) -->
+                                    <th:block th:if="${myTickets == null or myTickets.empty}">
+                                        <!-- Dòng 1: Đang chọn (highlight) -->
+                                        <tr class="row-selected" style="cursor: pointer;" onclick="selectRowMock('#BH-00125', 'iPhone 13', 'Màn hình', 'DANG_XU_LY')">
+                                            <td><strong>#BH-00125</strong></td>
+                                            <td>iPhone 13</td>
+                                            <td>Màn hình</td>
+                                            <td>30/10/2026 08:00</td>
+                                            <td>ĐANG XỬ LÝ</td>
+                                        </tr>
+                                        <!-- Dòng 2 -->
+                                        <tr style="cursor: pointer;" onclick="selectRowMock('#BH-00130', 'Xiaomi 13', 'Sạc', 'DA_PHAN_CONG')">
+                                            <td><strong>#BH-00130</strong></td>
+                                            <td>Xiaomi 13</td>
+                                            <td>Sạc</td>
+                                            <td>31/10/2026 10:00</td>
+                                            <td>ĐÃ PHÂN CÔNG</td>
+                                        </tr>
+                                        <!-- Dòng 3 -->
+                                        <tr style="cursor: pointer;" onclick="selectRowMock('#BH-00133', 'Oppo A78', 'Loa', 'DA_PHAN_CONG')">
+                                            <td><strong>#BH-00133</strong></td>
+                                            <td>Oppo A78</td>
+                                            <td>Loa</td>
+                                            <td>01/11/2026 15:00</td>
+                                            <td>ĐÃ PHÂN CÔNG</td>
+                                        </tr>
+                                    </th:block>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Ghi chú dòng được chọn theo Wireframe MH3 -->
+                        <div class="mt-2 text-primary fst-italic" style="font-size: 0.85rem;" id="selectedRowNote">
+                            Dòng được chọn: <strong id="selectedTicketCodeText" th:text="${selectedTicket != null ? '#' + selectedTicket.ticketCode : '#BH-00125'}">#BH-00125</strong>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================================
+                 CỘT PHẢI: Khung 2 (Vòng đời) & Khung 3 (Lịch sử sửa chữa)
+                 ========================================================================= -->
+            <div class="col-12 col-lg-7 d-flex flex-column gap-3">
+
+                <!-- Khung 2 — Vòng đời & Cập nhật trạng thái (FR5 / QT-06) -->
+                <div class="card shadow-sm border" style="border-color: #9E9E9E !important; border-radius: 8px;">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold mb-3" style="color: #1976D2; font-size: 0.95rem;">
+                            Khung 2 — Vòng đời &amp; Cập nhật trạng thái (FR5 / QT-06)
+                        </h6>
+
+                        <!-- Sơ đồ tiến trình vòng đời trạng thái Wireframe MH3 -->
+                        <div class="lifecycle-wrapper mb-3">
+                            <!-- Bước 1: MỚI -->
+                            <div class="lifecycle-step completed">MỚI</div>
+                            <span class="lifecycle-arrow">➔</span>
+
+                            <!-- Bước 2: ĐÃ PHÂN CÔNG -->
+                            <div class="lifecycle-step completed">ĐÃ PHÂN CÔNG</div>
+                            <span class="lifecycle-arrow">➔</span>
+
+                            <!-- Bước 3: ĐANG XỬ LÝ (Tô đậm theo Wireframe MH3) -->
+                            <div class="lifecycle-step active" id="stepDangXuLy">ĐANG XỬ LÝ</div>
+                            <span class="lifecycle-arrow">➔</span>
+
+                            <!-- Bước 4: HOÀN TẤT -->
+                            <div class="lifecycle-step future" id="stepHoanTat">HOÀN TẤT</div>
+                            <span class="lifecycle-arrow">➔</span>
+
+                            <!-- Bước 5: ĐÃ ĐÓNG -->
+                            <div class="lifecycle-step future" id="stepDaDong">ĐÃ ĐÓNG</div>
+                        </div>
+
+                        <!-- Form Cập nhật trạng thái -->
+                        <form method="post" th:action="@{/technician/tickets/{id}/status(id=${selectedTicket != null ? selectedTicket.ticketId : 125})}" class="mb-2">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                <label for="nextStatusSelect" class="form-label mb-0" style="font-size: 0.85rem;">Trạng thái tiếp theo:</label>
+                                <select id="nextStatusSelect" name="nextStatus" class="form-select form-select-sm" style="max-width: 220px;" onchange="validateLifecycleTransitionMock()">
+                                    <option value="HOAN_TAT" selected>HOÀN TẤT ▾</option>
+                                    <option value="DANG_XU_LY">ĐANG XỬ LÝ</option>
+                                    <option value="DA_PHAN_CONG">ĐÃ PHÂN CÔNG</option>
+                                    <option value="DONG">ĐÃ ĐÓNG</option>
+                                </select>
+                                <button type="submit" class="btn btn-crm-primary btn-sm px-3">
+                                    Cập nhật trạng thái
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Khung cảnh báo vi phạm vòng đời QT-06 theo Wireframe MH3 -->
+                        <div id="lifecycleErrorAlert" class="alert-wireframe-danger mt-2" style="display: block;">
+                            ❌ Không thể chuyển trạng thái từ HOÀN TẤT về ĐANG XỬ LÝ (Quy tắc QT-06).
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Khung 3 — Lịch sử sửa chữa thiết bị (US5 / FR6) -->
+                <div class="card shadow-sm border" style="border-color: #9E9E9E !important; border-radius: 8px;">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold mb-1" style="color: #1976D2; font-size: 0.95rem;">
+                            Khung 3 — Lịch sử sửa chữa thiết bị (US5 / FR6)
+                        </h6>
+
+                        <!-- Tiêu đề phụ cam đậm theo Wireframe MH3 -->
+                        <div class="fw-bold mb-3" style="color: #E65100; font-size: 0.875rem;" id="deviceRepairSubtitle">
+                            Thiết bị: <span id="historyDeviceName" th:text="${selectedTicket != null and selectedTicket.deviceName != null ? selectedTicket.deviceName : 'iPhone 13'}">iPhone 13</span> 
+                            (IMEI <span id="historySerialNo" th:text="${selectedTicket != null and selectedTicket.serialNo != null ? selectedTicket.serialNo : '356891234567890'}">356891234567890</span>)  |  
+                            Lặp lại sự cố <span id="historyCategoryName" th:text="${selectedTicket != null and selectedTicket.categoryName != null ? selectedTicket.categoryName : 'Màn hình'}">Màn hình</span>: 
+                            <span id="historyRepeatCount" th:text="${selectedTicket != null and selectedTicket.repeatCount != null ? selectedTicket.repeatCount : 2}">2</span> lần
+                        </div>
+
+                        <!-- Bảng lịch sử sửa chữa -->
+                        <div class="table-responsive">
+                            <table class="crm-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 110px;">Mã phiếu cũ</th>
+                                        <th style="width: 100px;">Ngày sửa</th>
+                                        <th style="width: 120px;">KTV sửa</th>
+                                        <th>Nội dung xử lý</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic nếu có -->
+                                    <th:block th:if="${repairHistory != null and not repairHistory.empty}">
+                                        <tr th:each="h : ${repairHistory}">
+                                            <td><strong th:text="${h.ticketCode}">#BH-00071</strong></td>
+                                            <td th:text="${h.repairedDate}">12/06/2026</td>
+                                            <td th:text="${h.technicianName}">Trần Văn C</td>
+                                            <td th:text="${h.solutionDesc}">Thay màn hình OLED</td>
+                                        </tr>
+                                    </th:block>
+
+                                    <!-- DỮ LIỆU MẪU KHỚP 100% WIREFRAME MH3 -->
+                                    <th:block th:if="${repairHistory == null or repairHistory.empty}">
+                                        <tr>
+                                            <td><strong>#BH-00071</strong></td>
+                                            <td>12/06/2026</td>
+                                            <td>Trần Văn C</td>
+                                            <td>Thay màn hình OLED</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>#BH-00098</strong></td>
+                                            <td>03/09/2026</td>
+                                            <td>Lê Thị D</td>
+                                            <td>Thay lại màn hình, kiểm tra cáp</td>
+                                        </tr>
+                                    </th:block>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/app.js}"></script>
+
+    <script>
+        function selectRowMock(code, device, cat, status) {
+            document.querySelectorAll('.crm-table tbody tr').forEach(r => r.classList.remove('row-selected'));
+            event.currentTarget.classList.add('row-selected');
+            document.getElementById('selectedTicketCodeText').textContent = code;
+            document.getElementById('historyDeviceName').textContent = device;
+            document.getElementById('historyCategoryName').textContent = cat;
+        }
+
+        function validateLifecycleTransitionMock() {
+            const nextStatus = document.getElementById('nextStatusSelect').value;
+            const alertBox = document.getElementById('lifecycleErrorAlert');
+            // Nếu chọn chuyển lùi về ĐANG_XU_LY hoặc DA_PHAN_CONG khi đã hoàn tất
+            if (nextStatus === 'DANG_XU_LY') {
+                alertBox.textContent = '❌ Không thể chuyển trạng thái từ HOÀN TẤT về ĐANG XỬ LÝ (Quy tắc QT-06).';
+                alertBox.style.display = 'block';
+            } else if (nextStatus === 'DA_PHAN_CONG') {
+                alertBox.textContent = '❌ Không thể quay lại trạng thái ĐÃ PHÂN CÔNG từ tiến trình hiện tại (Quy tắc QT-06).';
+                alertBox.style.display = 'block';
+            } else {
+                alertBox.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

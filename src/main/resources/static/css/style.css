@@ -642,3 +642,310 @@ body {
     font-size: 0.85rem;
 }
 
+/* ==========================================================================
+   WIREFRAME & BOOTSTRAP 5 STYLES (Đồng bộ 100% docs/wireframe.drawio & Bảng 5.2)
+   ========================================================================== */
+
+.crm-body {
+    background-color: #f8f9fa !important;
+    background-image: none !important;
+    color: #212529 !important;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif !important;
+    min-height: 100vh;
+}
+
+/* Header xanh #1976D2 theo Wireframe MH1, MH2, MH3 */
+.crm-top-bar {
+    background-color: #1976D2 !important;
+    color: #ffffff !important;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.crm-top-bar .crm-brand {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.crm-top-bar .crm-user-info {
+    font-size: 0.875rem;
+    color: #ffffff;
+}
+
+.crm-top-bar .crm-user-info a {
+    color: #e3f2fd;
+    text-decoration: none;
+    margin-left: 8px;
+    font-weight: 500;
+}
+
+.crm-top-bar .crm-user-info a:hover {
+    text-decoration: underline;
+}
+
+/* Thẻ chỉ số KPI (MH1) */
+.crm-kpi-card {
+    background-color: #F5F5F5;
+    border: 1px solid #BDBDBD;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.crm-kpi-card.danger {
+    background-color: #FFEBEE !important;
+    border: 2px solid #D32F2F !important;
+    color: #B71C1C !important;
+    position: relative;
+}
+
+.crm-kpi-card .kpi-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #424242;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.crm-kpi-card.danger .kpi-label {
+    color: #B71C1C !important;
+}
+
+.crm-kpi-card .kpi-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.2;
+    margin-top: 0.25rem;
+}
+
+.crm-kpi-card.danger .kpi-value {
+    color: #B71C1C !important;
+}
+
+.crm-kpi-alert-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: #D32F2F;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* Thanh Bộ lọc Filter Bar */
+.crm-filter-bar {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.crm-filter-select {
+    border: 1px solid #999999;
+    border-radius: 6px;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.875rem;
+    color: #333333;
+    background-color: #ffffff;
+    min-width: 180px;
+}
+
+/* Bảng dữ liệu Wireframe */
+.crm-table {
+    border: 1px solid #BDBDBD !important;
+    background: #ffffff;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.crm-table thead th {
+    background-color: #E3F2FD !important;
+    color: #0D47A1 !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    border-bottom: 1px solid #BDBDBD !important;
+    border-right: 1px solid #e0e0e0 !important;
+    padding: 0.65rem 0.75rem !important;
+    vertical-align: middle;
+}
+
+.crm-table tbody td {
+    border-bottom: 1px solid #e0e0e0 !important;
+    border-right: 1px solid #e0e0e0 !important;
+    padding: 0.65rem 0.75rem !important;
+    font-size: 0.85rem;
+    color: #212529;
+    vertical-align: middle;
+}
+
+.crm-table tbody tr:hover td {
+    background-color: #f1f5f9;
+}
+
+.crm-table tbody tr.row-urgent td {
+    background-color: #FFEBEE !important;
+}
+
+.crm-table tbody tr.row-selected td {
+    background-color: #BBDEFB !important;
+    font-weight: 500;
+}
+
+/* Trạng thái SLA với chấm màu theo wireframe */
+.sla-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.825rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+.sla-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.sla-dot.red { background-color: #D32F2F; }
+.sla-dot.yellow { background-color: #F57C00; }
+.sla-dot.green { background-color: #2E7D32; }
+
+/* Nút chuẩn Wireframe */
+.btn-crm-primary {
+    background-color: #1976D2 !important;
+    border-color: #1976D2 !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    border-radius: 6px !important;
+    padding: 0.35rem 0.85rem !important;
+}
+
+.btn-crm-primary:hover {
+    background-color: #1565C0 !important;
+    border-color: #1565C0 !important;
+}
+
+.btn-crm-secondary {
+    background-color: #ffffff !important;
+    border: 1px solid #999999 !important;
+    color: #333333 !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    border-radius: 6px !important;
+    padding: 0.35rem 0.85rem !important;
+}
+
+.btn-crm-secondary:hover {
+    background-color: #f5f5f5 !important;
+    color: #000000 !important;
+}
+
+/* Ghi chú Note Callout (Vàng nhạt) */
+.note-callout {
+    background-color: #FFF9C4;
+    border: 1px solid #F9A825;
+    color: #424242;
+    padding: 0.4rem 0.65rem;
+    border-radius: 4px;
+    font-size: 0.775rem;
+    display: inline-block;
+    line-height: 1.3;
+}
+
+/* Alert Cảnh báo Wireframe MH2 / MH3 */
+.alert-wireframe-warning {
+    background-color: #FFF3E0 !important;
+    border: 1px solid #F57C00 !important;
+    color: #E65100 !important;
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.alert-wireframe-danger {
+    background-color: #FFEBEE !important;
+    border: 1px solid #D32F2F !important;
+    color: #B71C1C !important;
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Sơ đồ vòng đời trạng thái (MH3 Khung 2) */
+.lifecycle-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+    gap: 0.5rem;
+}
+
+.lifecycle-step {
+    padding: 0.45rem 0.85rem;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid #1976D2;
+    text-align: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.lifecycle-step.completed {
+    background-color: #BBDEFB;
+    color: #0D47A1;
+}
+
+.lifecycle-step.active {
+    background-color: #1976D2;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(25, 118, 210, 0.4);
+}
+
+.lifecycle-step.future {
+    background-color: #EEEEEE;
+    color: #757575;
+    border-color: #BDBDBD;
+}
+
+.lifecycle-arrow {
+    color: #666666;
+    font-weight: bold;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+

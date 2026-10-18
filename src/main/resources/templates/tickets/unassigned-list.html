@@ -3,199 +3,459 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title}">Smart CRM - Danh Sách Phiếu Chưa Gán</title>
+    <title th:text="${title != null ? title : 'Smart CRM - Danh Sách Phiếu Chưa Phân Công'}">Smart CRM - Danh Sách Phiếu Chưa Phân Công</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- CRM Stylesheet -->
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="crm-body">
 
-    <!-- Header phong cách Smart CRM theo Wireframe MH1 -->
-    <header class="crm-header">
-        <a th:href="@{/tickets/unassigned}" class="crm-header-brand">
-            <span>⚙️</span> Smart CRM
+    <!-- Header bar theo Wireframe MH1: Nền xanh #1976D2 -->
+    <header class="crm-top-bar">
+        <a th:href="@{/tickets/unassigned}" class="crm-brand">
+            <span style="font-size: 1.25rem;">⚙️</span> Smart CRM
         </a>
-        <div class="crm-header-user">
+        <div class="crm-user-info">
             <span>Quản lý: <strong>Nguyễn Văn A</strong> | Trung tâm Bảo hành Quận 10</span>
             <a href="#">[Đăng xuất]</a>
         </div>
     </header>
 
-    <main class="container">
+    <main class="container-fluid px-4 py-3" style="max-width: 1200px;">
+
         <!-- Thông báo Thành công / Lỗi (Alert States) -->
-        <div th:if="${successMessage}" class="alert alert-success">
-            <span class="alert-icon">✓</span>
-            <div th:text="${successMessage}">Thao tác thành công!</div>
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span class="me-2">✓</span>
+            <span th:text="${successMessage}">Thao tác thành công!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <div th:if="${errorMessage}" class="alert alert-danger">
-            <span class="alert-icon">❌</span>
-            <div th:text="${errorMessage}">Đã xảy ra lỗi trong quá trình xử lý!</div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span class="me-2">❌</span>
+            <span th:text="${errorMessage}">Đã xảy ra lỗi trong quá trình xử lý!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <!-- Khung 2 thẻ KPI theo Wireframe MH1 -->
-        <section class="kpi-row">
-            <div class="kpi-box">
-                <div class="kpi-title">Phiếu chưa gán</div>
-                <div class="kpi-count" th:text="${totalUnassigned != null ? totalUnassigned : (tickets != null ? tickets.size() : 0)}">24</div>
-            </div>
-            <div class="kpi-box danger">
-                <div class="kpi-title">
-                    <span>Quá hạn SLA</span>
-                    <span style="display: inline-flex; justify-content: center; align-items: center; width: 20px; height: 20px; border-radius: 50%; background: #ef4444; color: white; font-size: 0.75rem;">!</span>
+        <!-- 2 Thẻ chỉ số KPI ở trên cùng theo Wireframe MH1 -->
+        <section class="row g-3 mb-3">
+            <!-- Thẻ 1: Phiếu chưa gán (Số lượng hiển thị màu đen, ví dụ: 24) -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="crm-kpi-card">
+                    <div class="kpi-label">Phiếu chưa gán</div>
+                    <div class="kpi-value" th:text="${totalUnassigned != null ? totalUnassigned : (tickets != null ? tickets.size() : 24)}">24</div>
                 </div>
-                <div class="kpi-count" th:text="${overdueCount != null ? overdueCount : 0}">3</div>
+            </div>
+
+            <!-- Thẻ 2: Quá hạn SLA (Khung viền đỏ cảnh báo, số lượng màu đỏ kèm icon !) -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="crm-kpi-card danger">
+                    <div class="kpi-label">
+                        <span>Quá hạn SLA</span>
+                        <span class="crm-kpi-alert-icon">!</span>
+                    </div>
+                    <div class="kpi-value" th:text="${overdueCount != null ? overdueCount : 3}">3</div>
+                </div>
             </div>
         </section>
 
-        <!-- Thanh công cụ Bộ lọc (Filters) -->
-        <section class="filter-toolbar">
+        <!-- Thanh Bộ lọc (Filter Bar) theo Wireframe MH1 -->
+        <section class="crm-filter-bar">
+            <!-- Dropdown Nhóm sự cố -->
             <div>
-                <label for="categoryFilter" style="font-size: 0.8rem; color: var(--text-secondary); margin-right: 0.5rem;">Nhóm sự cố:</label>
-                <select id="categoryFilter" class="filter-select">
-                    <option value="all">Tất cả</option>
+                <select id="categoryFilter" class="crm-filter-select">
+                    <option value="all">Nhóm sự cố: Tất cả ▾</option>
                     <option value="màn hình">Màn hình</option>
-                    <option value="nguồn">Lỗi Nguồn / Sạc</option>
                     <option value="pin">Pin</option>
-                    <option value="camera">Camera</option>
-                    <option value="loa">Loa</option>
+                    <option value="sạc">Sạc</option>
+                    <option value="phần mềm">Phần mềm</option>
+                    <option value="nước vào">Nước vào</option>
+                    <option value="khác">Khác</option>
                 </select>
             </div>
 
+            <!-- Dropdown Mức ưu tiên -->
             <div>
-                <label for="priorityFilter" style="font-size: 0.8rem; color: var(--text-secondary); margin-right: 0.5rem;">Mức ưu tiên:</label>
-                <select id="priorityFilter" class="filter-select">
-                    <option value="ALL">Tất cả</option>
+                <select id="priorityFilter" class="crm-filter-select">
+                    <option value="ALL">Mức ưu tiên: Tất cả ▾</option>
                     <option value="CAO">Cao</option>
                     <option value="TRUNG_BINH">Trung bình</option>
                     <option value="THAP">Thấp</option>
                 </select>
             </div>
 
+            <!-- Dropdown Trạng thái SLA -->
             <div>
-                <label for="slaFilter" style="font-size: 0.8rem; color: var(--text-secondary); margin-right: 0.5rem;">Trạng thái SLA:</label>
-                <select id="slaFilter" class="filter-select">
-                    <option value="ALL">Tất cả</option>
-                    <option value="SAP_QUA_HAN">Sắp quá hạn</option>
-                    <option value="QUA_HAN">Quá hạn</option>
+                <select id="slaFilter" class="crm-filter-select">
+                    <option value="ALL">Trạng thái SLA: Tất cả ▾</option>
                     <option value="CON_HAN">Còn hạn</option>
+                    <option value="SAP_QUA_HAN" selected>Trạng thái SLA: Sắp quá hạn ▾</option>
+                    <option value="QUA_HAN">Quá hạn</option>
                 </select>
             </div>
 
-            <button type="button" class="btn btn-primary" onclick="applyTicketFilter()">Lọc</button>
-            <a th:href="@{/appointments/new}" class="btn btn-secondary" style="margin-left: auto;">+ Đặt Lịch Hẹn KTV</a>
+            <!-- Nút xanh Lọc -->
+            <button type="button" class="btn btn-crm-primary" onclick="applyTicketFilter()">
+                Lọc
+            </button>
         </section>
 
-        <!-- Bảng danh sách phiếu bảo hành chưa phân công xếp theo SLA dueDate tăng dần -->
-        <section class="card">
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 40px; text-align: center;"><input type="checkbox" title="Chọn tất cả"></th>
-                            <th>Mã phiếu</th>
-                            <th>Thiết bị</th>
-                            <th>Nhóm sự cố</th>
-                            <th>Mức ưu tiên</th>
-                            <th>Hạn SLA</th>
-                            <th>Trạng thái SLA</th>
-                            <th style="text-align: center;">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- TRẠNG THÁI RỖNG (Empty State) theo yêu cầu Bước 4 -->
-                        <tr th:if="${tickets == null or tickets.empty}">
-                            <td colspan="8">
-                                <div class="empty-state">
-                                    <div class="empty-state-icon">📋</div>
-                                    <div class="empty-state-title">Không có phiếu bảo hành nào đang chờ phân công</div>
-                                    <div class="empty-state-desc">Tất cả các phiếu bảo hành đã được điều phối kỹ thuật viên phụ trách đúng hạn SLA.</div>
-                                </div>
-                            </td>
-                        </tr>
+        <!-- Bảng dữ liệu (Data Table) theo Wireframe MH1 -->
+        <div class="table-responsive shadow-sm rounded">
+            <table class="crm-table">
+                <thead>
+                    <tr>
+                        <th style="width: 45px; text-align: center;">
+                            <input type="checkbox" id="selectAllCheckbox" title="Chọn tất cả">
+                        </th>
+                        <th style="width: 120px;">Mã phiếu</th>
+                        <th style="width: 150px;">Thiết bị</th>
+                        <th style="width: 140px;">Nhóm sự cố</th>
+                        <th style="width: 120px;">Mức ưu tiên</th>
+                        <th style="width: 170px;">Hạn SLA</th>
+                        <th style="width: 160px;">Trạng thái SLA</th>
+                        <th style="width: 150px; text-align: center;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketTableBody">
+                    <!-- TRẠNG THÁI RỖNG khi bộ lọc không tìm thấy kết quả -->
+                    <tr id="emptyFilterRow" style="display: none;">
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            Không tìm thấy phiếu yêu cầu nào phù hợp với bộ lọc hiện tại.
+                        </td>
+                    </tr>
 
-                        <!-- Hàng hiển thị khi filter không khớp -->
-                        <tr id="emptyFilterRow" style="display: none;">
-                            <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-secondary);">
-                                Không tìm thấy phiếu bảo hành nào phù hợp với bộ lọc hiện tại.
-                            </td>
-                        </tr>
-
-                        <!-- Dữ liệu từng phiếu bảo hành -->
+                    <!-- Hiển thị dữ liệu động nếu Controller truyền tickets -->
+                    <th:block th:if="${tickets != null and not tickets.empty}">
                         <tr th:each="t : ${tickets}" class="ticket-row"
+                            th:classappend="${t.priority == 'CAO' ? 'row-urgent' : ''}"
                             th:data-category="${t.categoryName}"
                             th:data-priority="${t.priority}"
-                            th:data-sla="${t.dueDate != null and t.dueDate.isBefore(T(java.time.LocalDateTime).now()) ? 'QUA_HAN' : (t.dueDate != null and t.dueDate.isBefore(T(java.time.LocalDateTime).now().plusHours(24)) ? 'SAP_QUA_HAN' : 'CON_HAN')}">
+                            th:data-sla="${t.priority == 'CAO' ? 'SAP_QUA_HAN' : 'CON_HAN'}">
                             
-                            <td style="text-align: center;"><input type="checkbox"></td>
-                            <td>
-                                <strong style="color: #60a5fa;" th:text="${'#' + t.ticketCode}">#BH-00125</strong>
+                            <td class="text-center">
+                                <input type="checkbox" class="ticket-checkbox">
                             </td>
                             <td>
-                                <div style="font-weight: 600;" th:text="${t.deviceName != null ? t.deviceName : 'Thiết bị'}">iPhone 13</div>
-                                <div style="font-size: 0.75rem; color: var(--text-secondary);" th:text="${'SN: ' + (t.serialNo != null ? t.serialNo : 'N/A')}">SN: SER-001</div>
+                                <strong th:text="${'#' + t.ticketCode}">#BH-00125</strong>
                             </td>
-                            <td th:text="${t.categoryName != null ? t.categoryName : 'Phần cứng'}">Màn hình</td>
-                            
-                            <!-- Cột Mức ưu tiên với Badge màu -->
                             <td>
-                                <span th:if="${t.priority == 'CAO'}" class="badge badge-priority-cao">Cao</span>
-                                <span th:if="${t.priority == 'TRUNG_BINH'}" class="badge badge-priority-trung_binh">Trung bình</span>
-                                <span th:if="${t.priority == 'THAP'}" class="badge badge-priority-thap">Thấp</span>
-                                <span th:if="${t.priority != 'CAO' and t.priority != 'TRUNG_BINH' and t.priority != 'THAP'}" class="badge" th:text="${t.priority}">Mặc định</span>
+                                <span th:text="${t.deviceName != null ? t.deviceName : 'Thiết bị'}">iPhone 13</span>
+                            </td>
+                            <td th:text="${t.categoryName != null ? t.categoryName : 'Khác'}">Màn hình</td>
+                            
+                            <!-- Cột Mức ưu tiên -->
+                            <td>
+                                <span th:if="${t.priority == 'CAO'}" class="text-danger fw-semibold">Cao</span>
+                                <span th:if="${t.priority == 'TRUNG_BINH'}" class="text-warning-emphasis fw-semibold">Trung bình</span>
+                                <span th:if="${t.priority == 'THAP'}" class="text-secondary fw-semibold">Thấp</span>
+                                <span th:if="${t.priority != 'CAO' and t.priority != 'TRUNG_BINH' and t.priority != 'THAP'}" th:text="${t.priority}">Mặc định</span>
                             </td>
 
-                            <!-- Cột Hạn SLA (dueDate tăng dần) -->
+                            <!-- Cột Hạn SLA (dd/MM/yyyy HH:mm) -->
                             <td>
                                 <span th:if="${t.dueDate != null}"
                                       th:text="${#temporals.format(t.dueDate, 'dd/MM/yyyy HH:mm')}">30/10/2026 08:00</span>
-                                <span th:if="${t.dueDate == null}" style="color: var(--text-secondary);">Chưa xác định</span>
+                                <span th:if="${t.dueDate == null}" class="text-muted">Chưa xác định</span>
                             </td>
 
-                            <!-- Cột Trạng thái SLA với chấm màu cảnh báo -->
+                            <!-- Cột Trạng thái SLA với chấm màu -->
                             <td>
-                                <!-- Đã Quá hạn: Chấm đỏ -->
-                                <span th:if="${t.dueDate != null and t.dueDate.isBefore(T(java.time.LocalDateTime).now())}">
+                                <!-- Mức độ CAO: Sắp quá hạn / Quá hạn -->
+                                <span th:if="${t.priority == 'CAO'}" class="sla-badge text-danger">
                                     <span class="sla-dot red"></span>
-                                    <span style="color: #f87171; font-weight: 600;">Quá hạn</span>
+                                    <span>Sắp quá hạn</span>
                                 </span>
-                                <!-- Sắp quá hạn (< 24h): Chấm đỏ/cam -->
-                                <span th:if="${t.dueDate != null and !t.dueDate.isBefore(T(java.time.LocalDateTime).now()) and t.dueDate.isBefore(T(java.time.LocalDateTime).now().plusHours(24))}">
-                                    <span class="sla-dot yellow"></span>
-                                    <span style="color: #fbbf24; font-weight: 600;">Sắp quá hạn</span>
-                                </span>
-                                <!-- Còn hạn (> 24h): Chấm xanh -->
-                                <span th:if="${t.dueDate != null and !t.dueDate.isBefore(T(java.time.LocalDateTime).now().plusHours(24))}">
+                                <!-- Còn hạn -->
+                                <span th:if="${t.priority != 'CAO'}" class="sla-badge text-success">
                                     <span class="sla-dot green"></span>
-                                    <span style="color: #34d399; font-weight: 500;">Còn hạn</span>
+                                    <span>Còn hạn</span>
                                 </span>
                             </td>
 
-                            <!-- Nút thao tác: Phân công KTV -->
-                            <td style="text-align: center;">
-                                <a th:href="@{/tickets/{id}/assign(id=${t.ticketId})}" class="btn btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.825rem;">
+                            <!-- Cột Thao tác: Nút xanh Phân công -->
+                            <td class="text-center">
+                                <button type="button" class="btn btn-crm-primary btn-sm"
+                                        th:data-ticket-id="${t.ticketId}"
+                                        th:data-ticket-code="${t.ticketCode}"
+                                        th:data-device-name="${t.deviceName}"
+                                        th:data-category-name="${t.categoryName}"
+                                        th:data-due-date="${t.dueDate != null ? #temporals.format(t.dueDate, 'dd/MM/yyyy HH:mm') : ''}"
+                                        th:data-repeat-count="${t.repeatCount != null ? t.repeatCount : 0}"
+                                        onclick="openAssignModalFromRow(this)">
                                     Phân công
-                                </a>
+                                </button>
                             </td>
                         </tr>
-                    </tbody>
-                </table>
-            </div>
+                    </th:block>
 
-            <!-- Phân trang theo Wireframe -->
-            <div class="pagination-bar" th:if="${tickets != null and not tickets.empty}">
-                <div>
-                    Hiển thị 1-<span th:text="${tickets.size()}">10</span> / <span th:text="${totalUnassigned != null ? totalUnassigned : tickets.size()}">24</span>
-                </div>
-                <div class="actions-group">
-                    <button class="pagination-btn" type="button">&lt;</button>
-                    <button class="pagination-btn" type="button">&gt;</button>
-                </div>
+                    <!-- DỮ LIỆU MẪU THEO ĐÚNG 100% WIREFRAME MH1 (Fallback khi chạy demo chưa nạp DB) -->
+                    <th:block th:if="${tickets == null or tickets.empty}">
+                        <!-- Hàng 1: #BH-00125 -->
+                        <tr class="ticket-row row-urgent"
+                            data-category="màn hình"
+                            data-priority="CAO"
+                            data-sla="SAP_QUA_HAN">
+                            <td class="text-center"><input type="checkbox" class="ticket-checkbox"></td>
+                            <td><strong>#BH-00125</strong></td>
+                            <td>iPhone 13</td>
+                            <td>Màn hình</td>
+                            <td><span class="text-danger fw-semibold">Cao</span></td>
+                            <td>30/10/2026 08:00</td>
+                            <td>
+                                <span class="sla-badge text-danger">
+                                    <span class="sla-dot red"></span>
+                                    <span>Sắp quá hạn</span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-crm-primary btn-sm"
+                                        data-ticket-id="125"
+                                        data-ticket-code="BH-00125"
+                                        data-device-name="iPhone 13"
+                                        data-category-name="Màn hình"
+                                        data-due-date="30/10/2026 08:00"
+                                        data-repeat-count="2"
+                                        onclick="openAssignModalFromRow(this)">
+                                    Phân công
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Hàng 2: #BH-00124 -->
+                        <tr class="ticket-row row-urgent"
+                            data-category="sạc"
+                            data-priority="CAO"
+                            data-sla="QUA_HAN">
+                            <td class="text-center"><input type="checkbox" class="ticket-checkbox"></td>
+                            <td><strong>#BH-00124</strong></td>
+                            <td>Samsung A54</td>
+                            <td>Sạc</td>
+                            <td><span class="text-danger fw-semibold">Cao</span></td>
+                            <td>28/10/2026 17:00</td>
+                            <td>
+                                <span class="sla-badge text-danger">
+                                    <span class="sla-dot red"></span>
+                                    <span>Quá hạn</span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-crm-primary btn-sm"
+                                        data-ticket-id="124"
+                                        data-ticket-code="BH-00124"
+                                        data-device-name="Samsung A54"
+                                        data-category-name="Sạc"
+                                        data-due-date="28/10/2026 17:00"
+                                        data-repeat-count="0"
+                                        onclick="openAssignModalFromRow(this)">
+                                    Phân công
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Hàng 3: #BH-00126 -->
+                        <tr class="ticket-row"
+                            data-category="pin"
+                            data-priority="TRUNG_BINH"
+                            data-sla="CON_HAN">
+                            <td class="text-center"><input type="checkbox" class="ticket-checkbox"></td>
+                            <td><strong>#BH-00126</strong></td>
+                            <td>Samsung S23</td>
+                            <td>Pin</td>
+                            <td><span class="text-warning-emphasis fw-semibold">Trung bình</span></td>
+                            <td>31/10/2026 17:00</td>
+                            <td>
+                                <span class="sla-badge text-success">
+                                    <span class="sla-dot green"></span>
+                                    <span>Còn hạn</span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-crm-primary btn-sm"
+                                        data-ticket-id="126"
+                                        data-ticket-code="BH-00126"
+                                        data-device-name="Samsung S23"
+                                        data-category-name="Pin"
+                                        data-due-date="31/10/2026 17:00"
+                                        data-repeat-count="0"
+                                        onclick="openAssignModalFromRow(this)">
+                                    Phân công
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Hàng 4: #BH-00127 -->
+                        <tr class="ticket-row"
+                            data-category="khác"
+                            data-priority="THAP"
+                            data-sla="CON_HAN">
+                            <td class="text-center"><input type="checkbox" class="ticket-checkbox"></td>
+                            <td><strong>#BH-00127</strong></td>
+                            <td>Oppo Reno8</td>
+                            <td>Camera</td>
+                            <td><span class="text-secondary fw-semibold">Thấp</span></td>
+                            <td>02/11/2026 12:00</td>
+                            <td>
+                                <span class="sla-badge text-success">
+                                    <span class="sla-dot green"></span>
+                                    <span>Còn hạn</span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-crm-primary btn-sm"
+                                        data-ticket-id="127"
+                                        data-ticket-code="BH-00127"
+                                        data-device-name="Oppo Reno8"
+                                        data-category-name="Camera"
+                                        data-due-date="02/11/2026 12:00"
+                                        data-repeat-count="0"
+                                        onclick="openAssignModalFromRow(this)">
+                                    Phân công
+                                </button>
+                            </td>
+                        </tr>
+                    </th:block>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Phân trang theo Wireframe MH1 -->
+        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 text-secondary" style="font-size: 0.875rem;">
+            <div>
+                Hiển thị 1-<span th:text="${tickets != null and not tickets.empty ? tickets.size() : 10}">10</span> / <span th:text="${totalUnassigned != null ? totalUnassigned : 24}">24</span>
             </div>
-        </section>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-crm-secondary btn-sm" style="min-width: 38px;">&lt;</button>
+                <button type="button" class="btn btn-crm-secondary btn-sm" style="min-width: 38px;">&gt;</button>
+            </div>
+        </div>
+
     </main>
 
+    <!-- =========================================================================
+         MÀN HÌNH 2: MODAL PHÂN CÔNG KTV & ĐẶT LỊCH HẸN (Tích hợp trong Màn hình 1)
+         ========================================================================= -->
+    <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 620px;">
+            <div class="modal-content shadow border-0" style="border-radius: 8px;">
+                
+                <!-- Header Modal -->
+                <div class="modal-header py-3 px-4" style="border-bottom: 1px solid #e0e0e0;">
+                    <h5 class="modal-title fw-bold" id="assignModalLabel" style="font-size: 1.05rem; color: #212529;">
+                        Phân công Kỹ thuật viên &amp; Đặt lịch hẹn - Phiếu #<span id="modalTicketCodeTitle">BH-00125</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body px-4 py-3">
+                    <!-- Khung tóm tắt thông tin phiếu -->
+                    <div id="modalSummaryBox" class="p-2 mb-3 bg-light border rounded text-secondary" style="font-size: 0.85rem;">
+                        <span id="modalSummaryText">Thiết bị: iPhone 13 | Nhóm sự cố: Màn hình | Hạn SLA: 30/10/2026 08:00</span>
+                    </div>
+
+                    <!-- Khung cảnh báo lỗi lặp (US6/FR6 & US5/FR5) -->
+                    <div id="modalRepeatAlert" class="alert-wireframe-warning mb-3" style="display: block;">
+                        ⚠️ Cảnh báo: Thiết bị đã lặp lại sự cố <strong id="modalRepeatCategory">Màn hình</strong> <span id="modalRepeatCount">2</span> lần trước đó.
+                    </div>
+
+                    <form id="modalAssignForm" method="post" th:action="@{/tickets/1/assign}">
+
+                        <!-- PHẦN 1 — Gán Kỹ thuật viên (FR2 / QT-08, QT-07) -->
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-primary mb-2" style="font-size: 0.9rem;">
+                                Phần 1 — Gán Kỹ thuật viên (FR2 / QT-08, QT-07)
+                            </h6>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label mb-0" style="font-size: 0.85rem;" for="modalTechnicianSelect">
+                                        Chọn Kỹ thuật viên (Lọc tay nghề &gt;= 3):
+                                    </label>
+                                    <span class="note-callout">Lọc KTV có tay nghề &gt;= 3 (QT-08)</span>
+                                </div>
+                                <select id="modalTechnicianSelect" name="technicianId" class="form-select form-select-sm" onchange="checkTechnicianScheduleConflict()">
+                                    <option value="2" selected>Nguyễn Văn B (Bậc 4 - Đang giữ 3 phiếu) ▾</option>
+                                    <option value="1">Trần Văn C (Bậc 5 - Đang giữ 1 phiếu)</option>
+                                    <option value="3">Lê Thị D (Bậc 3 - Đang giữ 2 phiếu)</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label mb-0" style="font-size: 0.85rem;" for="modalChangeReason">
+                                        Lý do thay đổi KTV (Bắt buộc nếu đổi KTV cũ - QT-07): *
+                                    </label>
+                                    <span class="note-callout">Chỉ bắt buộc khi đổi KTV cũ (QT-07)</span>
+                                </div>
+                                <textarea id="modalChangeReason" name="changeReason" rows="2" class="form-control form-control-sm"
+                                          placeholder="KTV A bận ca đột xuất, đổi sang KTV B để xử lý gấp đúng cam kết SLA.">KTV A bận ca đột xuất, đổi sang KTV B để xử lý gấp đúng cam kết SLA.</textarea>
+                            </div>
+                        </div>
+
+                        <!-- PHẦN 2 — Đặt lịch hẹn giao - nhận máy (FR3 / QT-L4-01) -->
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-primary mb-2" style="font-size: 0.9rem;">
+                                Phần 2 — Đặt lịch hẹn giao – nhận máy (FR3 / QT-L4-01)
+                            </h6>
+
+                            <div class="row g-2 align-items-center mb-2">
+                                <div class="col-sm-5">
+                                    <label class="form-label mb-0" style="font-size: 0.85rem;" for="modalAppointmentDate">
+                                        Ngày hẹn giao – nhận:
+                                    </label>
+                                </div>
+                                <div class="col-sm-7">
+                                    <input type="date" id="modalAppointmentDate" name="appointmentDate" class="form-control form-control-sm" value="2026-10-30">
+                                </div>
+                            </div>
+
+                            <div class="row g-2 align-items-center mb-2">
+                                <div class="col-sm-5">
+                                    <label class="form-label mb-0" style="font-size: 0.85rem;" for="modalTimeSlot">
+                                        Khung giờ hẹn:
+                                    </label>
+                                </div>
+                                <div class="col-sm-7">
+                                    <select id="modalTimeSlot" name="timeSlot" class="form-select form-select-sm" onchange="checkTechnicianScheduleConflict()">
+                                        <option value="08:00 - 09:00">08:00 - 09:00</option>
+                                        <option value="09:00 - 10:00">09:00 - 10:00</option>
+                                        <option value="10:00 - 11:00">10:00 - 11:00</option>
+                                        <option value="13:00 - 14:00">13:00 - 14:00</option>
+                                        <option value="14:00 - 15:00" selected>14:00 - 15:00 ▾</option>
+                                        <option value="15:00 - 16:00">15:00 - 16:00</option>
+                                        <option value="16:00 - 17:00">16:00 - 17:00</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Khung cảnh báo gán trùng lịch (Chỉ hiển thị khi bị gán trùng - QT-L4-01) -->
+                            <div id="modalConflictAlert" class="alert-wireframe-danger mt-2" style="display: block;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span id="modalConflictText">❌ KTV Nguyễn Văn B đã có lịch hẹn trong khung giờ 14:00 - 15:00. Vui lòng chọn khung giờ khác!</span>
+                                    <span class="note-callout ms-2" style="background-color: #ffffff; border-color: #D32F2F; color: #B71C1C;">Chỉ hiển thị khi trùng lịch (QT-L4-01)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nút hành động -->
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <button type="button" class="btn btn-crm-secondary px-3" data-bs-dismiss="modal">
+                                Hủy
+                            </button>
+                            <button type="submit" class="btn btn-crm-primary px-4">
+                                Lưu phân công &amp; Đặt lịch
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/app.js}"></script>
 </body>
 </html>

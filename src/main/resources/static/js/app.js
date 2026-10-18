@@ -100,9 +100,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Bộ lọc danh sách phiếu chưa gán (Màn hình 1)
 function applyTicketFilter() {
-    const categoryFilter = document.getElementById('categoryFilter') ? document.getElementById('categoryFilter').value.toLowerCase() : 'all';
-    const priorityFilter = document.getElementById('priorityFilter') ? document.getElementById('priorityFilter').value.toUpperCase() : 'ALL';
-    const slaFilter = document.getElementById('slaFilter') ? document.getElementById('slaFilter').value.toUpperCase() : 'ALL';
+    const categorySelect = document.getElementById('categoryFilter');
+    const prioritySelect = document.getElementById('priorityFilter');
+    const slaSelect = document.getElementById('slaFilter');
+
+    const categoryFilter = categorySelect ? categorySelect.value.toLowerCase() : 'all';
+    const priorityFilter = prioritySelect ? prioritySelect.value.toUpperCase() : 'ALL';
+    const slaFilter = slaSelect ? slaSelect.value.toUpperCase() : 'ALL';
 
     const rows = document.querySelectorAll('.ticket-row');
     let visibleCount = 0;
@@ -129,3 +133,77 @@ function applyTicketFilter() {
         emptyFilterRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
     }
 }
+
+// Mở Modal Phân công & Đặt lịch từ dòng dữ liệu trên Màn hình 1
+function openAssignModalFromRow(btn) {
+    const ticketId = btn.dataset.ticketId || '1';
+    const ticketCode = btn.dataset.ticketCode || 'BH-00125';
+    const deviceName = btn.dataset.deviceName || 'iPhone 13';
+    const categoryName = btn.dataset.categoryName || 'Màn hình';
+    const dueDate = btn.dataset.dueDate || '30/10/2026 08:00';
+    const repeatCount = parseInt(btn.dataset.repeatCount || '2', 10);
+
+    // Cập nhật thông tin vào modal
+    const modalTitleEl = document.getElementById('modalTicketCodeTitle');
+    if (modalTitleEl) modalTitleEl.textContent = ticketCode;
+
+    const modalSummaryEl = document.getElementById('modalSummaryText');
+    if (modalSummaryEl) {
+        modalSummaryEl.textContent = `Thiết bị: ${deviceName} | Nhóm sự cố: ${categoryName} | Hạn SLA: ${dueDate}`;
+    }
+
+    // Cảnh báo lỗi lặp (US6/FR6 & US5/FR5)
+    const repeatAlert = document.getElementById('modalRepeatAlert');
+    const repeatCountEl = document.getElementById('modalRepeatCount');
+    const repeatCategoryEl = document.getElementById('modalRepeatCategory');
+    if (repeatAlert) {
+        if (repeatCount >= 2) {
+            if (repeatCountEl) repeatCountEl.textContent = repeatCount;
+            if (repeatCategoryEl) repeatCategoryEl.textContent = categoryName;
+            repeatAlert.style.display = '';
+        } else {
+            repeatAlert.style.display = 'none';
+        }
+    }
+
+    // Set action URL form
+    const formEl = document.getElementById('modalAssignForm');
+    if (formEl) {
+        formEl.action = `/tickets/${ticketId}/assign`;
+    }
+
+    // Reset cảnh báo trùng lịch
+    const conflictAlert = document.getElementById('modalConflictAlert');
+    if (conflictAlert) conflictAlert.style.display = 'none';
+
+    // Mở Bootstrap 5 modal
+    const assignModalEl = document.getElementById('assignModal');
+    if (assignModalEl && window.bootstrap && window.bootstrap.Modal) {
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(assignModalEl);
+        modalInstance.show();
+    }
+}
+
+// Mô phỏng / Kiểm tra cảnh báo trùng lịch hẹn (QT-L4-01)
+function checkTechnicianScheduleConflict() {
+    const techSelect = document.getElementById('modalTechnicianSelect') || document.getElementById('technicianId');
+    const timeSlotSelect = document.getElementById('modalTimeSlot') || document.getElementById('appointmentSlot');
+    const conflictAlert = document.getElementById('modalConflictAlert') || document.getElementById('conflictAlert');
+
+    if (!techSelect || !timeSlotSelect || !conflictAlert) return;
+
+    const selectedTechText = techSelect.options[techSelect.selectedIndex]?.text || '';
+    const selectedSlot = timeSlotSelect.value;
+
+    // Giả lập theo Wireframe MH2: KTV Nguyễn Văn B bị trùng vào khung 14:00 - 15:00
+    if (selectedTechText.includes('Nguyễn Văn B') && selectedSlot === '14:00 - 15:00') {
+        conflictAlert.style.display = '';
+        const conflictText = document.getElementById('modalConflictText') || document.getElementById('conflictText');
+        if (conflictText) {
+            conflictText.textContent = `❌ KTV Nguyễn Văn B đã có lịch hẹn trong khung giờ 14:00 - 15:00. Vui lòng chọn khung giờ khác!`;
+        }
+    } else {
+        conflictAlert.style.display = 'none';
+    }
+}
+
