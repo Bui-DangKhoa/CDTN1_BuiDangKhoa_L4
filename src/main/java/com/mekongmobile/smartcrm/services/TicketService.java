@@ -66,4 +66,14 @@ public interface TicketService {
      * QT-08: Cập nhật trạng thái tiến độ ticket và ghi nhật ký kiểm toán.
      */
     TicketResponseDto updateTicketStatus(Long ticketId, UpdateTicketStatusDto updateDto);
+
+    /**
+     * Lấy danh sách phiếu bảo hành chưa phân công, sắp xếp theo hạn SLA (due_date) tăng dần.
+     */
+    List<TicketResponseDto> getUnassignedTicketsSortedByDueDate();
+
+    /**
+     * QT-08: Lấy danh sách KTV đủ điều kiện (cùng centerId, proficiency >= 3 cho danh mục sự cố).
+     */
+    List<com.mekongmobile.smartcrm.dto.TechnicianResponseDto> getEligibleTechniciansForTicket(Long ticketId);
 }

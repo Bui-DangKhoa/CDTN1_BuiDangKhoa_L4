@@ -218,6 +218,50 @@ public class TicketServiceImpl implements TicketService {
         return savedTicket;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<TicketResponseDto> getUnassignedTicketsSortedByDueDate() {
+        return ticketRepository.findUnassignedTicketsOrderByDueDateAsc()
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<com.mekongmobile.smartcrm.dto.TechnicianResponseDto> getEligibleTechniciansForTicket(Long ticketId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
+
+        if (ticket.getCategory() == null) {
+            return List.of();
+        }
+
+        List<Technician> eligibleTechs = technicianRepository.findEligibleTechnicians(
+                ticket.getCenterId(), ticket.getCategory().getCategoryId());
+
+        return eligibleTechs.stream()
+                .map(tech -> {
+                    int activeCount = (int) ticketRepository.findByTechnician_TechnicianId(tech.getTechnicianId())
+                            .stream()
+                            .filter(t -> !"HOAN_THANH".equalsIgnoreCase(t.getStatus())
+                                    && !"DONG".equalsIgnoreCase(t.getStatus())
+                                    && !"DA_HUY".equalsIgnoreCase(t.getStatus()))
+                            .count();
+
+                    return com.mekongmobile.smartcrm.dto.TechnicianResponseDto.builder()
+                            .technicianId(tech.getTechnicianId())
+                            .employeeId(tech.getEmployeeId())
+                            .fullName(tech.getFullName())
+                            .centerId(tech.getCenterId())
+                            .level(tech.getLevel())
+                            .isActive(tech.getIsActive())
+                            .activeTicketsCount(activeCount)
+                            .build();
+                })
+                .toList();
+    }
+
     private void validateStatusTransition(String current, String next) {
         // Trạng thái đã đóng thì không thể đổi tiếp
         if ("DONG".equalsIgnoreCase(current) || "DA_HUY".equalsIgnoreCase(current)) {
@@ -226,6 +270,19 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private TicketResponseDto mapToDto(Ticket ticket) {
+        Integer repeatCount = 0;
+        if (ticket.getDevice() != null && ticket.getCategory() != null && ticket.getTicketId() != null) {
+            try {
+                repeatCount = (int) ticketRepository.countPreviousSameIssues(
+                        ticket.getDevice().getDeviceId(),
+                        ticket.getCategory().getCategoryId(),
+                        ticket.getTicketId()
+                );
+            } catch (Exception ignored) {
+                repeatCount = 0;
+            }
+        }
+
         return TicketResponseDto.builder()
                 .ticketId(ticket.getTicketId())
                 .ticketCode(ticket.getTicketCode())
@@ -244,6 +301,7 @@ public class TicketServiceImpl implements TicketService {
                 .receivedAt(ticket.getReceivedAt())
                 .dueDate(ticket.getDueDate())
                 .closedAt(ticket.getClosedAt())
+                .repeatCount(repeatCount)
                 .build();
     }
 }

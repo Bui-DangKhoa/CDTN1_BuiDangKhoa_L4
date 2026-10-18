@@ -65,4 +65,21 @@ public class AppointmentService {
         appointment.setStatus("DA_HUY");
         return appointmentRepository.save(appointment);
     }
+
+    /**
+     * Đặt lịch hẹn tiếp nhận DTO từ Web UI / REST API.
+     */
+    public com.mekongmobile.smartcrm.dto.AppointmentResponseDto createAppointment(com.mekongmobile.smartcrm.dto.CreateAppointmentRequest request) {
+        Appointment appointment = scheduleAppointment(request.getTicketId(), request.getTechnicianId(), request.getAppointmentTime());
+        return com.mekongmobile.smartcrm.dto.AppointmentResponseDto.builder()
+                .appointmentId(appointment.getAppointmentId())
+                .ticketId(appointment.getTicket().getTicketId())
+                .ticketCode(appointment.getTicket().getTicketCode())
+                .technicianId(appointment.getTechnician().getTechnicianId())
+                .technicianName(appointment.getTechnician().getFullName())
+                .appointmentTime(appointment.getAppointmentTime())
+                .status(appointment.getStatus())
+                .createdAt(appointment.getCreatedAt())
+                .build();
+    }
 }

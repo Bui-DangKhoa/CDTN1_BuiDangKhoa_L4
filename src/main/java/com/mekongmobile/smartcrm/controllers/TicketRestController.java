@@ -57,6 +57,29 @@ public class TicketRestController {
     }
 
     /**
+     * API lấy danh sách phiếu chưa phân công xếp theo SLA dueDate tăng dần.
+     */
+    @GetMapping("/unassigned")
+    public ResponseEntity<ApiResponse<List<TicketResponseDto>>> getUnassignedTickets() {
+        List<TicketResponseDto> tickets = ticketService.getUnassignedTicketsSortedByDueDate();
+        return ResponseEntity.ok(ApiResponse.of("Danh sách phiếu chưa phân công theo SLA", tickets));
+    }
+
+    /**
+     * QT-07 & QT-08: API phân công hoặc đổi kỹ thuật viên cho ticket.
+     */
+    @PostMapping("/{id}/assign")
+    public ResponseEntity<ApiResponse<TicketResponseDto>> assignTechnician(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody com.mekongmobile.smartcrm.dto.AssignTechnicianRequest request) {
+        Long assignedBy = 1L; // Quản lý đăng nhập
+        com.mekongmobile.smartcrm.entities.Ticket ticket = ticketService.assignTechnician(
+                id, request.getTechnicianId(), assignedBy, request.getChangeReason());
+        TicketResponseDto responseDto = ticketService.getTicketById(ticket.getTicketId());
+        return ResponseEntity.ok(ApiResponse.of("Phân công kỹ thuật viên thành công (QT-07, QT-08)", responseDto));
+    }
+
+    /**
      * QT-08: API cập nhật tiến độ và trạng thái ticket.
      */
     @PatchMapping("/{id}/status")

@@ -28,4 +28,12 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findByTechnician_TechnicianId(Long technicianId);
 
     List<Ticket> findAllByOrderByReceivedAtDesc();
+
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM Ticket t WHERE t.technician IS NULL OR t.status = 'MOI' ORDER BY t.dueDate ASC")
+    List<Ticket> findUnassignedTicketsOrderByDueDateAsc();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(t) FROM Ticket t WHERE t.device.deviceId = :deviceId AND t.category.categoryId = :categoryId AND t.ticketId <> :ticketId")
+    long countPreviousSameIssues(@org.springframework.data.repository.query.Param("deviceId") Long deviceId,
+                                 @org.springframework.data.repository.query.Param("categoryId") Integer categoryId,
+                                 @org.springframework.data.repository.query.Param("ticketId") Long ticketId);
 }
