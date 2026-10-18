@@ -33,4 +33,5 @@ public class TicketResponseDto {
     private LocalDateTime receivedAt;
     private LocalDateTime dueDate;
     private LocalDateTime closedAt;
+    private Integer repeatCount;
 }
