@@ -5,6 +5,7 @@ import com.mekongmobile.smartcrm.entities.IssueCategory;
 import com.mekongmobile.smartcrm.entities.Technician;
 import com.mekongmobile.smartcrm.entities.Ticket;
 import com.mekongmobile.smartcrm.entities.TicketStatusLog;
+import com.mekongmobile.smartcrm.exceptions.AppException;
 import com.mekongmobile.smartcrm.repositories.DeviceRepository;
 import com.mekongmobile.smartcrm.repositories.IssueCategoryRepository;
 import com.mekongmobile.smartcrm.repositories.TechnicianRepository;
@@ -115,5 +116,79 @@ class TicketServiceTest {
 
         verify(ticketRepository, times(1)).save(mockTicket);
         verify(statusLogRepository, times(1)).save(any(TicketStatusLog.class));
+    }
+
+    @Test
+    @DisplayName("TC-02: Boundary Value - Cho phép đổi KTV khi lý do thay đổi đúng vừa đủ 10 ký tự (QT-07)")
+    void TC02_assignTechnician_success_whenChangeReasonExactly10Chars() {
+        // Given: Phiếu đã có KTV cũ và KTV mới hợp lệ
+        Technician oldTechnician = Technician.builder()
+                .technicianId(5L)
+                .fullName("KTV Cũ")
+                .centerId(1L)
+                .build();
+        mockTicket.setTechnician(oldTechnician);
+
+        Technician newTechnician = Technician.builder()
+                .technicianId(6L)
+                .fullName("KTV Mới")
+                .centerId(1L)
+                .isActive(true)
+                .build();
+
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+        when(technicianRepository.findById(6L)).thenReturn(Optional.of(newTechnician));
+        when(technicianRepository.findEligibleTechnicians(1L, 1)).thenReturn(List.of(newTechnician));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Giá trị biên: Đúng vừa đủ 10 ký tự
+        String reason10Chars = "Doi KTV 10"; // Đúng vừa đủ 10 ký tự
+        assertEquals(10, reason10Chars.length());
+
+        // When & Then: Thực thi không ném ngoại lệ
+        assertDoesNotThrow(() -> {
+            Ticket updated = ticketService.assignTechnician(10L, 6L, 101L, reason10Chars);
+            assertNotNull(updated);
+            assertEquals(6L, updated.getTechnician().getTechnicianId());
+            assertEquals("DA_PHAN_CONG", updated.getStatus());
+        });
+
+        verify(statusLogRepository, times(1)).save(any(TicketStatusLog.class));
+    }
+
+    @Test
+    @DisplayName("TC-02: Boundary Value - Ném lỗi INVALID_CHANGE_REASON khi lý do đổi KTV chỉ có 9 ký tự (QT-07)")
+    void TC02_assignTechnician_throwException_whenChangeReasonIs9Chars() {
+        // Given: Phiếu đã có KTV cũ và KTV mới hợp lệ
+        Technician oldTechnician = Technician.builder()
+                .technicianId(5L)
+                .fullName("KTV Cũ")
+                .centerId(1L)
+                .build();
+        mockTicket.setTechnician(oldTechnician);
+
+        Technician newTechnician = Technician.builder()
+                .technicianId(6L)
+                .fullName("KTV Mới")
+                .centerId(1L)
+                .isActive(true)
+                .build();
+
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+        when(technicianRepository.findById(6L)).thenReturn(Optional.of(newTechnician));
+        when(technicianRepository.findEligibleTechnicians(1L, 1)).thenReturn(List.of(newTechnician));
+
+        // Giá trị biên dưới: 9 ký tự (vi phạm quy tắc >= 10 ký tự)
+        String reason9Chars = "Doi KTV m"; // Đúng 9 ký tự
+        assertEquals(9, reason9Chars.length());
+
+        // When & Then: Ném lỗi AppException với mã INVALID_CHANGE_REASON
+        AppException exception = assertThrows(AppException.class, () ->
+                ticketService.assignTechnician(10L, 6L, 101L, reason9Chars)
+        );
+
+        assertEquals("INVALID_CHANGE_REASON", exception.getErrorCode());
+        assertTrue(exception.getMessage().contains("từ 10 ký tự trở lên"));
+        verify(ticketRepository, never()).save(any(Ticket.class));
     }
 }
