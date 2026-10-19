@@ -16,3 +16,4 @@ __pycache__/
 # Dữ liệu lớn (chỉ commit mẫu nhỏ)
 data/*.csv
 !data/sample/
+.antigravityrules
