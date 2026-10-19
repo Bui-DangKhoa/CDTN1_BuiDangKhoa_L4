@@ -1,0 +1,47 @@
+# ============================================================
+# SYSTEM RULES FOR GOOGLE ANTIGRAVITY - SMART CRM (LUỒNG L4)
+# ============================================================
+
+## 1. TECH STACK & DỰ ÁN
+- Project: Smart CRM - Mekong Mobile (Luồng L4: Phân công KTV & Lịch hẹn)
+- Language & Runtime: Java 21 LTS
+- Framework: Spring Boot 3.2+
+- ORM & DB: Spring Data JPA (Hibernate), MySQL 8.0 (InnoDB)
+- View Engine: Thymeleaf + Bootstrap 5
+- Testing: JUnit 5, Mockito
+- API Docs: springdoc-openapi (Swagger)
+- Build & Container: Maven Wrapper (`./mvnw`), Dockerfile + docker-compose
+
+## 2. QUY TẮC KIẾN TRÚC PHÂN LỚP (3-TIER ARCHITECTURE)
+Tuân thủ nghiêm ngặt mô hình phụ thuộc một chiều (`Controllers/Thymeleaf -> Services -> Repositories`):
+1. Controller Layer (`com.mekongmobile.smartcrm.controllers`):
+   - Chỉ tiếp nhận HTTP Request, gọi Service, nhận DTO/Model và trả về View/Response.
+   - Tuyệt đối KHÔNG chứa logic nghiệp vụ, KHÔNG gọi trực tiếp Repository.
+2. Service Layer (`com.mekongmobile.smartcrm.services`):
+   - Chứa 100% logic nghiệp vụ và các quy tắc (QT-04, QT-06, QT-07, QT-08, QT-L4-01).
+   - Ném ngoại lệ nghiệp vụ `AppException` khi vi phạm quy tắc.
+3. Repository Layer (`com.mekongmobile.smartcrm.repositories`):
+   - Mở rộng `JpaRepository`, chỉ thao tác CSDL qua Spring Data JPA hoặc JPQL.
+
+## 3. CÁC QUY TẮC NGHIỆP VỤ BẮT BUỘC (LUỒNG L4)
+- QT-03: Định danh thiết bị duy nhất bằng `serial_no` (Bảng `device`).
+- QT-04: Tự động tính `due_date` (SLA) từ `received_at` và `priority` (CAO: +24h, TRUNG_BINH: +72h, THAP: +120h).
+- QT-06: Bắt buộc ghi nhật ký `TicketStatusLog` mỗi khi đổi `status` hoặc `technician_id`.
+- QT-07: Bắt buộc nhập lý do (`change_reason`) tối thiểu 10 ký tự khi thay đổi KTV phụ trách.
+- QT-08: KTV được gán phải cùng `center_id` với phiếu và có tay nghề (`proficiency`) >= 3 đối với nhóm sự cố (`category_id`) đó.
+- QT-L4-01 / NFR2: Chống gán trùng lịch hẹn (`Appointment`) cho cùng một KTV trong cùng khung giờ (trừ lịch bị hủy `DA_HUY`).
+
+## 4. QUY TẮC ĐẶT TÊN (NAMING CONVENTIONS)
+- Class / Interface / Enum: `PascalCase` (ví dụ: `TicketService`, `TicketStatus`, `TicketRepository`).
+- Method / Field / Variable: `camelCase` (ví dụ: `assignTechnician()`, `calculateDueDate()`, `technicianId`).
+- Constants / Enum values: `UPPER_SNAKE_CASE` (ví dụ: `CHO_XAC_NHAN`, `TRUNG_BINH`).
+- Database Tables & Columns: `snake_case` (ví dụ: `ticket_status_log`, `appointment_time`, `full_name`).
+- Method Names in Service: Phải thể hiện MỤC ĐÍCH NGHIỆP VỤ (ví dụ: `assignTechnician`, `calculateDueDate`, `hasScheduleConflict`, `isTechnicianQualified`).
+- Boolean Methods: Bắt đầu bằng `is`, `has`, `can` (ví dụ: `isTechnicianQualified`, `hasScheduleConflict`).
+
+## 5. QUY TẮC COMMIT (CONVENTIONAL COMMITS)
+Mỗi khi hoàn thành một tác vụ nhỏ, tự động thực hiện commit bằng Git CLI theo đúng cú pháp:
+`<type>(<scope>): <mô tả công việc đã làm bằng tiếng Việt>`
+- Types: `feat`, `fix`, `test`, `docs`, `refactor`, `chore`.
+- Scopes: `entity`, `repository`, `service`, `controller`, `ui`, `config`, `changelog`.
+- Tần suất: 2–4 commits/ngày, không gộp nhiều việc khác nhau vào một commit.

@@ -7,7 +7,6 @@ import com.mekongmobile.smartcrm.entities.Ticket;
 import com.mekongmobile.smartcrm.repositories.TechnicianRepository;
 import com.mekongmobile.smartcrm.repositories.TicketRepository;
 import com.mekongmobile.smartcrm.services.TicketService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

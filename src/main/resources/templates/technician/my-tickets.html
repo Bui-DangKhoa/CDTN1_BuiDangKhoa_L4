@@ -12,13 +12,16 @@
 <body class="crm-body">
 
     <!-- Header bar theo Wireframe MH3: Nền xanh #1976D2 -->
+    <!-- Header bar theo Wireframe MH3: Nền xanh #1976D2 -->
     <header class="crm-top-bar">
-        <div class="d-flex align-items-center gap-2">
-            <span style="font-size: 1.25rem;">⚙️</span>
-            <span class="fw-semibold">Kỹ thuật viên: <strong th:text="${technician != null ? technician.fullName : 'Nguyễn Văn B'}">Nguyễn Văn B</strong> | Trung tâm Bảo hành Quận 10</span>
+        <div class="crm-brand" style="font-size: 0.95rem; font-weight: 500;">
+            Kỹ thuật viên: <strong th:text="${technician != null ? technician.fullName : 'Nguyễn Văn B'}">Nguyễn Văn B</strong> | Trung tâm Bảo hành Quận 10
         </div>
-        <div class="crm-user-info">
+        <div class="crm-user-info d-flex align-items-center gap-2">
             <a href="#">[Đăng xuất]</a>
+            <a th:href="@{/tickets/unassigned}" class="badge bg-light text-primary text-decoration-none px-2 py-1 ms-2" style="font-size: 0.75rem; border-radius: 4px;">
+                ➔ Màn hình Quản lý (MH1)
+            </a>
         </div>
     </header>
 

@@ -647,7 +647,7 @@ body {
    ========================================================================== */
 
 .crm-body {
-    background-color: #f8f9fa !important;
+    background-color: #ffffff !important;
     background-image: none !important;
     color: #212529 !important;
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif !important;
@@ -663,17 +663,15 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 0 1.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
 }
 
 .crm-top-bar .crm-brand {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: #ffffff;
     text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    letter-spacing: -0.01em;
 }
 
 .crm-top-bar .crm-user-info {
@@ -682,96 +680,95 @@ body {
 }
 
 .crm-top-bar .crm-user-info a {
-    color: #e3f2fd;
+    color: #ffffff;
     text-decoration: none;
-    margin-left: 8px;
-    font-weight: 500;
+    margin-left: 6px;
 }
 
 .crm-top-bar .crm-user-info a:hover {
     text-decoration: underline;
 }
 
-/* Thẻ chỉ số KPI (MH1) */
+/* Thẻ chỉ số KPI (MH1) - Khớp 100% Wireframe */
 .crm-kpi-card {
     background-color: #F5F5F5;
     border: 1px solid #BDBDBD;
     border-radius: 8px;
-    padding: 1rem 1.25rem;
-    min-height: 80px;
+    padding: 1.25rem 1rem;
+    min-height: 110px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.crm-kpi-card.danger {
-    background-color: #FFEBEE !important;
-    border: 2px solid #D32F2F !important;
-    color: #B71C1C !important;
-    position: relative;
+    align-items: center;
+    text-align: center;
 }
 
 .crm-kpi-card .kpi-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #424242;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.crm-kpi-card.danger .kpi-label {
-    color: #B71C1C !important;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 0.25rem;
 }
 
 .crm-kpi-card .kpi-value {
-    font-size: 1.75rem;
+    font-size: 2.2rem;
     font-weight: 700;
-    color: #212529;
-    line-height: 1.2;
-    margin-top: 0.25rem;
+    color: #000000;
+    line-height: 1.1;
+}
+
+.crm-kpi-card.danger {
+    background-color: #FFF5F5 !important;
+    border: 2px solid #D32F2F !important;
+    position: relative;
+}
+
+.crm-kpi-card.danger .kpi-label {
+    color: #D32F2F !important;
 }
 
 .crm-kpi-card.danger .kpi-value {
-    color: #B71C1C !important;
+    color: #D32F2F !important;
 }
 
 .crm-kpi-alert-icon {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     background-color: #D32F2F;
     color: #ffffff;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     font-weight: 700;
     line-height: 1;
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
 }
 
-/* Thanh Bộ lọc Filter Bar */
+/* Thanh Bộ lọc Filter Bar - Inline không viền bao */
 .crm-filter-bar {
-    background: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    padding: 0;
     margin-bottom: 1.25rem;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.85rem;
 }
 
 .crm-filter-select {
     border: 1px solid #999999;
-    border-radius: 6px;
-    padding: 0.35rem 0.65rem;
+    border-radius: 4px;
+    padding: 0.45rem 0.85rem;
     font-size: 0.875rem;
     color: #333333;
     background-color: #ffffff;
-    min-width: 180px;
+    min-width: 190px;
 }
 
 /* Bảng dữ liệu Wireframe */
@@ -869,24 +866,38 @@ body {
     color: #000000 !important;
 }
 
-/* Ghi chú Note Callout (Vàng nhạt) */
+/* Ghi chú Note Callout & Post-it Sticky (Vàng nhạt theo Draw.io) */
 .note-callout {
     background-color: #FFF9C4;
-    border: 1px solid #F9A825;
-    color: #424242;
+    border: 1px solid #FBC02D;
+    color: #37474F;
     padding: 0.4rem 0.65rem;
-    border-radius: 4px;
+    border-radius: 2px;
     font-size: 0.775rem;
     display: inline-block;
     line-height: 1.3;
+    box-shadow: 1px 1px 4px rgba(0,0,0,0.08);
+}
+
+.post-it-sticky {
+    background-color: #FFF9C4;
+    border: 1px solid #FBC02D;
+    color: #333333;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.775rem;
+    line-height: 1.35;
+    border-radius: 2px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+    position: relative;
+    display: inline-block;
 }
 
 /* Alert Cảnh báo Wireframe MH2 / MH3 */
 .alert-wireframe-warning {
-    background-color: #FFF3E0 !important;
-    border: 1px solid #F57C00 !important;
+    background-color: #FFF8E1 !important;
+    border: 1px solid #FFA726 !important;
     color: #E65100 !important;
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 0.65rem 0.9rem;
     font-size: 0.875rem;
     font-weight: 500;
@@ -894,9 +905,9 @@ body {
 
 .alert-wireframe-danger {
     background-color: #FFEBEE !important;
-    border: 1px solid #D32F2F !important;
-    color: #B71C1C !important;
-    border-radius: 8px;
+    border: 1px solid #EF5350 !important;
+    color: #C62828 !important;
+    border-radius: 4px;
     padding: 0.65rem 0.9rem;
     font-size: 0.875rem;
     font-weight: 500;
@@ -906,45 +917,48 @@ body {
 .lifecycle-wrapper {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     flex-wrap: nowrap;
     overflow-x: auto;
     padding: 0.5rem 0;
-    gap: 0.5rem;
+    gap: 0.65rem;
 }
 
 .lifecycle-step {
-    padding: 0.45rem 0.85rem;
-    border-radius: 30px;
-    font-size: 0.75rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: 12px;
+    font-size: 0.775rem;
     font-weight: 700;
     border: 1px solid #1976D2;
     text-align: center;
     white-space: nowrap;
     flex-shrink: 0;
+    min-width: 90px;
 }
 
 .lifecycle-step.completed {
     background-color: #BBDEFB;
     color: #0D47A1;
+    border: 1px solid #1976D2;
 }
 
 .lifecycle-step.active {
     background-color: #1976D2;
     color: #ffffff;
-    box-shadow: 0 2px 6px rgba(25, 118, 210, 0.4);
+    border: 1px solid #1976D2;
+    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);
 }
 
 .lifecycle-step.future {
-    background-color: #EEEEEE;
-    color: #757575;
-    border-color: #BDBDBD;
+    background-color: #ECEFF1;
+    color: #78909C;
+    border: 1px solid #B0BEC5;
 }
 
 .lifecycle-arrow {
-    color: #666666;
+    color: #555555;
     font-weight: bold;
-    font-size: 0.9rem;
+    font-size: 1rem;
     flex-shrink: 0;
 }
 

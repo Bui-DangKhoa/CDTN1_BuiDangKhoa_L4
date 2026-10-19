@@ -15,15 +15,18 @@
     <!-- Header bar theo Wireframe MH1: Nền xanh #1976D2 -->
     <header class="crm-top-bar">
         <a th:href="@{/tickets/unassigned}" class="crm-brand">
-            <span style="font-size: 1.25rem;">⚙️</span> Smart CRM
+            Smart CRM
         </a>
-        <div class="crm-user-info">
-            <span>Quản lý: <strong>Nguyễn Văn A</strong> | Trung tâm Bảo hành Quận 10</span>
+        <div class="crm-user-info d-flex align-items-center gap-1">
+            <span>Quản lý: <strong>Nguyễn Văn A</strong> | Trung tâm Bảo hành Quận 10 |</span>
             <a href="#">[Đăng xuất]</a>
+            <a th:href="@{/technician/my-tickets}" class="badge bg-light text-primary text-decoration-none px-2 py-1 ms-3" style="font-size: 0.75rem; border-radius: 4px;">
+                Màn hình KTV (MH3) ➔
+            </a>
         </div>
     </header>
 
-    <main class="container-fluid px-4 py-3" style="max-width: 1200px;">
+    <main class="container-fluid px-4 py-3" style="max-width: 1250px;">
 
         <!-- Thông báo Thành công / Lỗi (Alert States) -->
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
@@ -39,29 +42,23 @@
         </div>
 
         <!-- 2 Thẻ chỉ số KPI ở trên cùng theo Wireframe MH1 -->
-        <section class="row g-3 mb-3">
-            <!-- Thẻ 1: Phiếu chưa gán (Số lượng hiển thị màu đen, ví dụ: 24) -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div class="crm-kpi-card">
-                    <div class="kpi-label">Phiếu chưa gán</div>
-                    <div class="kpi-value" th:text="${totalUnassigned != null ? totalUnassigned : (tickets != null ? tickets.size() : 24)}">24</div>
-                </div>
+        <section class="d-flex flex-wrap gap-4 mb-4 pt-1">
+            <!-- Thẻ 1: Phiếu chưa gán (Số lượng hiển thị màu đen: 24) -->
+            <div class="crm-kpi-card" style="width: 210px;">
+                <div class="kpi-label">Phiếu chưa gán</div>
+                <div class="kpi-value" th:text="${totalUnassigned != null ? totalUnassigned : (tickets != null ? tickets.size() : 24)}">24</div>
             </div>
 
             <!-- Thẻ 2: Quá hạn SLA (Khung viền đỏ cảnh báo, số lượng màu đỏ kèm icon !) -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div class="crm-kpi-card danger">
-                    <div class="kpi-label">
-                        <span>Quá hạn SLA</span>
-                        <span class="crm-kpi-alert-icon">!</span>
-                    </div>
-                    <div class="kpi-value" th:text="${overdueCount != null ? overdueCount : 3}">3</div>
-                </div>
+            <div class="crm-kpi-card danger" style="width: 210px;">
+                <span class="crm-kpi-alert-icon">!</span>
+                <div class="kpi-label">Quá hạn SLA</div>
+                <div class="kpi-value" th:text="${overdueCount != null ? overdueCount : 3}">3</div>
             </div>
         </section>
 
         <!-- Thanh Bộ lọc (Filter Bar) theo Wireframe MH1 -->
-        <section class="crm-filter-bar">
+        <section class="crm-filter-bar mb-3">
             <!-- Dropdown Nhóm sự cố -->
             <div>
                 <select id="categoryFilter" class="crm-filter-select">
@@ -87,7 +84,7 @@
 
             <!-- Dropdown Trạng thái SLA -->
             <div>
-                <select id="slaFilter" class="crm-filter-select">
+                <select id="slaFilter" class="crm-filter-select" style="min-width: 230px;">
                     <option value="ALL">Trạng thái SLA: Tất cả ▾</option>
                     <option value="CON_HAN">Còn hạn</option>
                     <option value="SAP_QUA_HAN" selected>Trạng thái SLA: Sắp quá hạn ▾</option>
@@ -96,14 +93,15 @@
             </div>
 
             <!-- Nút xanh Lọc -->
-            <button type="button" class="btn btn-crm-primary" onclick="applyTicketFilter()">
+            <button type="button" class="btn btn-crm-primary px-4" onclick="applyTicketFilter()">
                 Lọc
             </button>
         </section>
 
-        <!-- Bảng dữ liệu (Data Table) theo Wireframe MH1 -->
-        <div class="table-responsive shadow-sm rounded">
-            <table class="crm-table">
+        <!-- Bảng dữ liệu (Data Table) kèm ghi chú Post-it theo Wireframe MH1 -->
+        <div class="d-flex align-items-start gap-3">
+            <div class="table-responsive flex-grow-1 border rounded" style="border-color: #BDBDBD !important;">
+                <table class="crm-table mb-0">
                 <thead>
                     <tr>
                         <th style="width: 45px; text-align: center;">
@@ -204,8 +202,8 @@
                             <td><span class="text-danger fw-semibold">Cao</span></td>
                             <td>30/10/2026 08:00</td>
                             <td>
-                                <span class="sla-badge text-danger">
-                                    <span class="sla-dot red"></span>
+                                <span class="sla-badge" style="color: #E65100;">
+                                    <span class="sla-dot yellow"></span>
                                     <span>Sắp quá hạn</span>
                                 </span>
                             </td>
@@ -318,6 +316,14 @@
                     </th:block>
                 </tbody>
             </table>
+            </div>
+
+            <!-- Sticky Note Annotation bên phải bảng theo Wireframe MH1 -->
+            <div class="d-none d-lg-block pt-5" style="width: 170px;">
+                <div class="post-it-sticky">
+                    Click [Phân công] → mở Modal ở MH2
+                </div>
+            </div>
         </div>
 
         <!-- Phân trang theo Wireframe MH1 -->

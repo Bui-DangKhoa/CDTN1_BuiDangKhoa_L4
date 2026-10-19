@@ -9,8 +9,8 @@ spring:
 
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:smart-crm-technician-scheduling}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8
-    username: ${DB_USER:root}
-    password: ${DB_PASS:root}
+    username: smart-crm-technician-scheduling
+    password: 12345
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
