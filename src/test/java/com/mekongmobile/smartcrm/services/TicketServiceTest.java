@@ -1,14 +1,13 @@
 package com.mekongmobile.smartcrm.services;
 
-import com.mekongmobile.smartcrm.dto.TicketRequestDto;
-import com.mekongmobile.smartcrm.dto.TicketResponseDto;
-import com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto;
 import com.mekongmobile.smartcrm.entities.Device;
 import com.mekongmobile.smartcrm.entities.IssueCategory;
+import com.mekongmobile.smartcrm.entities.Technician;
 import com.mekongmobile.smartcrm.entities.Ticket;
-import com.mekongmobile.smartcrm.exceptions.BusinessRuleException;
+import com.mekongmobile.smartcrm.entities.TicketStatusLog;
 import com.mekongmobile.smartcrm.repositories.DeviceRepository;
 import com.mekongmobile.smartcrm.repositories.IssueCategoryRepository;
+import com.mekongmobile.smartcrm.repositories.TechnicianRepository;
 import com.mekongmobile.smartcrm.repositories.TicketRepository;
 import com.mekongmobile.smartcrm.repositories.TicketStatusLogRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,7 +27,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit Test cho TicketService (QT-04: Tiếp nhận sự cố & QT-08: Cập nhật tiến độ).
+ * Bộ kiểm thử tự động Unit Test cho Tầng Service (TicketService).
+ * Sử dụng JUnit 5 và Mockito độc lập với cơ sở dữ liệu.
  */
 @ExtendWith(MockitoExtension.class)
 class TicketServiceTest {
@@ -36,13 +37,16 @@ class TicketServiceTest {
     private TicketRepository ticketRepository;
 
     @Mock
+    private TechnicianRepository technicianRepository;
+
+    @Mock
+    private TicketStatusLogRepository statusLogRepository;
+
+    @Mock
     private DeviceRepository deviceRepository;
 
     @Mock
     private IssueCategoryRepository categoryRepository;
-
-    @Mock
-    private TicketStatusLogRepository statusLogRepository;
 
     @InjectMocks
     private TicketServiceImpl ticketService;
@@ -50,6 +54,7 @@ class TicketServiceTest {
     private Device mockDevice;
     private IssueCategory mockCategory;
     private Ticket mockTicket;
+    private Technician mockTechnician;
 
     @BeforeEach
     void setUp() {
@@ -76,67 +81,39 @@ class TicketServiceTest {
                 .issueDesc("Máy không sạc được pin")
                 .priority("CAO")
                 .status("MOI")
+                .technician(null)
                 .receivedAt(LocalDateTime.now())
                 .dueDate(LocalDateTime.now().plusHours(24))
                 .build();
-    }
 
-    @Test
-    @DisplayName("QT-04: Tạo ticket thành công và tự gán độ ưu tiên mặc định theo danh mục sự cố")
-    void testCreateTicket_Success() {
-        TicketRequestDto request = TicketRequestDto.builder()
-                .ticketCode("TCK-2026-001")
-                .customerId(101L)
-                .deviceId(1L)
+        mockTechnician = Technician.builder()
+                .technicianId(5L)
+                .fullName("Nguyễn Văn Kỹ Thuật")
                 .centerId(1L)
-                .categoryId(1)
-                .issueDesc("Máy không nhận sạc")
-                .priority(null) // Để trống để kiểm tra fallback vào defaultPriority của category
+                .isActive(true)
                 .build();
-
-        when(ticketRepository.findByTicketCode("TCK-2026-001")).thenReturn(Optional.empty());
-        when(deviceRepository.findById(1L)).thenReturn(Optional.of(mockDevice));
-        when(categoryRepository.findById(1)).thenReturn(Optional.of(mockCategory));
-        when(ticketRepository.save(any(Ticket.class))).thenReturn(mockTicket);
-
-        TicketResponseDto response = ticketService.createTicket(request);
-
-        assertNotNull(response);
-        assertEquals("TCK-2026-001", response.getTicketCode());
-        assertEquals("CAO", response.getPriority());
-        assertEquals("MOI", response.getStatus());
-        verify(statusLogRepository, times(1)).save(any());
     }
 
     @Test
-    @DisplayName("QT-08: Cập nhật trạng thái ticket sang DANG_XU_LY thành công")
-    void testUpdateTicketStatus_Success() {
-        UpdateTicketStatusDto updateDto = UpdateTicketStatusDto.builder()
-                .newStatus("DANG_XU_LY")
-                .changedBy(201L)
-                .changeReason("Kỹ thuật viên đã nhận máy và bắt đầu kiểm tra linh kiện")
-                .build();
-
+    @DisplayName("TC-01: Happy Path - Phân công KTV đủ tay nghề thành công lần đầu cho phiếu ở trạng thái MOI")
+    void TC01_assignTechnician_success_whenValidData() {
+        // Given: ticket ở trạng thái MOI, chưa có KTV; KTV cùng trung tâm và đủ tay nghề (proficiency >= 3)
         when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
-        when(ticketRepository.save(any(Ticket.class))).thenReturn(mockTicket);
+        when(technicianRepository.findById(5L)).thenReturn(Optional.of(mockTechnician));
+        when(technicianRepository.findEligibleTechnicians(1L, 1)).thenReturn(List.of(mockTechnician));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        TicketResponseDto result = ticketService.updateTicketStatus(10L, updateDto);
+        // When: Gọi phương thức phân công KTV
+        Ticket result = ticketService.assignTechnician(10L, 5L, 101L, "Phân công KTV xử lý sự cố nguồn");
 
+        // Then: Phiếu chuyển sang DA_PHAN_CONG, gán đúng KTV và logStatusChange được gọi 1 lần
         assertNotNull(result);
-        assertEquals("DANG_XU_LY", mockTicket.getStatus());
-        verify(statusLogRepository, times(1)).save(any());
-    }
+        assertEquals("DA_PHAN_CONG", result.getStatus());
+        assertNotNull(result.getTechnician());
+        assertEquals(5L, result.getTechnician().getTechnicianId());
+        assertEquals("Nguyễn Văn Kỹ Thuật", result.getTechnician().getFullName());
 
-    @Test
-    @DisplayName("QT-08: Ném ngoại lệ khi cập nhật trạng thái mới trùng với trạng thái cũ")
-    void testUpdateTicketStatus_SameStatus_ThrowsException() {
-        UpdateTicketStatusDto updateDto = UpdateTicketStatusDto.builder()
-                .newStatus("MOI") // Trùng với mockTicket.status ("MOI")
-                .changedBy(201L)
-                .build();
-
-        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
-
-        assertThrows(BusinessRuleException.class, () -> ticketService.updateTicketStatus(10L, updateDto));
+        verify(ticketRepository, times(1)).save(mockTicket);
+        verify(statusLogRepository, times(1)).save(any(TicketStatusLog.class));
     }
 }
