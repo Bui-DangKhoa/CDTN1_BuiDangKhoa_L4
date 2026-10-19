@@ -191,4 +191,23 @@ class TicketServiceTest {
         assertTrue(exception.getMessage().contains("từ 10 ký tự trở lên"));
         verify(ticketRepository, never()).save(any(Ticket.class));
     }
+
+    @Test
+    @DisplayName("TC-04: Invalid Data - Ném lỗi KTV_NOT_QUALIFIED khi KTV khác trung tâm hoặc tay nghề < 3 (QT-08)")
+    void TC04_assignTechnician_throwException_whenKtvNotQualified() {
+        // Given: KTV không nằm trong danh sách đủ điều kiện của trung tâm và danh mục sự cố
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+        when(technicianRepository.findById(5L)).thenReturn(Optional.of(mockTechnician));
+        when(technicianRepository.findEligibleTechnicians(1L, 1)).thenReturn(List.of()); // Không đủ điều kiện
+
+        // When & Then: Ném lỗi AppException với mã KTV_NOT_QUALIFIED
+        AppException exception = assertThrows(AppException.class, () ->
+                ticketService.assignTechnician(10L, 5L, 101L, "Phân công kiểm tra")
+        );
+
+        assertEquals("KTV_NOT_QUALIFIED", exception.getErrorCode());
+        assertTrue(exception.getMessage().contains("chưa đạt mức 3") || exception.getMessage().contains("KTV không cùng trung tâm"));
+        verify(ticketRepository, never()).save(any(Ticket.class));
+        verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
+    }
 }
