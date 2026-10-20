@@ -31,11 +31,18 @@ public class TicketController {
 
     /**
      * MÀN HÌNH 1: Hiển thị danh sách phiếu bảo hành chưa phân công xếp theo SLA dueDate tăng dần.
+     * QT-14: Quản lý chỉ lấy danh sách phiếu thuộc center_id phụ trách.
      */
     @GetMapping("/unassigned")
-    public String getUnassignedTickets(Model model) {
+    public String getUnassignedTickets(Model model, jakarta.servlet.http.HttpSession session) {
         log.info("GET /tickets/unassigned - Tải danh sách phiếu chưa phân công theo SLA");
-        List<TicketResponseDto> unassignedTickets = ticketService.getUnassignedTicketsSortedByDueDate();
+
+        com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
+                (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
+        Long centerId = (currentUser != null) ? currentUser.getCenterId() : null;
+
+        // QT-14: Phân vùng dữ liệu theo trung tâm phụ trách của Quản lý
+        List<TicketResponseDto> unassignedTickets = ticketService.getUnassignedTicketsSortedByDueDate(centerId);
 
         // Thống kê nhanh cho thẻ KPI
         long totalUnassigned = unassignedTickets.size();
@@ -46,6 +53,7 @@ public class TicketController {
         model.addAttribute("tickets", unassignedTickets);
         model.addAttribute("totalUnassigned", totalUnassigned);
         model.addAttribute("overdueCount", overdueCount);
+        model.addAttribute("currentUser", currentUser);
         model.addAttribute("title", "Smart CRM - Danh sách phiếu chưa gán KTV");
 
         return "tickets/unassigned-list";

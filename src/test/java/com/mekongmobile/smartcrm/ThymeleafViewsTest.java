@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -54,9 +55,17 @@ public class ThymeleafViewsTest {
                 .repeatCount(2)
                 .build();
 
-        when(ticketService.getUnassignedTicketsSortedByDueDate()).thenReturn(List.of(ticket));
+        when(ticketService.getUnassignedTicketsSortedByDueDate(any())).thenReturn(List.of(ticket));
 
-        mockMvc.perform(get("/tickets/unassigned"))
+        com.mekongmobile.smartcrm.dto.UserSessionDto managerSession = com.mekongmobile.smartcrm.dto.UserSessionDto.builder()
+                .userId(1L)
+                .username("quanly1")
+                .fullName("Nguyễn Quản Lý")
+                .role("QUAN_LY")
+                .centerId(1L)
+                .build();
+
+        mockMvc.perform(get("/tickets/unassigned").sessionAttr("currentUser", managerSession))
                 .andExpect(status().isOk())
                 .andExpect(view().name("tickets/unassigned-list"))
                 .andExpect(model().attributeExists("tickets", "totalUnassigned", "overdueCount"));
@@ -86,7 +95,15 @@ public class ThymeleafViewsTest {
         when(ticketService.getTicketById(125L)).thenReturn(ticket);
         when(ticketService.getEligibleTechniciansForTicket(125L)).thenReturn(List.of(tech));
 
-        mockMvc.perform(get("/tickets/125/assign"))
+        com.mekongmobile.smartcrm.dto.UserSessionDto managerSession = com.mekongmobile.smartcrm.dto.UserSessionDto.builder()
+                .userId(1L)
+                .username("quanly1")
+                .fullName("Nguyễn Quản Lý")
+                .role("QUAN_LY")
+                .centerId(1L)
+                .build();
+
+        mockMvc.perform(get("/tickets/125/assign").sessionAttr("currentUser", managerSession))
                 .andExpect(status().isOk())
                 .andExpect(view().name("tickets/assign-form"))
                 .andExpect(model().attributeExists("ticket", "technicians", "assignRequest"));
@@ -103,33 +120,29 @@ public class ThymeleafViewsTest {
                 .level("4")
                 .build();
 
-        com.mekongmobile.smartcrm.entities.Device device = com.mekongmobile.smartcrm.entities.Device.builder()
-                .deviceId(1L)
-                .customerId(101L)
-                .deviceName("iPhone 13")
-                .serialNo("356891234567890")
-                .build();
-
-        com.mekongmobile.smartcrm.entities.IssueCategory category = com.mekongmobile.smartcrm.entities.IssueCategory.builder()
-                .categoryId(1)
-                .categoryName("Màn hình")
-                .defaultPriority("CAO")
-                .build();
-
-        Ticket ticket = Ticket.builder()
+        TicketResponseDto ticketDto = TicketResponseDto.builder()
                 .ticketId(125L)
                 .ticketCode("BH-00125")
-                .device(device)
-                .category(category)
+                .deviceName("iPhone 13")
+                .customerPhone("090****567")
+                .categoryName("Màn hình")
                 .status("DANG_XU_LY")
                 .priority("CAO")
                 .dueDate(LocalDateTime.now().plusHours(12))
                 .build();
 
         when(technicianRepository.findById(anyLong())).thenReturn(Optional.of(tech));
-        when(ticketRepository.findByTechnician_TechnicianId(anyLong())).thenReturn(List.of(ticket));
+        when(ticketService.getTicketsForTechnician(anyLong())).thenReturn(List.of(ticketDto));
 
-        mockMvc.perform(get("/technician/my-tickets"))
+        com.mekongmobile.smartcrm.dto.UserSessionDto techSession = com.mekongmobile.smartcrm.dto.UserSessionDto.builder()
+                .userId(2L)
+                .username("ktv1")
+                .fullName("Nguyễn Văn B")
+                .role("KY_THUAT_VIEN")
+                .centerId(1L)
+                .build();
+
+        mockMvc.perform(get("/technician/my-tickets").sessionAttr("currentUser", techSession))
                 .andExpect(status().isOk())
                 .andExpect(view().name("technician/my-tickets"))
                 .andExpect(model().attributeExists("technician", "myTickets"));

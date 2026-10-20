@@ -57,4 +57,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     List<Appointment> findByTechnician_TechnicianIdAndAppointmentTimeBetween(
             Long technicianId, LocalDateTime start, LocalDateTime end);
+
+    /**
+     * US7 / FR7: Tìm kiếm lịch hẹn công khai theo mã phiếu (ticketCode) hoặc SĐT khách hàng.
+     */
+    @Query("""
+        SELECT a FROM Appointment a
+        WHERE a.ticket.ticketCode = :keyword
+           OR a.ticket.customerPhone = :keyword
+        ORDER BY a.appointmentTime DESC
+    """)
+    List<Appointment> findByTicketCodeOrPhone(@Param("keyword") String keyword);
 }

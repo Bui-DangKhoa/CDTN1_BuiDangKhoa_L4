@@ -39,28 +39,18 @@ public class TechnicianWebController {
     @GetMapping("/my-tickets")
     public String showMyTickets(
             @RequestParam(value = "ticketId", required = false) Long ticketId,
+            jakarta.servlet.http.HttpSession session,
             Model model) {
         log.info("GET /technician/my-tickets - Xem danh sách phiếu của KTV đăng nhập");
 
-        // Giả lập KTV Nguyễn Văn B (id = 2) đăng nhập theo Wireframe MH3
-        Long loggedInTechId = 2L;
+        com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
+                (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
+        Long loggedInTechId = (currentUser != null) ? currentUser.getUserId() : 2L;
         Technician tech = technicianRepository.findById(loggedInTechId)
                 .orElse(null);
 
-        List<Ticket> assignedTickets = ticketRepository.findByTechnician_TechnicianId(loggedInTechId);
-        List<TicketResponseDto> ticketDtos = assignedTickets.stream()
-                .map(t -> TicketResponseDto.builder()
-                        .ticketId(t.getTicketId())
-                        .ticketCode(t.getTicketCode())
-                        .deviceName(t.getDevice() != null ? t.getDevice().getDeviceName() : "iPhone 13")
-                        .serialNo(t.getDevice() != null ? t.getDevice().getSerialNo() : "356891234567890")
-                        .categoryName(t.getCategory() != null ? t.getCategory().getCategoryName() : "Màn hình")
-                        .priority(t.getPriority())
-                        .status(t.getStatus())
-                        .dueDate(t.getDueDate())
-                        .repeatCount(2)
-                        .build())
-                .toList();
+        // QT-15: KTV chỉ xem danh sách phiếu gán cho cá nhân, che 4 số giữa SĐT khách hàng qua DTO Mapper
+        List<TicketResponseDto> ticketDtos = ticketService.getTicketsForTechnician(loggedInTechId);
 
         TicketResponseDto selectedTicket = null;
         if (ticketId != null) {
@@ -84,6 +74,7 @@ public class TechnicianWebController {
     public String updateTicketStatus(
             @PathVariable("id") Long id,
             @RequestParam("nextStatus") String nextStatus,
+            jakarta.servlet.http.HttpSession session,
             RedirectAttributes redirectAttributes) {
         log.info("POST /technician/tickets/{}/status - Cập nhật trạng thái sang {}", id, nextStatus);
 
@@ -96,9 +87,13 @@ public class TechnicianWebController {
         }
 
         try {
+            com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
+                    (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
+            Long changedById = (currentUser != null) ? currentUser.getUserId() : 2L;
+
             UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder()
                     .newStatus(nextStatus)
-                    .changedBy(2L) // KTV đăng nhập
+                    .changedBy(changedById) // KTV đăng nhập
                     .changeReason("Cập nhật tiến độ theo quy trình QT-06")
                     .build();
             ticketService.updateTicketStatus(id, dto);

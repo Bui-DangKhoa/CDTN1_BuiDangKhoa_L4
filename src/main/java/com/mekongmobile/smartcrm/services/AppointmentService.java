@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * TẦNG 2: Dịch vụ nghiệp vụ quản lý lịch hẹn kỹ thuật viên (Appointment).
@@ -67,6 +68,28 @@ public class AppointmentService {
     }
 
     /**
+     * US7 / FR7: Khách hàng xác nhận lịch hẹn (chuyển trạng thái sang DA_XAC_NHAN).
+     */
+    public Appointment confirmAppointment(Long appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy lịch hẹn với ID: " + appointmentId));
+
+        appointment.setStatus("DA_XAC_NHAN");
+        return appointmentRepository.save(appointment);
+    }
+
+    /**
+     * US7 / FR7: Tra cứu thông tin lịch hẹn theo mã phiếu bảo hành hoặc SĐT khách hàng.
+     */
+    @Transactional(readOnly = true)
+    public List<Appointment> findAppointmentsByKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return List.of();
+        }
+        return appointmentRepository.findByTicketCodeOrPhone(keyword.trim());
+    }
+
+    /**
      * Đặt lịch hẹn tiếp nhận DTO từ Web UI / REST API.
      */
     public com.mekongmobile.smartcrm.dto.AppointmentResponseDto createAppointment(com.mekongmobile.smartcrm.dto.CreateAppointmentRequest request) {
@@ -83,3 +106,4 @@ public class AppointmentService {
                 .build();
     }
 }
+
