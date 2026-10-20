@@ -10,6 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -20,6 +21,7 @@ import java.util.List;
  * Cho phép khách hàng tra cứu tiến độ/lịch hẹn bảo hành bằng Mã phiếu hoặc SĐT mà không cần đăng nhập.
  */
 @Controller
+@RequestMapping("/lookup")
 @RequiredArgsConstructor
 @Slf4j
 public class PublicAppointmentController {
@@ -30,7 +32,7 @@ public class PublicAppointmentController {
      * US7 / FR7: Màn hình tra cứu thông tin lịch hẹn công khai.
      * Tiếp nhận mã phiếu bảo hành hoặc số điện thoại khách hàng.
      */
-    @GetMapping("/lookup")
+    @GetMapping
     public String showLookupPortal(
             @RequestParam(value = "keyword", required = false) String keyword,
             Model model) {
@@ -55,7 +57,7 @@ public class PublicAppointmentController {
     /**
      * US7 / FR7: Khách hàng nhấn nút "Xác nhận lịch hẹn", cập nhật trạng thái sang DA_XAC_NHAN.
      */
-    @PostMapping("/lookup/confirm/{appointmentId}")
+    @PostMapping("/confirm/{appointmentId}")
     public String confirmAppointment(
             @PathVariable("appointmentId") Long appointmentId,
             @RequestParam(value = "keyword", required = false) String keyword,

@@ -33,5 +33,6 @@ spring:
 logging:
   level:
     root: INFO
-    com.mekongmobile.smartcrm: DEBUG
-    org.hibernate.SQL: DEBUG
+    "[com.mekongmobile.smartcrm]": DEBUG
+    "[org.hibernate.SQL]": DEBUG
+

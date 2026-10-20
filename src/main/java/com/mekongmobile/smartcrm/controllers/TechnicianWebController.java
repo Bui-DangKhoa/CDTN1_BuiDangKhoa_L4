@@ -3,9 +3,7 @@ package com.mekongmobile.smartcrm.controllers;
 import com.mekongmobile.smartcrm.dto.TicketResponseDto;
 import com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto;
 import com.mekongmobile.smartcrm.entities.Technician;
-import com.mekongmobile.smartcrm.entities.Ticket;
 import com.mekongmobile.smartcrm.repositories.TechnicianRepository;
-import com.mekongmobile.smartcrm.repositories.TicketRepository;
 import com.mekongmobile.smartcrm.services.TicketService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -25,14 +23,11 @@ import java.util.List;
 public class TechnicianWebController {
 
     private final TicketService ticketService;
-    private final TicketRepository ticketRepository;
     private final TechnicianRepository technicianRepository;
 
     public TechnicianWebController(TicketService ticketService,
-                                   TicketRepository ticketRepository,
                                    TechnicianRepository technicianRepository) {
         this.ticketService = ticketService;
-        this.ticketRepository = ticketRepository;
         this.technicianRepository = technicianRepository;
     }
 

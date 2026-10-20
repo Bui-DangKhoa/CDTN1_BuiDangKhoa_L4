@@ -3,7 +3,6 @@ package com.mekongmobile.smartcrm.controllers;
 import com.mekongmobile.smartcrm.dto.UserSessionDto;
 import com.mekongmobile.smartcrm.entities.Appointment;
 import com.mekongmobile.smartcrm.entities.Ticket;
-import com.mekongmobile.smartcrm.exceptions.AppException;
 import com.mekongmobile.smartcrm.services.AppointmentService;
 import com.mekongmobile.smartcrm.services.AuthService;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +14,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;

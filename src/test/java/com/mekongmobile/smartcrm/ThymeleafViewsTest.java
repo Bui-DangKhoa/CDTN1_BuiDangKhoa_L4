@@ -5,9 +5,7 @@ import com.mekongmobile.smartcrm.controllers.TicketController;
 import com.mekongmobile.smartcrm.dto.TechnicianResponseDto;
 import com.mekongmobile.smartcrm.dto.TicketResponseDto;
 import com.mekongmobile.smartcrm.entities.Technician;
-import com.mekongmobile.smartcrm.entities.Ticket;
 import com.mekongmobile.smartcrm.repositories.TechnicianRepository;
-import com.mekongmobile.smartcrm.repositories.TicketRepository;
 import com.mekongmobile.smartcrm.services.TicketService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,8 +33,6 @@ public class ThymeleafViewsTest {
     @MockBean
     private TicketService ticketService;
 
-    @MockBean
-    private TicketRepository ticketRepository;
 
     @MockBean
     private TechnicianRepository technicianRepository;
