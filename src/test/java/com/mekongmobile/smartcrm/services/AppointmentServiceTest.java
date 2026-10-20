@@ -24,6 +24,8 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit Test cho AppointmentService (QT-L4-01 / NFR2: Chống trùng lịch hẹn KTV).
+ *
+ * @author MekongMobile CRM Team
  */
 @ExtendWith(MockitoExtension.class)
 class AppointmentServiceTest {

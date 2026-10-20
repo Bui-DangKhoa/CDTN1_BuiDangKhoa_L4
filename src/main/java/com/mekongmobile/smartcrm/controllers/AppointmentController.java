@@ -25,6 +25,8 @@ import java.util.List;
 /**
  * TẦNG 1: Controller quản lý lịch hẹn Kỹ thuật viên (Appointment).
  * Điều hướng Web UI (Thymeleaf) và cung cấp REST API (QT-L4-01 / NFR2).
+ *
+ * @author MekongMobile CRM Team
  */
 @Controller
 @RequiredArgsConstructor
