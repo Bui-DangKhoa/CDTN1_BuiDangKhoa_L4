@@ -14,14 +14,12 @@
     <!-- Header bar theo Wireframe MH3: Nền xanh #1976D2 -->
     <!-- Header bar theo Wireframe MH3: Nền xanh #1976D2 -->
     <header class="crm-top-bar">
-        <div class="crm-brand" style="font-size: 0.95rem; font-weight: 500;">
-            Kỹ thuật viên: <strong th:text="${technician != null ? technician.fullName : 'Nguyễn Văn B'}">Nguyễn Văn B</strong> | Trung tâm Bảo hành Quận 10
+        <div class="crm-brand d-flex align-items-center gap-2" style="font-size: 0.95rem; font-weight: 500;">
+            <span>Kỹ thuật viên: <strong th:text="${session.currentUser != null ? session.currentUser.fullName : (technician != null ? technician.fullName : 'Trần Kỹ Thuật')}">Trần Kỹ Thuật</strong> | Trung tâm Bảo hành Quận 10</span>
+            <span class="badge bg-light text-primary" style="font-size: 0.75rem;">KY_THUAT_VIEN</span>
         </div>
         <div class="crm-user-info d-flex align-items-center gap-2">
-            <a href="#">[Đăng xuất]</a>
-            <a th:href="@{/tickets/unassigned}" class="badge bg-light text-primary text-decoration-none px-2 py-1 ms-2" style="font-size: 0.75rem; border-radius: 4px;">
-                ➔ Màn hình Quản lý (MH1)
-            </a>
+            <a th:href="@{/logout}" class="text-white text-decoration-underline fw-semibold">[Đăng xuất]</a>
         </div>
     </header>
 

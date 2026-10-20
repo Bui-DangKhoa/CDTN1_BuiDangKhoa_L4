@@ -16,9 +16,10 @@
         <a th:href="@{/tickets/unassigned}" class="crm-header-brand">
             <span>⚙️</span> Smart CRM
         </a>
-        <div class="crm-header-user">
-            <span>Quản lý: <strong>Nguyễn Văn A</strong> | Trung tâm Bảo hành Quận 10</span>
+        <div class="crm-header-user d-flex align-items-center gap-2">
+            <span>Quản lý: <strong th:text="${session.currentUser != null ? session.currentUser.fullName : 'Nguyễn Quản Lý'}">Nguyễn Quản Lý</strong> | Trung tâm Bảo hành Quận 10</span>
             <a th:href="@{/tickets/unassigned}">[Quay lại danh sách]</a>
+            <a th:href="@{/logout}" class="text-white text-decoration-underline ms-2">[Đăng xuất]</a>
         </div>
     </header>
 

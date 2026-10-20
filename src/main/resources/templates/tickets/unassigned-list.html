@@ -17,11 +17,18 @@
         <a th:href="@{/tickets/unassigned}" class="crm-brand">
             Smart CRM
         </a>
-        <div class="crm-user-info d-flex align-items-center gap-1">
-            <span>Quản lý: <strong>Nguyễn Văn A</strong> | Trung tâm Bảo hành Quận 10 |</span>
-            <a href="#">[Đăng xuất]</a>
-            <a th:href="@{/technician/my-tickets}" class="badge bg-light text-primary text-decoration-none px-2 py-1 ms-3" style="font-size: 0.75rem; border-radius: 4px;">
-                Màn hình KTV (MH3) ➔
+        <div class="crm-user-info d-flex align-items-center gap-2">
+            <span>
+                <span th:if="${session.currentUser != null and session.currentUser.role == 'QUAN_LY'}">Quản lý: </span>
+                <span th:if="${session.currentUser != null and session.currentUser.role == 'KY_THUAT_VIEN'}">Kỹ thuật viên: </span>
+                <span th:if="${session.currentUser == null}">Quản lý: </span>
+                <strong th:text="${session.currentUser != null ? session.currentUser.fullName : 'Nguyễn Quản Lý'}">Nguyễn Quản Lý</strong>
+                | Trung tâm Bảo hành Quận 10
+                (<span class="badge bg-light text-primary" th:text="${session.currentUser != null ? session.currentUser.role : 'QUAN_LY'}">QUAN_LY</span>) |
+            </span>
+            <a th:href="@{/logout}" class="text-white text-decoration-underline fw-semibold">[Đăng xuất]</a>
+            <a th:href="@{/lookup}" target="_blank" class="badge bg-light text-primary text-decoration-none px-2 py-1 ms-2" style="font-size: 0.75rem; border-radius: 4px;">
+                <i class="bi bi-search me-1"></i> Cổng Khách hàng ➔
             </a>
         </div>
     </header>
