@@ -31,6 +31,9 @@ public class Ticket {
     @Column(name = "customer_id", nullable = false)
     private Long customerId;
 
+    @Column(name = "customer_phone", length = 20)
+    private String customerPhone;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "device_id", nullable = false)
     private Device device;

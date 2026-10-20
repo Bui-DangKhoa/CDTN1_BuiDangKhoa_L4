@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS `smart-crm-technician-scheduling`.`ticket` (
   `ticket_id` BIGINT NOT NULL AUTO_INCREMENT,
   `ticket_code` VARCHAR(20) NOT NULL,
   `customer_id` BIGINT NOT NULL,
+  `customer_phone` VARCHAR(20) NULL DEFAULT NULL,
   `device_id` BIGINT NOT NULL,
   `center_id` BIGINT NOT NULL,
   `technician_id` BIGINT NULL DEFAULT NULL,
@@ -170,6 +171,24 @@ CREATE TABLE IF NOT EXISTS `smart-crm-technician-scheduling`.`ticket_status_log`
   CONSTRAINT `fk_log_ticket`
     FOREIGN KEY (`ticket_id`)
     REFERENCES `smart-crm-technician-scheduling`.`ticket` (`ticket_id`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
+
+-- -----------------------------------------------------
+-- Table `smart-crm-technician-scheduling`.`app_user`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `smart-crm-technician-scheduling`.`app_user` (
+  `user_id` BIGINT NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(50) NOT NULL,
+  `password` VARCHAR(255) NOT NULL,
+  `full_name` VARCHAR(120) NOT NULL,
+  `role` VARCHAR(30) NOT NULL,
+  `center_id` BIGINT NOT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`user_id`),
+  UNIQUE INDEX `username` (`username` ASC) VISIBLE)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_unicode_ci;
