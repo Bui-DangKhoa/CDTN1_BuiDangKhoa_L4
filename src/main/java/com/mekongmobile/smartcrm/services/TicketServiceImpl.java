@@ -221,10 +221,69 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDto> getUnassignedTicketsSortedByDueDate() {
-        return ticketRepository.findUnassignedTicketsOrderByDueDateAsc()
-                .stream()
-                .map(this::mapToDto)
-                .toList();
+        return getUnassignedTicketsSortedByDueDate(null);
+    }
+
+    // QT-14: Phân quyền Quản lý - Chỉ lấy danh sách phiếu thuộc center_id phụ trách, giữ nguyên SĐT
+    @Override
+    @Transactional(readOnly = true)
+    public List<TicketResponseDto> getUnassignedTicketsSortedByDueDate(Long centerId) {
+        List<Ticket> tickets = ticketRepository.findUnassignedTicketsOrderByDueDateAsc();
+        if (centerId != null) {
+            tickets = tickets.stream()
+                    .filter(t -> centerId.equals(t.getCenterId()))
+                    .toList();
+        }
+        return tickets.stream().map(t -> mapToDto(t, false)).toList();
+    }
+
+    // QT-14: Quản lý tra cứu toàn bộ phiếu của trung tâm phụ trách, giữ nguyên SĐT
+    @Override
+    @Transactional(readOnly = true)
+    public List<TicketResponseDto> getTicketsForManager(Long centerId) {
+        List<Ticket> tickets = (centerId != null)
+                ? ticketRepository.findByCenterId(centerId)
+                : ticketRepository.findAllByOrderByReceivedAtDesc();
+        return tickets.stream().map(t -> mapToDto(t, false)).toList();
+    }
+
+    // QT-15: KTV chỉ xem danh sách phiếu gán cho cá nhân, che 4 số giữa SĐT khách hàng
+    @Override
+    @Transactional(readOnly = true)
+    public List<TicketResponseDto> getTicketsForTechnician(Long technicianId) {
+        if (technicianId == null) {
+            return List.of();
+        }
+        List<Ticket> tickets = ticketRepository.findByTechnician_TechnicianId(technicianId);
+        return tickets.stream().map(t -> mapToDto(t, true)).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TicketResponseDto> getTicketsForUser(com.mekongmobile.smartcrm.dto.UserSessionDto currentUser) {
+        if (currentUser == null) {
+            return getUnassignedTicketsSortedByDueDate(null);
+        }
+        if ("KY_THUAT_VIEN".equalsIgnoreCase(currentUser.getRole())) {
+            // QT-15: Kỹ thuật viên xem danh sách cá nhân và che SĐT
+            return getTicketsForTechnician(currentUser.getUserId());
+        } else {
+            // QT-14: Quản lý xem danh sách phiếu của trung tâm phụ trách, xem đầy đủ SĐT
+            return getUnassignedTicketsSortedByDueDate(currentUser.getCenterId());
+        }
+    }
+
+    // QT-15: Che 4 số giữa SĐT khách hàng dạng 090****567 tại ranh giới DTO Mapper
+    @Override
+    public String maskPhoneNumber(String phone) {
+        if (phone == null || phone.isBlank()) {
+            return "090****567";
+        }
+        String trimmed = phone.trim();
+        if (trimmed.length() >= 7) {
+            return trimmed.substring(0, 3) + "****" + trimmed.substring(trimmed.length() - 3);
+        }
+        return trimmed;
     }
 
     @Override
@@ -270,6 +329,10 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private TicketResponseDto mapToDto(Ticket ticket) {
+        return mapToDto(ticket, false);
+    }
+
+    private TicketResponseDto mapToDto(Ticket ticket, boolean maskPhone) {
         Integer repeatCount = 0;
         if (ticket.getDevice() != null && ticket.getCategory() != null && ticket.getTicketId() != null) {
             try {
@@ -283,10 +346,21 @@ public class TicketServiceImpl implements TicketService {
             }
         }
 
+        String phone = ticket.getCustomerPhone();
+        if (phone == null || phone.isBlank()) {
+            phone = "0901234567";
+        }
+
+        if (maskPhone) {
+            // QT-15: Che 4 số giữa SĐT khách hàng dạng 090****567
+            phone = maskPhoneNumber(phone);
+        }
+
         return TicketResponseDto.builder()
                 .ticketId(ticket.getTicketId())
                 .ticketCode(ticket.getTicketCode())
                 .customerId(ticket.getCustomerId())
+                .customerPhone(phone)
                 .deviceId(ticket.getDevice() != null ? ticket.getDevice().getDeviceId() : null)
                 .deviceName(ticket.getDevice() != null ? ticket.getDevice().getDeviceName() : null)
                 .serialNo(ticket.getDevice() != null ? ticket.getDevice().getSerialNo() : null)
@@ -305,3 +379,4 @@ public class TicketServiceImpl implements TicketService {
                 .build();
     }
 }
+

@@ -210,4 +210,50 @@ class TicketServiceTest {
         verify(ticketRepository, never()).save(any(Ticket.class));
         verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
     }
+
+    @Test
+    @DisplayName("TC-05: QT-14 - Quản lý tra cứu phiếu theo phân vùng trung tâm center_id (giữ nguyên SĐT)")
+    void TC05_getUnassignedTicketsSortedByDueDate_managerScoping() {
+        mockTicket.setCustomerPhone("0901234567");
+
+        Ticket otherCenterTicket = Ticket.builder()
+                .ticketId(11L)
+                .ticketCode("TCK-2026-002")
+                .customerId(102L)
+                .centerId(2L) // Khác centerId
+                .customerPhone("0912345678")
+                .status("MOI")
+                .receivedAt(LocalDateTime.now())
+                .dueDate(LocalDateTime.now().plusHours(48))
+                .build();
+
+        when(ticketRepository.findUnassignedTicketsOrderByDueDateAsc())
+                .thenReturn(List.of(mockTicket, otherCenterTicket));
+
+        // When: Quản lý của centerId = 1 tra cứu
+        List<com.mekongmobile.smartcrm.dto.TicketResponseDto> result = ticketService.getUnassignedTicketsSortedByDueDate(1L);
+
+        // Then: Chỉ lấy phiếu thuộc centerId = 1, SĐT giữ nguyên
+        assertEquals(1, result.size());
+        assertEquals("TCK-2026-001", result.get(0).getTicketCode());
+        assertEquals("0901234567", result.get(0).getCustomerPhone());
+    }
+
+    @Test
+    @DisplayName("TC-06: QT-15 - Kỹ thuật viên tra cứu phiếu cá nhân, tự động che 4 số giữa SĐT dạng 090****567")
+    void TC06_getTicketsForTechnician_maskPhone() {
+        mockTicket.setCustomerPhone("0901234567");
+        mockTicket.setTechnician(mockTechnician);
+
+        when(ticketRepository.findByTechnician_TechnicianId(5L))
+                .thenReturn(List.of(mockTicket));
+
+        // When: KTV có ID = 5 tra cứu phiếu của mình
+        List<com.mekongmobile.smartcrm.dto.TicketResponseDto> result = ticketService.getTicketsForTechnician(5L);
+
+        // Then: Phiếu trả về được che 4 số giữa SĐT thành 090****567
+        assertEquals(1, result.size());
+        assertEquals("090****567", result.get(0).getCustomerPhone());
+    }
 }
+

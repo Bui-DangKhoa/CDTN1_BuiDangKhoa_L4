@@ -19,6 +19,7 @@ public class TicketResponseDto {
     private Long ticketId;
     private String ticketCode;
     private Long customerId;
+    private String customerPhone;
     private Long deviceId;
     private String deviceName;
     private String serialNo;

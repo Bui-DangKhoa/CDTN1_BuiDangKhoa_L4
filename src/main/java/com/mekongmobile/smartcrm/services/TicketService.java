@@ -73,7 +73,36 @@ public interface TicketService {
     List<TicketResponseDto> getUnassignedTicketsSortedByDueDate();
 
     /**
+     * QT-14: Lấy danh sách phiếu bảo hành chưa phân công thuộc trung tâm (centerId) quản lý.
+     * SĐT khách hàng hiển thị đầy đủ cho Quản lý.
+     */
+    List<TicketResponseDto> getUnassignedTicketsSortedByDueDate(Long centerId);
+
+    /**
+     * QT-14: Lấy danh sách phiếu của trung tâm phụ trách dành cho Quản lý (đầy đủ SĐT).
+     */
+    List<TicketResponseDto> getTicketsForManager(Long centerId);
+
+    /**
+     * QT-15: Lấy danh sách phiếu được gán cho KTV cá nhân, tự động che 4 số giữa SĐT (090****567).
+     */
+    List<TicketResponseDto> getTicketsForTechnician(Long technicianId);
+
+    /**
+     * Phân quyền tra cứu dữ liệu động theo phiên người dùng hiện tại (UserSessionDto):
+     * - QUAN_LY: Phân vùng dữ liệu theo centerId phụ trách (QT-14), xem đầy đủ SĐT.
+     * - KY_THUAT_VIEN: Chỉ xem phiếu được gán cho cá nhân, che SĐT khách hàng (QT-15).
+     */
+    List<TicketResponseDto> getTicketsForUser(com.mekongmobile.smartcrm.dto.UserSessionDto currentUser);
+
+    /**
+     * QT-15: Che 4 số giữa SĐT khách hàng dạng 090****567 tại ranh giới DTO Mapper.
+     */
+    String maskPhoneNumber(String phone);
+
+    /**
      * QT-08: Lấy danh sách KTV đủ điều kiện (cùng centerId, proficiency >= 3 cho danh mục sự cố).
      */
     List<com.mekongmobile.smartcrm.dto.TechnicianResponseDto> getEligibleTechniciansForTicket(Long ticketId);
 }
+

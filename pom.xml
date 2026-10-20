@@ -57,6 +57,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- jBCrypt for password hashing -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
+
         <!-- Spring Boot Starter Test (JUnit 5 + Mockito) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
