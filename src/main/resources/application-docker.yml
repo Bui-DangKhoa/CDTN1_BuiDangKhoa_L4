@@ -1,0 +1,24 @@
+server:
+  port: ${APP_PORT:8080}
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://db:3306/smart_crm_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8}
+    username: ${SPRING_DATASOURCE_USERNAME:crm_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:crm_password123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:none}
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+
+logging:
+  level:
+    root: INFO
+    "[com.mekongmobile.smartcrm]": INFO
+    "[org.hibernate.SQL]": WARN

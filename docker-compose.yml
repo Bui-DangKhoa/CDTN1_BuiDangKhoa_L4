@@ -1,26 +1,27 @@
-version: '3.8'
-
 services:
   db:
     image: mysql:8.0
     container_name: smartcrm-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: smart-crm-technician-scheduling
-      MYSQL_USER: crmuser
-      MYSQL_PASSWORD: crmpassword
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password123}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-smart_crm_db}
+      MYSQL_USER: ${MYSQL_USER:-crm_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-crm_password123}
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - db_data:/var/lib/mysql
       - ./docs/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./seeds/data-demo.sql:/docker-entrypoint-initdb.d/02-data-demo.sql:ro
+      - ./seeds/auth_data.sql:/docker-entrypoint-initdb.d/03-auth-data.sql:ro
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password123}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
     networks:
       - smartcrm-network
 
@@ -34,17 +35,19 @@ services:
       db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/smart-crm-technician-scheduling?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-smart_crm_db}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-crm_user}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-crm_password123}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      APP_PORT: ${APP_PORT:-8080}
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:8080"
     networks:
       - smartcrm-network
 
 volumes:
-  mysql_data:
+  db_data:
 
 networks:
   smartcrm-network:
