@@ -1,6 +1,7 @@
 # Stage 1: Build source code với Maven JDK 21 Alpine
 FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
+ENV MAVEN_CONFIG=""
 
 # Copy tệp cấu hình Maven và wrapper
 COPY pom.xml .

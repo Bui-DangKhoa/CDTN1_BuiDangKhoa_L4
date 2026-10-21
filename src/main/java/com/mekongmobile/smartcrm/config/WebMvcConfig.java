@@ -27,7 +27,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/images/**",
                         "/webjars/**",
                         "/favicon.ico",
-                        "/error"
+                        "/error",
+                        "/actuator/**"
                 );
     }
 }

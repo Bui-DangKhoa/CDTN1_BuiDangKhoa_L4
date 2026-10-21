@@ -36,3 +36,13 @@ logging:
     "[com.mekongmobile.smartcrm]": DEBUG
     "[org.hibernate.SQL]": DEBUG
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+

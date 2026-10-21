@@ -44,6 +44,14 @@ class AuthAndSecurityTest {
     }
 
     @Test
+    @DisplayName("TC-SEC-01b: Endpoint kiểm tra sức khỏe /actuator/health công khai -> Trả về 200 OK")
+    void testActuatorHealthPublicAccess() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @Test
     @DisplayName("TC-SEC-02: Truy cập internal /tickets/unassigned khi chưa đăng nhập -> Redirect về /login")
     void testUnauthenticatedAccessRedirectsToLogin() throws Exception {
         mockMvc.perform(get("/tickets/unassigned"))
