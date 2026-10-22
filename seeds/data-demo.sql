@@ -82,7 +82,13 @@ VALUES
 -- Phiếu 4: Đã gán cho KTV 1, đang xử lý
 (104, 'TK-202610-004', 204, '0933221100', 4, 1, 1, 4, 'Bảo dưỡng định kỳ, kiểm tra chân sạc USB-C lỏng lẻo', 'THAP', 'DANG_XU_LY', '2026-10-19 15:00:00', '2026-10-25 10:00:00', NULL),
 -- Phiếu 5: Đã gán cho KTV 2
-(105, 'TK-202610-005', 205, '0977889900', 5, 1, 2, 5, 'Camera sau bị rung và mờ, không lấy nét quang học được', 'TRUNG_BINH', 'DA_PHAN_CONG', '2026-10-20 11:00:00', '2026-10-23 17:00:00', NULL)
+(105, 'TK-202610-005', 205, '0977889900', 5, 1, 2, 5, 'Camera sau bị rung và mờ, không lấy nét quang học được', 'TRUNG_BINH', 'DA_PHAN_CONG', '2026-10-20 11:00:00', '2026-10-23 17:00:00', NULL),
+-- Phiếu 6: Đã gán cho KTV 1 - Thay màn hình cảm ứng, trạng thái ĐÃ PHÂN CÔNG (dùng để test KTV bấm nhận việc / chuyển ĐANG_XU_LY)
+(106, 'TK-202610-006', 201, '0987654321', 1, 1, 1, 1, 'Màn hình OLED bị ố vàng góc trên, cảm ứng đơ giật ngắt quãng', 'CAO', 'DA_PHAN_CONG', '2026-10-21 09:00:00', '2026-10-23 16:00:00', NULL),
+-- Phiếu 7: Đã gán cho KTV 1 - Thay pin / Nguồn, trạng thái ĐANG XỬ LÝ (dùng để test KTV bấm hoàn tất sửa chữa HOAN_TAT)
+(107, 'TK-202610-007', 202, '0912345678', 2, 1, 1, 2, 'Pin chai còn 68%, máy thường xuyên báo pin ảo và tự khởi động lại', 'CAO', 'DANG_XU_LY', '2026-10-21 10:30:00', '2026-10-24 15:00:00', NULL),
+-- Phiếu 8: Đã gán cho KTV 1 - Sửa chữa Camera, trạng thái ĐÃ PHÂN CÔNG
+(108, 'TK-202610-008', 205, '0977889900', 5, 1, 1, 5, 'Cụm camera tele zoom 5x bị mờ sương và kẹt chống rung OIS', 'TRUNG_BINH', 'DA_PHAN_CONG', '2026-10-21 14:00:00', '2026-10-25 12:00:00', NULL)
 ON DUPLICATE KEY UPDATE
     `ticket_code` = VALUES(`ticket_code`),
     `customer_id` = VALUES(`customer_id`),
@@ -106,7 +112,11 @@ VALUES
 -- Lịch hẹn cho Phiếu 103: Chờ khách hàng xác nhận qua cổng tra cứu /lookup
 (1, 103, 1, '2026-10-22 09:30:00', 'CHO_XAC_NHAN', '2026-10-19 14:15:00'),
 -- Lịch hẹn cho Phiếu 104: Đã xác nhận
-(2, 104, 1, '2026-10-22 14:00:00', 'DA_XAC_NHAN', '2026-10-19 15:30:00')
+(2, 104, 1, '2026-10-22 14:00:00', 'DA_XAC_NHAN', '2026-10-19 15:30:00'),
+-- Lịch hẹn cho Phiếu 106: KTV 1 giao nhận màn hình
+(3, 106, 1, '2026-10-23 10:00:00', 'DA_XAC_NHAN', '2026-10-21 09:15:00'),
+-- Lịch hẹn cho Phiếu 107: KTV 1 thay pin
+(4, 107, 1, '2026-10-24 14:30:00', 'CHO_XAC_NHAN', '2026-10-21 10:45:00')
 ON DUPLICATE KEY UPDATE
     `ticket_id` = VALUES(`ticket_id`),
     `technician_id` = VALUES(`technician_id`),

@@ -40,9 +40,20 @@ public class TechnicianWebController {
 
         com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
                 (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
-        Long loggedInTechId = (currentUser != null) ? currentUser.getUserId() : 2L;
-        Technician tech = technicianRepository.findById(loggedInTechId)
-                .orElse(null);
+
+        // Tìm kiếm Kỹ thuật viên tương ứng: ưu tiên theo họ tên tài khoản đăng nhập (vd: Trần Kỹ Thuật), sau đó theo ID
+        Technician tech = null;
+        if (currentUser != null && currentUser.getFullName() != null) {
+            tech = technicianRepository.findByFullName(currentUser.getFullName()).orElse(null);
+        }
+        if (tech == null && currentUser != null && currentUser.getUserId() != null) {
+            tech = technicianRepository.findById(currentUser.getUserId()).orElse(null);
+        }
+        if (tech == null) {
+            tech = technicianRepository.findById(1L).orElse(null);
+        }
+
+        Long loggedInTechId = (tech != null) ? tech.getTechnicianId() : 1L;
 
         // QT-15: KTV chỉ xem danh sách phiếu gán cho cá nhân, che 4 số giữa SĐT khách hàng qua DTO Mapper
         List<TicketResponseDto> ticketDtos = ticketService.getTicketsForTechnician(loggedInTechId);
@@ -84,7 +95,12 @@ public class TechnicianWebController {
         try {
             com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
                     (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
-            Long changedById = (currentUser != null) ? currentUser.getUserId() : 2L;
+
+            Technician tech = null;
+            if (currentUser != null && currentUser.getFullName() != null) {
+                tech = technicianRepository.findByFullName(currentUser.getFullName()).orElse(null);
+            }
+            Long changedById = (tech != null) ? tech.getTechnicianId() : ((currentUser != null) ? currentUser.getUserId() : 1L);
 
             UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder()
                     .newStatus(nextStatus)
