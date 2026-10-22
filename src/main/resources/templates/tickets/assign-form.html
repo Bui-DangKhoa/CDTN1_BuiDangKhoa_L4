@@ -48,7 +48,7 @@
                 </div>
 
                 <!-- Dòng thông tin tóm tắt phiếu -->
-                <div class="p-2 mb-3 bg-light border rounded text-secondary" style="font-size: 0.85rem;">
+                <div class="p-2 mb-3 bg-white border rounded text-secondary" style="font-size: 0.85rem; border: 1px solid #e5e7eb !important;">
                     <span>Thiết bị: <strong class="text-dark" th:text="${ticket != null and ticket.deviceName != null ? ticket.deviceName : 'iPhone 13'}">iPhone 13</strong></span>
                     <span class="mx-1">|</span>
                     <span>Nhóm sự cố: <strong class="text-dark" th:text="${ticket != null and ticket.categoryName != null ? ticket.categoryName : 'Màn hình'}">Màn hình</strong></span>
@@ -64,7 +64,9 @@
                 <form method="post"
                       th:action="@{/tickets/{id}/assign(id=${ticket != null ? ticket.ticketId : 125})}"
                       th:object="${assignRequest}"
-                      class="form-with-loading">
+                      class="form-with-loading"
+                      id="assignStandardForm">
+                    <input type="hidden" id="currentTechId" name="currentTechId" th:value="${ticket != null and ticket.technicianId != null ? ticket.technicianId : ''}">
 
                     <!-- PHẦN 1 — Gán Kỹ thuật viên (FR2 / QT-08, QT-07) -->
                     <div class="mb-4">
@@ -107,10 +109,13 @@
                                 </label>
                                 <span class="note-callout">Chỉ bắt buộc khi đổi KTV cũ (QT-07)</span>
                             </div>
-                            <textarea id="changeReason" th:field="*{changeReason}" rows="2" class="form-control form-control-sm"
-                                      placeholder="KTV A bận ca đột xuất, đổi sang KTV B để xử lý gấp đúng cam kết SLA."></textarea>
+                            <textarea id="changeReason" th:field="*{changeReason}" rows="3" minlength="10" class="form-control"
+                                      placeholder="Nhập lý do thay đổi KTV (tối thiểu 10 ký tự)..."></textarea>
                             <div th:if="${#fields != null and #fields.hasErrors('changeReason')}" class="text-danger mt-1" style="font-size: 0.775rem;" th:errors="*{changeReason}">
                                 Lý do thay đổi KTV phải tối thiểu 10 ký tự
+                            </div>
+                            <div id="changeReasonError" class="text-danger small mt-1" style="display: none;">
+                                Lý do thay đổi KTV phải có ít nhất 10 ký tự khi thay đổi KTV cũ (QT-07).
                             </div>
                         </div>
                     </div>

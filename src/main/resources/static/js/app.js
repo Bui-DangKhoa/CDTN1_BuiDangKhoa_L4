@@ -142,6 +142,7 @@ function openAssignModalFromRow(btn) {
     const categoryName = btn.dataset.categoryName || 'Màn hình';
     const dueDate = btn.dataset.dueDate || '30/10/2026 08:00';
     const repeatCount = parseInt(btn.dataset.repeatCount || '2', 10);
+    const currentTechId = btn.dataset.currentTechId || '';
 
     // Cập nhật thông tin vào modal
     const modalTitleEl = document.getElementById('modalTicketCodeTitle');
@@ -150,6 +151,23 @@ function openAssignModalFromRow(btn) {
     const modalSummaryEl = document.getElementById('modalSummaryText');
     if (modalSummaryEl) {
         modalSummaryEl.textContent = `Thiết bị: ${deviceName} | Nhóm sự cố: ${categoryName} | Hạn SLA: ${dueDate}`;
+    }
+
+    // Set currentTechId vào hidden field
+    const currentTechInput = document.getElementById('modalCurrentTechId') || document.getElementById('currentTechId');
+    if (currentTechInput) {
+        currentTechInput.value = currentTechId;
+    }
+
+    // Reset textarea changeReason & error state
+    const reasonInput = document.getElementById('changeReason') || document.getElementById('modalChangeReason');
+    if (reasonInput) {
+        reasonInput.value = '';
+        reasonInput.classList.remove('is-invalid');
+    }
+    const errDiv = document.getElementById('changeReasonError');
+    if (errDiv) {
+        errDiv.style.display = 'none';
     }
 
     // Cảnh báo lỗi lặp (US6/FR6 & US5/FR5)
@@ -206,4 +224,51 @@ function checkTechnicianScheduleConflict() {
         conflictAlert.style.display = 'none';
     }
 }
+
+// Bổ sung kiểm tra validation QT-07 khi submit form phân công KTV
+document.addEventListener('DOMContentLoaded', () => {
+    const formsToValidate = [
+        document.getElementById('modalAssignForm'),
+        document.getElementById('assignModalForm'),
+        document.getElementById('assignStandardForm')
+    ];
+
+    formsToValidate.forEach(form => {
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            const currentTechInput = form.querySelector('input[name="currentTechId"]') || document.getElementById('modalCurrentTechId') || document.getElementById('currentTechId');
+            const currentTechId = currentTechInput ? currentTechInput.value : '';
+            const techSelect = form.querySelector('select[name="technicianId"]') || document.getElementById('modalTechnicianSelect') || document.getElementById('technicianId');
+            const newTechId = techSelect ? techSelect.value : '';
+            const reasonInput = form.querySelector('textarea[name="changeReason"]') || document.getElementById('changeReason') || document.getElementById('modalChangeReason');
+            const errDiv = form.querySelector('#changeReasonError') || document.getElementById('changeReasonError');
+
+            // QT-07: Nếu ticket đã có KTV trước đó và chọn đổi sang KTV khác mà nhập dưới 10 ký tự
+            if (currentTechId && newTechId && currentTechId !== newTechId) {
+                const reasonText = reasonInput ? reasonInput.value.trim() : '';
+                if (reasonText.length < 10) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (errDiv) {
+                        errDiv.style.display = 'block';
+                        errDiv.textContent = 'Quy tắc QT-07: Khi thay đổi Kỹ thuật viên đã được phân công, lý do thay đổi phải có ít nhất 10 ký tự!';
+                    }
+                    if (reasonInput) {
+                        reasonInput.classList.add('is-invalid');
+                        reasonInput.focus();
+                    }
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.classList.remove('btn-loading');
+                        submitBtn.innerHTML = submitBtn.dataset.originalText || 'Lưu phân công & Đặt lịch';
+                    }
+                    return false;
+                }
+            }
+
+            if (errDiv) errDiv.style.display = 'none';
+            if (reasonInput) reasonInput.classList.remove('is-invalid');
+        });
+    });
+});
 
