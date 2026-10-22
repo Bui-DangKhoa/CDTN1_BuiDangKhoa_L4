@@ -13,7 +13,7 @@
 - **Sinh viên thực hiện**: Bùi Đăng Khoa
 - **Mã số sinh viên (MSSV)**: 2374802013428
 - **Lớp**: L4-SE
-- **Kho lưu trữ GitHub (Repository)**: [[https://github.com/Bui-DangKhoa/smart-crm-technician-scheduling](https://github.com/Bui-DangKhoa/CDTN1_BuiDangKhoa_L4.git](https://github.com/Bui-DangKhoa/CDTN1_BuiDangKhoa_L4.git)](https://github.com/Bui-DangKhoa/CDTN1_BuiDangKhoa_L4.git)
+- **Kho lưu trữ GitHub (Repository)**: https://github.com/Bui-DangKhoa/CDTN1_BuiDangKhoa_L4.git
 - **Công nghệ nền tảng**: Java 21 LTS, Spring Boot 3.3.4, Spring Data JPA, MySQL 8.0 (InnoDB), Thymeleaf, Bootstrap 5, Docker & Docker Compose.
 
 ---
