@@ -96,6 +96,14 @@
         </div>
 
         <!-- Alert messages -->
+        <div th:if="${currentLoggedInUser}" class="alert alert-warning py-2 small d-flex justify-content-between align-items-center" role="alert" style="background-color: #FFF8E1; border: 1px solid #FFA726; color: #E65100; font-weight: 500;">
+            <div>
+                <i class="bi bi-person-badge-fill me-1"></i>
+                Đang phiên: <strong th:text="${currentLoggedInUser.username}">user</strong> (<span th:text="${currentLoggedInUser.role}">ROLE</span>)
+            </div>
+            <a th:href="@{/logout}" class="text-danger fw-semibold text-decoration-underline ms-2">[Đăng xuất]</a>
+        </div>
+
         <div th:if="${infoMessage}" class="alert alert-info alert-dismissible fade show py-2 small" role="alert">
             <i class="bi bi-info-circle-fill me-1"></i>
             <span th:text="${infoMessage}">Đã đăng xuất thành công.</span>

@@ -20,6 +20,9 @@ public class AssignTechnicianRequest {
     @NotNull(message = "Vui lòng chọn kỹ thuật viên")
     private Long technicianId;
 
-    @Size(min = 10, message = "Lý do thay đổi KTV phải tối thiểu 10 ký tự")
+    /**
+     * Lý do thay đổi KTV (Quy tắc QT-07: Chỉ bắt buộc >= 10 ký tự khi thay đổi KTV cũ).
+     * Kiểm tra động tại Tầng Service (TicketServiceImpl) và JavaScript (app.js).
+     */
     private String changeReason;
 }

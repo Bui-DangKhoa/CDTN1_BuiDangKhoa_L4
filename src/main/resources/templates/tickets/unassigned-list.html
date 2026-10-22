@@ -35,15 +35,15 @@
 
     <main class="container-fluid px-4 py-3" style="max-width: 1250px;">
 
-        <!-- Thông báo Thành công / Lỗi (Alert States) -->
-        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
-            <span class="me-2">✓</span>
+        <!-- Thông báo Thành công / Lỗi (Alert States - Màu chữ đậm rõ nét) -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show fw-bold shadow-sm" style="color: #1B5E20 !important; background-color: #E8F5E9 !important; border: 1px solid #2E7D32 !important; font-size: 0.95rem;" role="alert">
+            <span class="me-2 fs-6">✓</span>
             <span th:text="${successMessage}">Thao tác thành công!</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <span class="me-2">❌</span>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show fw-bold shadow-sm" style="color: #B71C1C !important; background-color: #FFEBEE !important; border: 1px solid #C62828 !important; font-size: 0.95rem;" role="alert">
+            <span class="me-2 fs-6">❌</span>
             <span th:text="${errorMessage}">Đã xảy ra lỗi trong quá trình xử lý!</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>

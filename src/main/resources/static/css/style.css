@@ -892,25 +892,51 @@ body {
     display: inline-block;
 }
 
-/* Alert Cảnh báo Wireframe MH2 / MH3 */
+/* Alert Cảnh báo & Thông báo hệ thống rõ nét, tương phản cao (không bị mờ) */
+.alert {
+    border-radius: 6px;
+    font-size: 0.925rem;
+    font-weight: 600 !important;
+    line-height: 1.5;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.alert-success {
+    background-color: #E8F5E9 !important;
+    border: 1px solid #2E7D32 !important;
+    color: #1B5E20 !important; /* Xanh lá đậm, chữ nổi bật, không mờ */
+}
+
+.alert-danger {
+    background-color: #FFEBEE !important;
+    border: 1px solid #C62828 !important;
+    color: #B71C1C !important; /* Đỏ đậm nét, rõ ràng */
+}
+
+.alert-info {
+    background-color: #E3F2FD !important;
+    border: 1px solid #1565C0 !important;
+    color: #0D47A1 !important;
+}
+
 .alert-wireframe-warning {
     background-color: #FFF8E1 !important;
-    border: 1px solid #FFA726 !important;
-    color: #E65100 !important;
+    border: 1px solid #F57C00 !important;
+    color: #B23C00 !important;
     border-radius: 4px;
     padding: 0.65rem 0.9rem;
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600 !important;
 }
 
 .alert-wireframe-danger {
     background-color: #FFEBEE !important;
-    border: 1px solid #EF5350 !important;
-    color: #C62828 !important;
+    border: 1px solid #C62828 !important;
+    color: #B71C1C !important;
     border-radius: 4px;
     padding: 0.65rem 0.9rem;
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600 !important;
 }
 
 /* Sơ đồ vòng đời trạng thái (MH3 Khung 2) */

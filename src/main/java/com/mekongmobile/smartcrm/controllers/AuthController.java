@@ -38,17 +38,16 @@ public class AuthController {
             HttpSession session,
             Model model) {
 
-        UserSessionDto currentUser = (UserSessionDto) session.getAttribute("currentUser");
-        if (currentUser != null) {
-            if ("QUAN_LY".equalsIgnoreCase(currentUser.getRole())) {
-                return "redirect:/tickets/unassigned";
-            } else if ("KY_THUAT_VIEN".equalsIgnoreCase(currentUser.getRole())) {
-                return "redirect:/technician/my-tickets";
-            }
-        }
-
         if (logout != null) {
+            if (session != null) {
+                session.invalidate();
+            }
             model.addAttribute("infoMessage", "Bạn đã đăng xuất khỏi hệ thống thành công.");
+        } else {
+            UserSessionDto currentUser = (session != null) ? (UserSessionDto) session.getAttribute("currentUser") : null;
+            if (currentUser != null) {
+                model.addAttribute("currentLoggedInUser", currentUser);
+            }
         }
 
         if (!model.containsAttribute("loginRequest")) {
