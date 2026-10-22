@@ -26,35 +26,35 @@ Dự án được tổ chức và phát triển tuân thủ nghiêm ngặt nguy�
 
 ```mermaid
 graph TD
-    subgraph Client["Lớp Giao diện & Trình duyệt (Client)"]
+    subgraph Client ["Lớp Giao diện và Trình duyệt (Client)"]
         UI_Manager["Quản lý Trung tâm (/tickets/unassigned)"]
         UI_Tech["Kỹ thuật viên (/technician/my-tickets)"]
         UI_Public["Khách hàng Tra cứu (/lookup)"]
-        REST_Client["REST Client / Swagger UI (/swagger-ui.html)"]
+        REST_Client["REST Client và Swagger UI (/swagger-ui.html)"]
     end
 
-    subgraph Presentation["Tầng 1: Presentation Layer (Controllers & DTOs)"]
-        AuthCtrl["AuthController & AuthInterceptor"]
-        TicketCtrl["TicketController & TicketRestController"]
-        ApptCtrl["AppointmentController & PublicAppointmentController"]
+    subgraph Presentation ["Tầng 1: Presentation Layer (Controllers và DTOs)"]
+        AuthCtrl["AuthController và AuthInterceptor"]
+        TicketCtrl["TicketController và TicketRestController"]
+        ApptCtrl["AppointmentController và PublicAppointmentController"]
         TechCtrl["TechnicianWebController"]
-        DTO["DTO Request/Response & DTO Mapper (QT-15 che SĐT)"]
+        DTO["DTO Request-Response và DTO Mapper (QT-15 che SĐT)"]
         ExceptionHandler["GlobalExceptionHandler (Xử lý tập trung, bảo mật mã lỗi)"]
     end
 
-    subgraph Business["Tầng 2: Business Logic Layer (Services)"]
-        AuthSvc["AuthService (Mã hóa BCrypt & Phân quyền)"]
+    subgraph Business ["Tầng 2: Business Logic Layer (Services)"]
+        AuthSvc["AuthService (Mã hóa BCrypt và Phân quyền)"]
         TicketSvc["TicketServiceImpl (QT-04 SLA, QT-07 Đổi KTV, QT-08 Tay nghề, QT-14)"]
         ApptSvc["AppointmentService (QT-L4-01 Chống trùng lịch, US7 Xác nhận)"]
     end
 
-    subgraph DataAccess["Tầng 3: Data Access Layer (Repositories & JPA Entities)"]
+    subgraph DataAccess ["Tầng 3: Data Access Layer (Repositories và Entities)"]
         Repos["TicketRepository, TechnicianRepository, AppointmentRepository, UserRepository..."]
         Entities["Ticket, Technician, Appointment, Device, AppUser, TicketStatusLog..."]
     end
 
-    subgraph Database["Tầng Lưu trữ: CSDL MySQL 8.0"]
-        MySQL[("MySQL 8.0 Database (InnoDB, utf8mb4)")]
+    subgraph Database ["Tầng Lưu trữ: CSDL MySQL 8.0"]
+        MySQL[("MySQL 8.0 Database - InnoDB utf8mb4")]
     end
 
     UI_Manager --> AuthCtrl
@@ -68,9 +68,9 @@ graph TD
     TechCtrl --> TicketSvc
     ApptCtrl --> ApptSvc
 
-    TicketCtrl -.-> ExceptionHandler
-    ApptCtrl -.-> ExceptionHandler
-    TicketCtrl -.-> DTO
+    TicketCtrl --> ExceptionHandler
+    ApptCtrl --> ExceptionHandler
+    TicketCtrl --> DTO
 
     AuthSvc --> Repos
     TicketSvc --> Repos
