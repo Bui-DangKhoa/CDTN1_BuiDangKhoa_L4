@@ -81,8 +81,8 @@ VALUES
 (103, 'TK-202610-003', 203, '0909123456', 3, 1, 1, 3, 'Máy bị treo táo sau khi nâng cấp hệ điều hành macOS', 'TRUNG_BINH', 'DANG_XU_LY', '2026-10-19 14:00:00', '2026-10-24 18:00:00', NULL),
 -- Phiếu 4: Đã gán cho KTV 1, đang xử lý
 (104, 'TK-202610-004', 204, '0933221100', 4, 1, 1, 4, 'Bảo dưỡng định kỳ, kiểm tra chân sạc USB-C lỏng lẻo', 'THAP', 'DANG_XU_LY', '2026-10-19 15:00:00', '2026-10-25 10:00:00', NULL),
--- Phiếu 5: Đã gán cho KTV 2, chờ tiếp nhận
-(105, 'TK-202610-005', 205, '0977889900', 5, 1, 2, 5, 'Camera sau bị rung và mờ, không lấy nét quang học được', 'TRUNG_BINH', 'CHO_TIEP_NHAN', '2026-10-20 11:00:00', '2026-10-23 17:00:00', NULL)
+-- Phiếu 5: Đã gán cho KTV 2
+(105, 'TK-202610-005', 205, '0977889900', 5, 1, 2, 5, 'Camera sau bị rung và mờ, không lấy nét quang học được', 'TRUNG_BINH', 'DA_PHAN_CONG', '2026-10-20 11:00:00', '2026-10-23 17:00:00', NULL)
 ON DUPLICATE KEY UPDATE
     `ticket_code` = VALUES(`ticket_code`),
     `customer_id` = VALUES(`customer_id`),
