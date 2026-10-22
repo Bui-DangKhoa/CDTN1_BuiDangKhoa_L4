@@ -29,6 +29,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@lombok.extern.slf4j.Slf4j
 public class TicketServiceImpl implements TicketService {
 
     private final TicketRepository ticketRepository;
@@ -182,6 +183,9 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public Ticket assignTechnician(Long ticketId, Long technicianId, Long assignedBy, String changeReason) {
+        log.info("Thực hiện phân công KTV cho ticket ID: {}, technician ID: {}, assignedBy: {}",
+                ticketId, technicianId, assignedBy);
+
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
 
@@ -194,12 +198,16 @@ public class TicketServiceImpl implements TicketService {
                 .anyMatch(tech -> tech.getTechnicianId().equals(technicianId));
 
         if (!isQualified) {
+            log.warn("Vi phạm quy tắc tay nghề QT-08: KTV {} (ID: {}) không cùng trung tâm (phiếu: {}) hoặc tay nghề chưa đạt mức 3 cho sự cố {}",
+                    technician.getFullName(), technicianId, ticket.getCenterId(), ticket.getCategory().getCategoryName());
             throw new AppException("KTV_NOT_QUALIFIED", "KTV không cùng trung tâm hoặc tay nghề chưa đạt mức 3");
         }
 
         // QT-07 (Bắt buộc lý do đổi KTV): Nếu phiếu đã được gán KTV trước đó và KTV mới khác KTV cũ
         if (ticket.getTechnician() != null && !ticket.getTechnician().getTechnicianId().equals(technicianId)) {
             if (changeReason == null || changeReason.trim().length() < 10) {
+                log.warn("Vi phạm quy tắc QT-07: Thay đổi KTV từ ID {} sang ID {} nhưng lý do không đủ 10 ký tự: '{}'",
+                        ticket.getTechnician().getTechnicianId(), technicianId, changeReason);
                 throw new AppException("INVALID_CHANGE_REASON", "Lý do thay đổi KTV phải từ 10 ký tự trở lên");
             }
         }
@@ -214,6 +222,9 @@ public class TicketServiceImpl implements TicketService {
                 ? changeReason
                 : "Phân công kỹ thuật viên " + technician.getFullName() + " cho phiếu";
         logStatusChange(savedTicket, fromStatus, "DA_PHAN_CONG", assignedBy, reasonToLog);
+
+        log.info("Phân công KTV {} cho phiếu #{} thành công (QT-07, QT-08)",
+                technician.getFullName(), savedTicket.getTicketCode());
 
         return savedTicket;
     }

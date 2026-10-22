@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
  * Bắt các lỗi nghiệp vụ từ Tầng Service và chuyển thành ResponseErrorDto chuẩn.
  */
 @RestControllerAdvice
+@lombok.extern.slf4j.Slf4j
 public class GlobalExceptionHandler {
 
     /**
@@ -24,6 +25,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ResponseErrorDto> handleAppException(AppException ex) {
+        log.warn("Nghiệp vụ trả lỗi AppException [{}]: {}", ex.getErrorCode(), ex.getMessage());
         HttpStatus status = resolveHttpStatus(ex);
         ResponseErrorDto errorDto = ResponseErrorDto.builder()
                 .code(ex.getErrorCode() != null ? ex.getErrorCode() : "BAD_REQUEST")
@@ -31,6 +33,34 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .build();
         return new ResponseEntity<>(errorDto, status);
+    }
+
+    /**
+     * Bắt lỗi nghiệp vụ BusinessRuleException kế thừa từ BT1.
+     */
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ResponseErrorDto> handleBusinessRuleException(BusinessRuleException ex) {
+        log.warn("Nghiệp vụ trả lỗi BusinessRuleException: {}", ex.getMessage());
+        ResponseErrorDto errorDto = ResponseErrorDto.builder()
+                .code("BUSINESS_RULE_VIOLATION")
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return new ResponseEntity<>(errorDto, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    /**
+     * Bắt lỗi không tìm thấy tài nguyên ResourceNotFoundException.
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ResponseErrorDto> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        log.warn("Không tìm thấy tài nguyên: {}", ex.getMessage());
+        ResponseErrorDto errorDto = ResponseErrorDto.builder()
+                .code("NOT_FOUND")
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -46,9 +76,12 @@ public class GlobalExceptionHandler {
             sb.append(error.getField()).append(": ").append(error.getDefaultMessage());
         }
 
+        String validationMsg = sb.isEmpty() ? "Dữ liệu đầu vào không hợp lệ" : sb.toString();
+        log.warn("Dữ liệu đầu vào không hợp lệ (Bean Validation): {}", validationMsg);
+
         ResponseErrorDto errorDto = ResponseErrorDto.builder()
                 .code("VALIDATION_ERROR")
-                .message(sb.isEmpty() ? "Dữ liệu đầu vào không hợp lệ" : sb.toString())
+                .message(validationMsg)
                 .timestamp(LocalDateTime.now())
                 .build();
 
@@ -56,13 +89,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Bắt các ngoại lệ không xác định: Trả về HTTP 500 Internal Server Error.
+     * Bắt các ngoại lệ không xác định: Trả về HTTP 500 với thông báo thân thiện.
+     * Bảo mật: Không bao giờ để lộ SQL error hoặc stack trace ra client.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseErrorDto> handleGenericException(Exception ex) {
+        log.error("Lỗi nội bộ hệ thống chưa được phân loại: ", ex);
         ResponseErrorDto errorDto = ResponseErrorDto.builder()
                 .code("INTERNAL_SERVER_ERROR")
-                .message("Đã xảy ra lỗi nội bộ hệ thống: " + ex.getMessage())
+                .message("Đã xảy ra lỗi nội bộ trong hệ thống. Vui lòng thử lại sau hoặc liên hệ quản trị viên.")
                 .timestamp(LocalDateTime.now())
                 .build();
 

@@ -21,6 +21,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@lombok.extern.slf4j.Slf4j
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
@@ -31,6 +32,9 @@ public class AppointmentService {
      * QT-L4-01 / NFR2: Đặt lịch hẹn mới cho KTV và kiểm tra chống trùng lịch trong cùng khung giờ.
      */
     public Appointment scheduleAppointment(Long ticketId, Long technicianId, LocalDateTime appointmentTime) {
+        log.info("Bắt đầu đặt lịch hẹn cho ticketId: {}, technicianId: {}, appointmentTime: {}",
+                ticketId, technicianId, appointmentTime);
+
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
 
@@ -42,6 +46,8 @@ public class AppointmentService {
                 technicianId, appointmentTime, "DA_HUY");
 
         if (hasConflict) {
+            log.warn("Vi phạm quy tắc chống trùng lịch QT-L4-01: KTV {} (ID: {}) đã có lịch hẹn khác tại khung giờ {}",
+                    technician.getFullName(), technicianId, appointmentTime);
             throw new AppException("SCHEDULE_CONFLICT", "KTV đã có lịch hẹn khác trong cùng khung giờ này");
         }
 
@@ -53,29 +59,38 @@ public class AppointmentService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        return appointmentRepository.save(appointment);
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+        log.info("Đặt lịch hẹn thành công (ID: {}) cho KTV {} tại thời điểm {} (QT-L4-01)",
+                savedAppointment.getAppointmentId(), technician.getFullName(), appointmentTime);
+        return savedAppointment;
     }
 
     /**
      * Hủy lịch hẹn và giải phóng khung giờ cho KTV.
      */
     public Appointment cancelAppointment(Long appointmentId) {
+        log.info("Tiếp nhận yêu cầu hủy lịch hẹn ID: {}", appointmentId);
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy lịch hẹn với ID: " + appointmentId));
 
         appointment.setStatus("DA_HUY");
-        return appointmentRepository.save(appointment);
+        Appointment saved = appointmentRepository.save(appointment);
+        log.info("Hủy lịch hẹn ID: {} thành công, đã giải phóng khung giờ cho KTV", appointmentId);
+        return saved;
     }
 
     /**
      * US7 / FR7: Khách hàng xác nhận lịch hẹn (chuyển trạng thái sang DA_XAC_NHAN).
      */
     public Appointment confirmAppointment(Long appointmentId) {
+        log.info("Khách hàng xác nhận lịch hẹn ID: {}", appointmentId);
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy lịch hẹn với ID: " + appointmentId));
 
         appointment.setStatus("DA_XAC_NHAN");
-        return appointmentRepository.save(appointment);
+        Appointment saved = appointmentRepository.save(appointment);
+        log.info("Xác nhận lịch hẹn ID: {} thành công (US7)", appointmentId);
+        return saved;
     }
 
     /**
