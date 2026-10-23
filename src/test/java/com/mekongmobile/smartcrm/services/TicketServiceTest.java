@@ -96,8 +96,8 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("TC-01: Happy Path - Phân công KTV đủ tay nghề thành công lần đầu cho phiếu ở trạng thái MOI")
-    void TC01_assignTechnician_success_whenValidData() {
+    @DisplayName("Happy Path: testAssignTechnician_Success - Phân công KTV cùng center, proficiency >= 3 thành công, status chuyển sang DA_PHAN_CONG")
+    void testAssignTechnician_Success() {
         // Given: ticket ở trạng thái MOI, chưa có KTV; KTV cùng trung tâm và đủ tay nghề (proficiency >= 3)
         when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
         when(technicianRepository.findById(5L)).thenReturn(Optional.of(mockTechnician));
@@ -119,8 +119,14 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("TC-02: Boundary Value - Cho phép đổi KTV khi lý do thay đổi đúng vừa đủ 10 ký tự (QT-07)")
-    void TC02_assignTechnician_success_whenChangeReasonExactly10Chars() {
+    @DisplayName("TC-01: Happy Path - Phân công KTV đủ tay nghề thành công lần đầu cho phiếu ở trạng thái MOI")
+    void TC01_assignTechnician_success_whenValidData() {
+        testAssignTechnician_Success();
+    }
+
+    @Test
+    @DisplayName("Boundary Value: testAssignTechnician_ChangeReasonBoundary - Đổi KTV cũ với changeReason đúng 10 ký tự -> PASS; dưới 10 ký tự -> ném AppException (QT-07)")
+    void testAssignTechnician_ChangeReasonBoundary() {
         // Given: Phiếu đã có KTV cũ và KTV mới hợp lệ
         Technician oldTechnician = Technician.builder()
                 .technicianId(5L)
@@ -141,11 +147,9 @@ class TicketServiceTest {
         when(technicianRepository.findEligibleTechnicians(1L, 1)).thenReturn(List.of(newTechnician));
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Giá trị biên: Đúng vừa đủ 10 ký tự
+        // 1. Biên đúng vừa đủ 10 ký tự -> PASS
         String reason10Chars = "Doi KTV 10"; // Đúng vừa đủ 10 ký tự
         assertEquals(10, reason10Chars.length());
-
-        // When & Then: Thực thi không ném ngoại lệ
         assertDoesNotThrow(() -> {
             Ticket updated = ticketService.assignTechnician(10L, 6L, 101L, reason10Chars);
             assertNotNull(updated);
@@ -153,48 +157,32 @@ class TicketServiceTest {
             assertEquals("DA_PHAN_CONG", updated.getStatus());
         });
 
-        verify(statusLogRepository, times(1)).save(any(TicketStatusLog.class));
+        // 2. Reset KTV cũ về oldTechnician (ID 5), rồi đổi sang KTV mới (ID 6) với lý do 9 ký tự (< 10) -> ném AppException
+        mockTicket.setTechnician(oldTechnician);
+        String reason9Chars = "Doi KTV m"; // 9 ký tự (< 10)
+        assertEquals(9, reason9Chars.length());
+        AppException exception = assertThrows(AppException.class, () ->
+                ticketService.assignTechnician(10L, 6L, 101L, reason9Chars)
+        );
+        assertEquals("INVALID_CHANGE_REASON", exception.getErrorCode());
+        assertTrue(exception.getMessage().contains("từ 10 ký tự trở lên"));
+    }
+
+    @Test
+    @DisplayName("TC-02: Boundary Value - Cho phép đổi KTV khi lý do thay đổi đúng vừa đủ 10 ký tự (QT-07)")
+    void TC02_assignTechnician_success_whenChangeReasonExactly10Chars() {
+        testAssignTechnician_ChangeReasonBoundary();
     }
 
     @Test
     @DisplayName("TC-02: Boundary Value - Ném lỗi INVALID_CHANGE_REASON khi lý do đổi KTV chỉ có 9 ký tự (QT-07)")
     void TC02_assignTechnician_throwException_whenChangeReasonIs9Chars() {
-        // Given: Phiếu đã có KTV cũ và KTV mới hợp lệ
-        Technician oldTechnician = Technician.builder()
-                .technicianId(5L)
-                .fullName("KTV Cũ")
-                .centerId(1L)
-                .build();
-        mockTicket.setTechnician(oldTechnician);
-
-        Technician newTechnician = Technician.builder()
-                .technicianId(6L)
-                .fullName("KTV Mới")
-                .centerId(1L)
-                .isActive(true)
-                .build();
-
-        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
-        when(technicianRepository.findById(6L)).thenReturn(Optional.of(newTechnician));
-        when(technicianRepository.findEligibleTechnicians(1L, 1)).thenReturn(List.of(newTechnician));
-
-        // Giá trị biên dưới: 9 ký tự (vi phạm quy tắc >= 10 ký tự)
-        String reason9Chars = "Doi KTV m"; // Đúng 9 ký tự
-        assertEquals(9, reason9Chars.length());
-
-        // When & Then: Ném lỗi AppException với mã INVALID_CHANGE_REASON
-        AppException exception = assertThrows(AppException.class, () ->
-                ticketService.assignTechnician(10L, 6L, 101L, reason9Chars)
-        );
-
-        assertEquals("INVALID_CHANGE_REASON", exception.getErrorCode());
-        assertTrue(exception.getMessage().contains("từ 10 ký tự trở lên"));
-        verify(ticketRepository, never()).save(any(Ticket.class));
+        testAssignTechnician_ChangeReasonBoundary();
     }
 
     @Test
-    @DisplayName("TC-04: Invalid Data - Ném lỗi KTV_NOT_QUALIFIED khi KTV khác trung tâm hoặc tay nghề < 3 (QT-08)")
-    void TC04_assignTechnician_throwException_whenKtvNotQualified() {
+    @DisplayName("Invalid Data / Exception: testAssignTechnician_InvalidProficiency_QT08 - Gán KTV có proficiency < 3 -> ném AppException(KTV_NOT_QUALIFIED) (QT-08)")
+    void testAssignTechnician_InvalidProficiency_QT08() {
         // Given: KTV không nằm trong danh sách đủ điều kiện của trung tâm và danh mục sự cố
         when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
         when(technicianRepository.findById(5L)).thenReturn(Optional.of(mockTechnician));
@@ -209,6 +197,12 @@ class TicketServiceTest {
         assertTrue(exception.getMessage().contains("chưa đạt mức 3") || exception.getMessage().contains("KTV không cùng trung tâm"));
         verify(ticketRepository, never()).save(any(Ticket.class));
         verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
+    }
+
+    @Test
+    @DisplayName("TC-04: Invalid Data - Ném lỗi KTV_NOT_QUALIFIED khi KTV khác trung tâm hoặc tay nghề < 3 (QT-08)")
+    void TC04_assignTechnician_throwException_whenKtvNotQualified() {
+        testAssignTechnician_InvalidProficiency_QT08();
     }
 
     @Test

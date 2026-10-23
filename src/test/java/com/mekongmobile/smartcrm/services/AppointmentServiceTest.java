@@ -64,8 +64,8 @@ class AppointmentServiceTest {
     }
 
     @Test
-    @DisplayName("TC-03: Invalid Data & Exception - Từ chối đặt lịch khi KTV bị trùng lịch hẹn (QT-L4-01)")
-    void TC03_scheduleAppointment_throwException_whenScheduleConflict() {
+    @DisplayName("Luồng ngoại lệ - QT-L4-01: Đặt lịch trùng khung giờ KTV đã có hẹn -> ném AppException(SCHEDULE_CONFLICT)")
+    void testCreateAppointment_ScheduleConflict_QTL401() {
         // Given: KTV đã có lịch hẹn khác trong cùng khung giờ (chưa bị hủy)
         when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
         when(technicianRepository.findById(5L)).thenReturn(Optional.of(mockTechnician));
@@ -83,8 +83,14 @@ class AppointmentServiceTest {
     }
 
     @Test
-    @DisplayName("QT-L4-01: Đặt lịch hẹn thành công khi KTV không có lịch trùng")
-    void testScheduleAppointment_Success() {
+    @DisplayName("TC-03: Invalid Data & Exception - Từ chối đặt lịch khi KTV bị trùng lịch hẹn (QT-L4-01)")
+    void TC03_scheduleAppointment_throwException_whenScheduleConflict() {
+        testCreateAppointment_ScheduleConflict_QTL401();
+    }
+
+    @Test
+    @DisplayName("Happy Path - QT-L4-01: Đặt lịch hẹn không trùng khung giờ thành công")
+    void testCreateAppointment_Success() {
         when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
         when(technicianRepository.findById(5L)).thenReturn(Optional.of(mockTechnician));
         when(appointmentRepository.existsByTechnician_TechnicianIdAndAppointmentTimeAndStatusNot(5L, appointmentTime, "DA_HUY"))
@@ -105,6 +111,12 @@ class AppointmentServiceTest {
         assertEquals("CHO_XAC_NHAN", result.getStatus());
         assertEquals(mockTechnician, result.getTechnician());
         verify(appointmentRepository, times(1)).save(any(Appointment.class));
+    }
+
+    @Test
+    @DisplayName("QT-L4-01: Đặt lịch hẹn thành công khi KTV không có lịch trùng")
+    void testScheduleAppointment_Success() {
+        testCreateAppointment_Success();
     }
 
     @Test
