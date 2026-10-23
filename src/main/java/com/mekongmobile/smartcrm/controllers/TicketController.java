@@ -88,7 +88,20 @@ public class TicketController {
     }
 
     /**
-     * Tiếp nhận form submit phân công / đổi Kỹ thuật viên (QT-07, QT-08).
+     * MÀN HÌNH 2 (Modal): Trả JSON danh sách KTV đủ điều kiện QT-08 (cùng trung tâm, tay nghề &gt;= 3)
+     * để nạp động vào dropdown của Modal phân công trên Màn hình 1.
+     */
+    @GetMapping(value = "/{id}/eligible-technicians", produces = "application/json")
+    @ResponseBody
+    public List<TechnicianResponseDto> getEligibleTechnicians(@PathVariable("id") Long id) {
+        log.info("GET /tickets/{}/eligible-technicians - Nạp danh sách KTV đủ điều kiện (QT-08)", id);
+        return ticketService.getEligibleTechniciansForTicket(id);
+    }
+
+    /**
+     * Tiếp nhận form submit phân công / đổi Kỹ thuật viên kèm đặt lịch hẹn (QT-07, QT-08, QT-L4-01).
+     * Thành công: redirect về danh sách chưa gán để làm mới (phiếu vừa gán biến mất khỏi danh sách
+     * và lập tức xuất hiện tại /technician/my-tickets của KTV).
      */
     @PostMapping("/{id}/assign")
     public String assignTechnician(
@@ -96,34 +109,57 @@ public class TicketController {
             @Valid @ModelAttribute("assignRequest") AssignTechnicianRequest request,
             BindingResult bindingResult,
             Model model,
+            jakarta.servlet.http.HttpSession session,
             RedirectAttributes redirectAttributes) {
 
         log.info("POST /tickets/{}/assign - Tiếp nhận yêu cầu phân công KTV: {}", id, request);
+        boolean fromModal = "modal".equalsIgnoreCase(request.getSource());
 
         if (bindingResult.hasErrors()) {
+            String message = bindingResult.getAllErrors().get(0).getDefaultMessage();
+            if (fromModal) {
+                redirectAttributes.addFlashAttribute("errorMessage", message);
+                return "redirect:/tickets/unassigned";
+            }
             loadFormContext(id, model);
             return "tickets/assign-form";
         }
 
         try {
-            // Giả lập ID người phân công đăng nhập (Admin/Manager id = 1)
-            Long assignedBy = 1L;
-            Ticket assignedTicket = ticketService.assignTechnician(
-                    id, request.getTechnicianId(), assignedBy, request.getChangeReason());
+            com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
+                    (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
+            Long assignedBy = (currentUser != null && currentUser.getUserId() != null) ? currentUser.getUserId() : 1L;
 
+            java.time.LocalDateTime appointmentTime = request.resolveAppointmentTime();
+            Ticket assignedTicket = ticketService.assignTechnician(
+                    id, request.getTechnicianId(), assignedBy, request.getChangeReason(), appointmentTime);
+
+            String apptText = (appointmentTime != null)
+                    ? " Lịch hẹn " + appointmentTime.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                            + " đang chờ khách hàng xác nhận."
+                    : "";
             redirectAttributes.addFlashAttribute("successMessage",
                     "Phân công kỹ thuật viên " + assignedTicket.getTechnician().getFullName()
-                            + " cho phiếu #" + assignedTicket.getTicketCode() + " thành công!");
+                            + " cho phiếu #" + assignedTicket.getTicketCode() + " thành công!" + apptText);
 
-            return "redirect:/tickets/unassigned";
+            return "redirect:/tickets/unassigned?assigned=true";
         } catch (AppException ex) {
             log.warn("Nghiệp vụ từ chối phân công KTV cho ticket {}: {}", id, ex.getMessage());
+            if (fromModal) {
+                redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+                return "redirect:/tickets/unassigned";
+            }
             model.addAttribute("errorMessage", ex.getMessage());
             loadFormContext(id, model);
             return "tickets/assign-form";
         } catch (Exception ex) {
             log.error("Lỗi hệ thống khi phân công KTV cho ticket {}: {}", id, ex.getMessage(), ex);
-            model.addAttribute("errorMessage", "Đã xảy ra lỗi trong quá trình phân công: " + ex.getMessage());
+            String message = "Đã xảy ra lỗi trong quá trình phân công, vui lòng thử lại.";
+            if (fromModal) {
+                redirectAttributes.addFlashAttribute("errorMessage", message);
+                return "redirect:/tickets/unassigned";
+            }
+            model.addAttribute("errorMessage", message);
             loadFormContext(id, model);
             return "tickets/assign-form";
         }

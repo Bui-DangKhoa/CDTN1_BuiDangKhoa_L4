@@ -41,6 +41,19 @@ public class AppointmentService {
         Technician technician = technicianRepository.findById(technicianId)
                 .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy kỹ thuật viên với ID: " + technicianId));
 
+        return scheduleAppointment(ticket, technician, appointmentTime);
+    }
+
+    /**
+     * QT-L4-01 / NFR2: Đặt lịch hẹn cho KTV khi đã có sẵn thực thể Ticket và Technician
+     * (dùng chung trong transaction phân công KTV của {@code TicketServiceImpl.assignTechnician}).
+     */
+    public Appointment scheduleAppointment(Ticket ticket, Technician technician, LocalDateTime appointmentTime) {
+        if (appointmentTime == null) {
+            throw new AppException("INVALID_APPOINTMENT_TIME", "Vui lòng chọn ngày và khung giờ hẹn");
+        }
+        Long technicianId = technician.getTechnicianId();
+
         // QT-L4-01 / NFR2: Kiểm tra chống gán trùng lịch hẹn cho KTV trong cùng khung giờ
         boolean hasConflict = appointmentRepository.existsByTechnician_TechnicianIdAndAppointmentTimeAndStatusNot(
                 technicianId, appointmentTime, "DA_HUY");
@@ -63,6 +76,20 @@ public class AppointmentService {
         log.info("Đặt lịch hẹn thành công (ID: {}) cho KTV {} tại thời điểm {} (QT-L4-01)",
                 savedAppointment.getAppointmentId(), technician.getFullName(), appointmentTime);
         return savedAppointment;
+    }
+
+    /**
+     * Hủy toàn bộ lịch hẹn còn hiệu lực của một phiếu (dùng khi đổi KTV – QT-07),
+     * giải phóng khung giờ của KTV cũ trước khi tạo lịch hẹn mới.
+     */
+    public void cancelActiveAppointmentsForTicket(Long ticketId) {
+        appointmentRepository.findByTicket_TicketId(ticketId).stream()
+                .filter(a -> !"DA_HUY".equalsIgnoreCase(a.getStatus()))
+                .forEach(a -> {
+                    a.setStatus("DA_HUY");
+                    appointmentRepository.save(a);
+                    log.info("Hủy lịch hẹn cũ ID: {} của phiếu ID: {} do phân công lại KTV", a.getAppointmentId(), ticketId);
+                });
     }
 
     /**

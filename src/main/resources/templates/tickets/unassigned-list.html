@@ -377,6 +377,7 @@
                     </div>
 
                     <form id="modalAssignForm" method="post" th:action="@{/tickets/1/assign}">
+                        <input type="hidden" name="source" value="modal">
                         <input type="hidden" id="modalCurrentTechId" name="currentTechId" value="">
 
                         <!-- PHẦN 1 — Gán Kỹ thuật viên (FR2 / QT-08, QT-07) -->

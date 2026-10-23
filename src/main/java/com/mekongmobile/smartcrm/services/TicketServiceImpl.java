@@ -37,6 +37,19 @@ public class TicketServiceImpl implements TicketService {
     private final IssueCategoryRepository categoryRepository;
     private final TicketStatusLogRepository statusLogRepository;
     private final TechnicianRepository technicianRepository;
+    private final AppointmentService appointmentService;
+
+    /** QT-06: Thứ tự vòng đời trạng thái đơn hướng MOI → DA_PHAN_CONG → DANG_XU_LY → HOAN_TAT → DONG. */
+    private static final java.util.Map<String, Integer> STATUS_ORDER = java.util.Map.of(
+            "MOI", 0,
+            "DA_PHAN_CONG", 1,
+            "DANG_XU_LY", 2,
+            "HOAN_TAT", 3,
+            "HOAN_THANH", 3,
+            "DONG", 4);
+
+    /** MH3 / US4: Trạng thái phiếu hiển thị trên màn hình cá nhân của KTV. */
+    private static final List<String> TECHNICIAN_ACTIVE_STATUSES = List.of("DA_PHAN_CONG", "DANG_XU_LY");
 
     @Override
     public LocalDateTime calculateDueDate(LocalDateTime receivedAt, Priority priority) {
@@ -168,7 +181,8 @@ public class TicketServiceImpl implements TicketService {
         validateStatusTransition(fromStatus, toStatus);
 
         ticket.setStatus(toStatus);
-        if ("HOAN_THANH".equalsIgnoreCase(toStatus) || "DONG".equalsIgnoreCase(toStatus)) {
+        if ("HOAN_TAT".equalsIgnoreCase(toStatus) || "HOAN_THANH".equalsIgnoreCase(toStatus)
+                || "DONG".equalsIgnoreCase(toStatus)) {
             ticket.setClosedAt(LocalDateTime.now());
         }
 
@@ -182,15 +196,34 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    @Transactional
     public Ticket assignTechnician(Long ticketId, Long technicianId, Long assignedBy, String changeReason) {
-        log.info("Thực hiện phân công KTV cho ticket ID: {}, technician ID: {}, assignedBy: {}",
-                ticketId, technicianId, assignedBy);
+        return assignTechnician(ticketId, technicianId, assignedBy, changeReason, null);
+    }
+
+    /**
+     * Thực thi 4 thao tác trong 1 transaction; bất kỳ vi phạm nào (QT-08, QT-07, QT-L4-01)
+     * đều ném {@link AppException} và rollback toàn bộ (không còn phiếu "đã gán nhưng không có lịch").
+     */
+    @Override
+    @Transactional
+    public Ticket assignTechnician(Long ticketId, Long technicianId, Long assignedBy, String changeReason,
+                                   LocalDateTime appointmentTime) {
+        log.info("Thực hiện phân công KTV cho ticket ID: {}, technician ID: {}, assignedBy: {}, appointmentTime: {}",
+                ticketId, technicianId, assignedBy, appointmentTime);
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
 
         Technician technician = technicianRepository.findById(technicianId)
                 .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy kỹ thuật viên với ID: " + technicianId));
+
+        // QT-06: Chỉ được phân công / đổi KTV khi phiếu còn ở MOI hoặc DA_PHAN_CONG (không kéo lùi phiếu đang xử lý)
+        String fromStatus = ticket.getStatus();
+        if (fromStatus != null && !"MOI".equalsIgnoreCase(fromStatus) && !"DA_PHAN_CONG".equalsIgnoreCase(fromStatus)) {
+            throw new AppException("INVALID_STATUS_TRANSITION",
+                    "Không thể phân công lại phiếu đang ở trạng thái " + fromStatus + " (QT-06)");
+        }
 
         // QT-08 (Kiểm tra tay nghề): KTV phải cùng centerId với phiếu và có proficiency >= 3 đối với categoryId của phiếu
         boolean isQualified = technicianRepository.findEligibleTechnicians(ticket.getCenterId(), ticket.getCategory().getCategoryId())
@@ -204,7 +237,8 @@ public class TicketServiceImpl implements TicketService {
         }
 
         // QT-07 (Bắt buộc lý do đổi KTV): Nếu phiếu đã được gán KTV trước đó và KTV mới khác KTV cũ
-        if (ticket.getTechnician() != null && !ticket.getTechnician().getTechnicianId().equals(technicianId)) {
+        boolean isReassign = ticket.getTechnician() != null;
+        if (isReassign && !ticket.getTechnician().getTechnicianId().equals(technicianId)) {
             if (changeReason == null || changeReason.trim().length() < 10) {
                 log.warn("Vi phạm quy tắc QT-07: Thay đổi KTV từ ID {} sang ID {} nhưng lý do không đủ 10 ký tự: '{}'",
                         ticket.getTechnician().getTechnicianId(), technicianId, changeReason);
@@ -212,18 +246,27 @@ public class TicketServiceImpl implements TicketService {
             }
         }
 
-        String fromStatus = ticket.getStatus();
+        // (a) Gán KTV + (b) chuyển trạng thái DA_PHAN_CONG
         ticket.setTechnician(technician);
         ticket.setStatus("DA_PHAN_CONG");
-
         Ticket savedTicket = ticketRepository.save(ticket);
 
+        // (c) Ghi nhật ký TicketStatusLog (from_status → DA_PHAN_CONG, change_reason)
         String reasonToLog = (changeReason != null && !changeReason.isBlank())
-                ? changeReason
+                ? changeReason.trim()
                 : "Phân công kỹ thuật viên " + technician.getFullName() + " cho phiếu";
         logStatusChange(savedTicket, fromStatus, "DA_PHAN_CONG", assignedBy, reasonToLog);
 
-        log.info("Phân công KTV {} cho phiếu #{} thành công (QT-07, QT-08)",
+        // (d) Tạo Appointment CHO_XAC_NHAN, kiểm tra chống trùng lịch QT-L4-01
+        if (appointmentTime != null) {
+            if (isReassign) {
+                // Giải phóng khung giờ của lịch hẹn cũ trước khi đặt lịch mới
+                appointmentService.cancelActiveAppointmentsForTicket(savedTicket.getTicketId());
+            }
+            appointmentService.scheduleAppointment(savedTicket, technician, appointmentTime);
+        }
+
+        log.info("Phân công KTV {} cho phiếu #{} thành công (QT-07, QT-08, QT-L4-01)",
                 technician.getFullName(), savedTicket.getTicketCode());
 
         return savedTicket;
@@ -267,6 +310,45 @@ public class TicketServiceImpl implements TicketService {
         }
         List<Ticket> tickets = ticketRepository.findByTechnician_TechnicianId(technicianId);
         return tickets.stream().map(t -> mapToDto(t, true)).toList();
+    }
+
+    // MH3 / US4 + QT-15: Chỉ lấy phiếu DA_PHAN_CONG / DANG_XU_LY của KTV, che SĐT khách hàng
+    @Override
+    @Transactional(readOnly = true)
+    public List<TicketResponseDto> getActiveTicketsForTechnician(Long technicianId) {
+        if (technicianId == null) {
+            return List.of();
+        }
+        return ticketRepository
+                .findByTechnician_TechnicianIdAndStatusInOrderByDueDateAsc(technicianId, TECHNICIAN_ACTIVE_STATUSES)
+                .stream()
+                .map(t -> mapToDto(t, true))
+                .toList();
+    }
+
+    /**
+     * Liên kết tài khoản KTV (app_user) với hồ sơ technician theo họ tên (full_name)
+     * do schema hiện tại chưa có khóa ngoại app_user → technician.
+     * Không dùng user_id làm technician_id vì hai bảng có dãy khóa chính độc lập
+     * (vd: ktv1 có user_id = 2 nhưng technician_id = 1).
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public com.mekongmobile.smartcrm.dto.TechnicianResponseDto findTechnicianForUser(
+            com.mekongmobile.smartcrm.dto.UserSessionDto currentUser) {
+        if (currentUser == null || currentUser.getFullName() == null) {
+            return null;
+        }
+        return technicianRepository.findByFullName(currentUser.getFullName())
+                .map(tech -> com.mekongmobile.smartcrm.dto.TechnicianResponseDto.builder()
+                        .technicianId(tech.getTechnicianId())
+                        .employeeId(tech.getEmployeeId())
+                        .fullName(tech.getFullName())
+                        .centerId(tech.getCenterId())
+                        .level(tech.getLevel())
+                        .isActive(tech.getIsActive())
+                        .build())
+                .orElse(null);
     }
 
     @Override
@@ -336,6 +418,13 @@ public class TicketServiceImpl implements TicketService {
         // Trạng thái đã đóng thì không thể đổi tiếp
         if ("DONG".equalsIgnoreCase(current) || "DA_HUY".equalsIgnoreCase(current)) {
             throw new BusinessRuleException("Ticket ở trạng thái " + current + " không thể chuyển đổi trạng thái nữa");
+        }
+        // QT-06: Vòng đời đơn hướng – chỉ được tiến lên, không được quay lùi
+        Integer currentRank = current != null ? STATUS_ORDER.get(current.toUpperCase()) : null;
+        Integer nextRank = next != null ? STATUS_ORDER.get(next.toUpperCase()) : null;
+        if (currentRank != null && nextRank != null && nextRank <= currentRank) {
+            throw new BusinessRuleException("Không thể chuyển trạng thái từ " + current + " về " + next
+                    + " (Quy tắc QT-06: vòng đời đơn hướng)");
         }
     }
 

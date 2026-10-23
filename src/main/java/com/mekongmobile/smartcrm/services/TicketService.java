@@ -63,6 +63,16 @@ public interface TicketService {
     Ticket assignTechnician(Long ticketId, Long technicianId, Long assignedBy, String changeReason);
 
     /**
+     * Phân công KTV và đặt lịch hẹn trong CÙNG MỘT transaction (all-or-nothing):
+     * (a) gán KTV, (b) chuyển trạng thái sang DA_PHAN_CONG, (c) ghi TicketStatusLog,
+     * (d) tạo Appointment CHO_XAC_NHAN sau khi kiểm tra chống trùng lịch QT-L4-01.
+     *
+     * @param appointmentTime thời điểm hẹn; nếu {@code null} sẽ bỏ qua bước (d)
+     */
+    Ticket assignTechnician(Long ticketId, Long technicianId, Long assignedBy, String changeReason,
+                            LocalDateTime appointmentTime);
+
+    /**
      * QT-08: Cập nhật trạng thái tiến độ ticket và ghi nhật ký kiểm toán.
      */
     TicketResponseDto updateTicketStatus(Long ticketId, UpdateTicketStatusDto updateDto);
@@ -87,6 +97,19 @@ public interface TicketService {
      * QT-15: Lấy danh sách phiếu được gán cho KTV cá nhân, tự động che 4 số giữa SĐT (090****567).
      */
     List<TicketResponseDto> getTicketsForTechnician(Long technicianId);
+
+    /**
+     * MH3 / US4 + QT-15: Phiếu đang hoạt động của KTV (status IN DA_PHAN_CONG, DANG_XU_LY),
+     * sắp xếp theo hạn SLA tăng dần, SĐT khách hàng được che dạng 090****567.
+     */
+    List<TicketResponseDto> getActiveTicketsForTechnician(Long technicianId);
+
+    /**
+     * Xác định hồ sơ Kỹ thuật viên tương ứng với tài khoản KTV đang đăng nhập.
+     *
+     * @return thông tin KTV, hoặc {@code null} nếu tài khoản không gắn với hồ sơ KTV nào
+     */
+    com.mekongmobile.smartcrm.dto.TechnicianResponseDto findTechnicianForUser(com.mekongmobile.smartcrm.dto.UserSessionDto currentUser);
 
     /**
      * Phân quyền tra cứu dữ liệu động theo phiên người dùng hiện tại (UserSessionDto):

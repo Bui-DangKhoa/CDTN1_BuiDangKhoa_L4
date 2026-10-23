@@ -190,6 +190,21 @@ function openAssignModalFromRow(btn) {
         formEl.action = `/tickets/${ticketId}/assign`;
     }
 
+    // Nạp động danh sách KTV đủ điều kiện (QT-08: cùng trung tâm, proficiency >= 3)
+    const techSelect = document.getElementById('modalTechnicianSelect');
+    if (techSelect && ticketId) {
+        fetch(`/tickets/${ticketId}/eligible-technicians`)
+            .then(res => res.ok ? res.json() : [])
+            .then(techs => {
+                if (Array.isArray(techs) && techs.length > 0) {
+                    techSelect.innerHTML = techs.map((t, idx) =>
+                        `<option value="${t.technicianId}" ${idx === 0 ? 'selected' : ''}>${t.fullName} (Bậc ${t.level} - Đang giữ ${t.activeTicketsCount || 0} phiếu)</option>`
+                    ).join('');
+                }
+            })
+            .catch(err => console.warn('Không thể nạp KTV động:', err));
+    }
+
     // Reset cảnh báo trùng lịch
     const conflictAlert = document.getElementById('modalConflictAlert');
     if (conflictAlert) conflictAlert.style.display = 'none';

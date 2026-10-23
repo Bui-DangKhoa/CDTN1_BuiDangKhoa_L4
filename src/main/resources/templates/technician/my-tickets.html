@@ -141,19 +141,19 @@
                             <span class="lifecycle-arrow">➔</span>
 
                             <!-- Bước 2: ĐÃ PHÂN CÔNG -->
-                            <div class="lifecycle-step completed">ĐÃ PHÂN CÔNG</div>
+                            <div class="lifecycle-step" th:classappend="${selectedTicket != null and selectedTicket.status == 'DA_PHAN_CONG' ? 'active' : 'completed'}">ĐÃ PHÂN CÔNG</div>
                             <span class="lifecycle-arrow">➔</span>
 
-                            <!-- Bước 3: ĐANG XỬ LÝ (Tô đậm theo Wireframe MH3) -->
-                            <div class="lifecycle-step active" id="stepDangXuLy">ĐANG XỬ LÝ</div>
+                            <!-- Bước 3: ĐANG XỬ LÝ (Tô đậm khi đang xử lý theo Wireframe MH3) -->
+                            <div class="lifecycle-step" th:classappend="${selectedTicket != null and selectedTicket.status == 'DANG_XU_LY' ? 'active' : (selectedTicket != null and (selectedTicket.status == 'HOAN_TAT' or selectedTicket.status == 'HOAN_THANH' or selectedTicket.status == 'DONG') ? 'completed' : 'future')}" id="stepDangXuLy">ĐANG XỬ LÝ</div>
                             <span class="lifecycle-arrow">➔</span>
 
                             <!-- Bước 4: HOÀN TẤT -->
-                            <div class="lifecycle-step future" id="stepHoanTat">HOÀN TẤT</div>
+                            <div class="lifecycle-step" th:classappend="${selectedTicket != null and (selectedTicket.status == 'HOAN_TAT' or selectedTicket.status == 'HOAN_THANH') ? 'active' : (selectedTicket != null and selectedTicket.status == 'DONG' ? 'completed' : 'future')}" id="stepHoanTat">HOÀN TẤT</div>
                             <span class="lifecycle-arrow">➔</span>
 
                             <!-- Bước 5: ĐÃ ĐÓNG -->
-                            <div class="lifecycle-step future" id="stepDaDong">ĐÃ ĐÓNG</div>
+                            <div class="lifecycle-step" th:classappend="${selectedTicket != null and selectedTicket.status == 'DONG' ? 'active' : 'future'}" id="stepDaDong">ĐÃ ĐÓNG</div>
                         </div>
 
                         <!-- Form Cập nhật trạng thái -->
@@ -161,19 +161,20 @@
                             <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                                 <label for="nextStatusSelect" class="form-label mb-0" style="font-size: 0.85rem;">Trạng thái tiếp theo:</label>
                                 <select id="nextStatusSelect" name="nextStatus" class="form-select form-select-sm" style="max-width: 220px;" onchange="validateLifecycleTransitionMock()">
-                                    <option value="HOAN_TAT" selected>HOÀN TẤT ▾</option>
-                                    <option value="DANG_XU_LY">ĐANG XỬ LÝ</option>
+                                    <option value="DANG_XU_LY" th:selected="${selectedTicket == null or selectedTicket.status == 'DA_PHAN_CONG'}">ĐANG XỬ LÝ ▾</option>
+                                    <option value="HOAN_TAT" th:selected="${selectedTicket != null and selectedTicket.status == 'DANG_XU_LY'}">HOÀN TẤT</option>
+                                    <option value="DONG" th:selected="${selectedTicket != null and (selectedTicket.status == 'HOAN_TAT' or selectedTicket.status == 'HOAN_THANH')}">ĐÃ ĐÓNG</option>
                                     <option value="DA_PHAN_CONG">ĐÃ PHÂN CÔNG</option>
-                                    <option value="DONG">ĐÃ ĐÓNG</option>
                                 </select>
-                                <button type="submit" class="btn btn-crm-primary btn-sm px-3">
-                                    Cập nhật trạng thái
+                                <button type="submit" class="btn btn-crm-primary btn-sm px-3" id="btnUpdateStatus"
+                                        th:text="${selectedTicket != null and selectedTicket.status == 'DA_PHAN_CONG' ? 'Bắt đầu sửa' : 'Cập nhật trạng thái'}">
+                                    Bắt đầu sửa
                                 </button>
                             </div>
                         </form>
 
                         <!-- Khung cảnh báo vi phạm vòng đời QT-06 theo Wireframe MH3 -->
-                        <div id="lifecycleErrorAlert" class="alert-wireframe-danger mt-2" style="display: block;">
+                        <div id="lifecycleErrorAlert" class="alert-wireframe-danger mt-2" style="display: none;">
                             ❌ Không thể chuyển trạng thái từ HOÀN TẤT về ĐANG XỬ LÝ (Quy tắc QT-06).
                         </div>
 

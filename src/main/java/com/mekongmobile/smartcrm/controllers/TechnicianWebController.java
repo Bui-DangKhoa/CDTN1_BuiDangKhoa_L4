@@ -55,8 +55,14 @@ public class TechnicianWebController {
 
         Long loggedInTechId = (tech != null) ? tech.getTechnicianId() : 1L;
 
-        // QT-15: KTV chỉ xem danh sách phiếu gán cho cá nhân, che 4 số giữa SĐT khách hàng qua DTO Mapper
-        List<TicketResponseDto> ticketDtos = ticketService.getTicketsForTechnician(loggedInTechId);
+        // QT-15: KTV chỉ xem danh sách phiếu gán cho cá nhân (DA_PHAN_CONG, DANG_XU_LY), che SĐT khách hàng
+        List<TicketResponseDto> ticketDtos = ticketService.getActiveTicketsForTechnician(loggedInTechId);
+        if (ticketDtos.isEmpty() && currentUser != null && currentUser.getUserId() != null && !currentUser.getUserId().equals(loggedInTechId)) {
+            ticketDtos = ticketService.getActiveTicketsForTechnician(currentUser.getUserId());
+        }
+        if (ticketDtos.isEmpty()) {
+            ticketDtos = ticketService.getTicketsForTechnician(loggedInTechId);
+        }
 
         TicketResponseDto selectedTicket = null;
         if (ticketId != null) {
@@ -84,14 +90,6 @@ public class TechnicianWebController {
             RedirectAttributes redirectAttributes) {
         log.info("POST /technician/tickets/{}/status - Cập nhật trạng thái sang {}", id, nextStatus);
 
-        // Quy tắc kiểm tra QT-06: Chuyển đổi trạng thái hợp lệ
-        if ("DANG_XU_LY".equalsIgnoreCase(nextStatus)) {
-            // Mô phỏng / Kiểm tra vi phạm QT-06 khi từ trạng thái hoàn tất quay về
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Không thể chuyển trạng thái từ HOÀN TẤT về ĐANG XỬ LÝ (Quy tắc QT-06).");
-            return "redirect:/technician/my-tickets?ticketId=" + id;
-        }
-
         try {
             com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
                     (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
@@ -105,11 +103,12 @@ public class TechnicianWebController {
             UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder()
                     .newStatus(nextStatus)
                     .changedBy(changedById) // KTV đăng nhập
-                    .changeReason("Cập nhật tiến độ theo quy trình QT-06")
+                    .changeReason("KTV cập nhật tiến độ theo quy trình QT-06")
                     .build();
             ticketService.updateTicketStatus(id, dto);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái phiếu thành công!");
         } catch (Exception ex) {
+            log.warn("Lỗi chuyển đổi trạng thái QT-06 cho ticket {}: {}", id, ex.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
         }
 
