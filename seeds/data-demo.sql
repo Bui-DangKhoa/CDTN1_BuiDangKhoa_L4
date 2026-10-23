@@ -1,6 +1,8 @@
 -- Seed Dữ liệu Demo Nghiệp vụ (Smart CRM - Phân công KTV & Lịch hẹn)
 -- Đảm bảo tính Idempotent (Tiêu chí C5): Sử dụng ON DUPLICATE KEY UPDATE / INSERT IGNORE
 
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 
