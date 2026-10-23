@@ -54,3 +54,8 @@ Tài liệu ghi nhận toàn bộ các quyết định điều chỉnh kỹ thu�
 - **Thay đổi gì**: Thêm `@Slf4j` cho các lớp Service (`TicketServiceImpl`, `AppointmentService`, `AuthService`) và ghi log `INFO` khi thao tác thành công, `WARN` khi vi phạm quy tắc nghiệp vụ; cập nhật `GlobalExceptionHandler` bắt ngoại lệ tập trung và không để lộ chuỗi SQL hoặc stack trace ra ngoài client.
 - **Lý do**: Nâng cao chất lượng Clean Code, năng lực giám sát vận hành (Observability) và bảo mật an toàn thông tin theo chuẩn SE.
 - **Ảnh hưởng tới thành phần nào**: `TicketServiceImpl.java`, `AppointmentService.java`, `AuthService.java`, `GlobalExceptionHandler.java`.
+
+### TD-10: Đồng bộ tên Repository chính thức `CDTN1_BuiDangKhoa_L4`
+- **Thay đổi gì**: Đổi tên kho lưu trữ GitHub từ `smart-crm-technician-scheduling` sang `CDTN1_BuiDangKhoa_L4` (`https://github.com/Bui-DangKhoa/CDTN1_BuiDangKhoa_L4.git`); cập nhật đường dẫn và lệnh clone trong `README.md`, thẻ `<name>`/`<url>` trong `pom.xml`.
+- **Lý do**: Tuân thủ quy ước đặt tên repository nộp bài của học phần Chuyên đề tốt nghiệp 1 (`CDTN1_<HoTen>_<MaLuong>`).
+- **Ảnh hưởng tới thành phần nào**: `README.md`, `pom.xml`, `docs/thay-doi-thiet-ke.md`, cấu hình Git remote `origin`.

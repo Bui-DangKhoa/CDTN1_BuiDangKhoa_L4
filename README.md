@@ -13,7 +13,7 @@
 - **Sinh viên thực hiện**: Bùi Đăng Khoa
 - **Mã số sinh viên (MSSV)**: 2374802013428
 - **Lớp**: L4-SE
-- **Kho lưu trữ GitHub (Repository)**: https://github.com/Bui-DangKhoa/CDTN1_BuiDangKhoa_L4.git
+- **Kho lưu trữ GitHub (Repository)**: [https://github.com/Bui-DangKhoa/CDTN1_BuiDangKhoa_L4.git](https://github.com/Bui-DangKhoa/CDTN1_BuiDangKhoa_L4.git)
 - **Công nghệ nền tảng**: Java 21 LTS, Spring Boot 3.3.4, Spring Data JPA, MySQL 8.0 (InnoDB), Thymeleaf, Bootstrap 5, Docker & Docker Compose.
 
 ---
@@ -102,7 +102,7 @@ Hệ thống được thiết kế theo tiêu chí **Zero-Setup (Clone-and-Run)*
 
 ### Bước 1: Sao chép mã nguồn từ GitHub
 ```bash
-git clone --branch v0.2 https://github.com/Bui-DangKhoa/smart-crm-technician-scheduling.git .
+git clone --branch v0.2 https://github.com/Bui-DangKhoa/CDTN1_BuiDangKhoa_L4.git .
 ```
 
 ### Bước 2: Thiết lập biến môi trường
