@@ -22,13 +22,20 @@ RUN ./mvnw clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Tạo user phi đặc quyền (non-root) để chạy ứng dụng an toàn
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
+# Cài đặt curl để hỗ trợ HEALTHCHECK qua endpoint /actuator/health
+RUN apk --no-cache add curl
 
-# Copy tệp thực thi .jar từ Stage 1
-COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
+# Tạo user phi đặc quyền (non-root) để chạy ứng dụng an toàn
+RUN addgroup -S app && adduser -S app -G app
+USER app:app
+
+# Copy tệp thực thi .jar từ Stage 1 với quyền thuộc về user app
+COPY --from=build --chown=app:app /app/target/*.jar app.jar
 
 EXPOSE 8080
+
+# Khai báo HEALTHCHECK giám sát trạng thái ứng dụng qua Spring Boot Actuator
+HEALTHCHECK --interval=15s --timeout=5s --retries=5 --start-period=30s \
+  CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

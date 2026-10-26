@@ -41,8 +41,16 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-crm_password123}
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
       APP_PORT: ${APP_PORT:-8080}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      JWT_SECRET: ${JWT_SECRET:-chuoi_bi_mat_32_ky_tu_sample}
     ports:
       - "${APP_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - smartcrm-network
 
