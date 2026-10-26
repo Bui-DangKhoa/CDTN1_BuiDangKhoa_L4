@@ -1,0 +1,51 @@
+# Nhật ký Gỡ lỗi Hệ thống Smart CRM (Luồng L4)
+> **Dự án**: CDTN1_BuiDangKhoa_L4 (Hệ thống điều phối kỹ thuật viên Smart CRM - Mekong Mobile)  
+> **Quy trình gỡ lỗi chuẩn 4 bước**: Tái lập (Reproduce) ➔ Khoanh vùng (Isolate) ➔ Sửa nguyên nhân (Fix Root Cause) ➔ Xác nhận bằng test (Verify via Regression Test).
+
+---
+
+## BUG-001 · Major — Lỗi sập hệ thống khi gán KTV trùng khung giờ hoặc thiếu lý do đổi
+
+| Dòng | Nội dung |
+| :--- | :--- |
+| **1. Mã và mức độ** | BUG-001 · Major |
+| **2. Phát hiện bởi** | Kiểm thử tự động `AppointmentServiceTest.testScheduleConflict` |
+| **3. Triệu chứng** | Khởi tạo lịch hẹn trùng giờ ném HTTP 500 (Internal Server Error) do xung đột dữ liệu thay vì trả về thông báo bận lịch thân thiện cho người dùng. |
+| **4. Cách tái lập** | Chạy lệnh kiểm thử tự động: `./mvnw test -Dtest=AppointmentServiceTest#testScheduleConflict` |
+| **5. Nguyên nhân** | Thiếu hàm kiểm tra chống trùng lịch `hasScheduleConflict` ở Tầng Service (`AppointmentService`) trước khi gọi lệnh `save()` xuống cơ sở dữ liệu. |
+| **6. Cách sửa** | Bổ sung truy vấn JPQL `existsByTechnician_TechnicianIdAndAppointmentTimeAndStatusNot` tại `AppointmentRepository` để kiểm tra khung thời gian và ném `AppException("SCHEDULE_CONFLICT", "Kỹ thuật viên đã có lịch hẹn khác...")`. Tích hợp `GlobalExceptionHandler` trả về HTTP 409 Conflict chuẩn JSON. |
+| **7. Commit và xác nhận** | Commit: `d44cf58` (Tích hợp RequestIdFilter, che SĐT và GlobalExceptionHandler) + Unit test `AppointmentServiceTest#testScheduleConflict` **PASS 100%**. |
+
+---
+
+### Chi tiết các bước gỡ lỗi theo chuẩn 4 bước:
+
+1. **Bước 1: Tái lập (Reproduce)**
+   - Thực thi `./mvnw test -Dtest=AppointmentServiceTest#testScheduleConflict`.
+   - Giả lập trường hợp KTV `ID = 5` đã có lịch hẹn ở thời điểm `2026-10-20T09:00:00`.
+   - Hệ thống không chặn ở tầng nghiệp vụ mà đẩy trực tiếp thao tác ghi xuống DB gây lỗi hoặc ghi đè lịch hẹn.
+
+2. **Bước 2: Khoanh vùng (Isolate)**
+   - Vị trí lỗi: Phương thức `scheduleAppointment(Long ticketId, Long technicianId, LocalDateTime appointmentTime)` trong `AppointmentService.java`.
+   - Tầng dữ liệu: `AppointmentRepository` chưa có phương thức kiểm tra trùng lịch có loại trừ trạng thái `DA_HUY`.
+
+3. **Bước 3: Sửa nguyên nhân gốc (Fix Root Cause)**
+   - Thêm phương thức truy vấn Spring Data JPA:
+     ```java
+     boolean existsByTechnician_TechnicianIdAndAppointmentTimeAndStatusNot(
+         Long technicianId, LocalDateTime appointmentTime, String status
+     );
+     ```
+   - Trước khi lưu lịch hẹn, kiểm tra:
+     ```java
+     boolean isConflict = appointmentRepository.existsByTechnician_TechnicianIdAndAppointmentTimeAndStatusNot(
+         technicianId, appointmentTime, "DA_HUY"
+     );
+     if (isConflict) {
+         throw new AppException("SCHEDULE_CONFLICT", "Kỹ thuật viên đã có lịch hẹn khác trong khung giờ này");
+     }
+     ```
+
+4. **Bước 4: Xác nhận bằng test (Verify via Regression Test)**
+   - Kiểm thử đơn vị `AppointmentServiceTest#testScheduleConflict` thực thi và trả về kết quả `BUILD SUCCESS` (Pass 100%).
+   - Ngoại lệ trả về đúng mã lỗi `SCHEDULE_CONFLICT` với HTTP Status `409 CONFLICT`, không lộ stack trace hay câu lệnh SQL nội bộ.
