@@ -13,9 +13,9 @@ spring:
     name: smart-crm-technician-scheduling
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:${MYSQL_HOST:localhost}}:${DB_PORT:${MYSQL_PORT:3306}}/${DB_NAME:${MYSQL_DATABASE:smart_crm_db}}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&useUnicode=true&characterEncoding=UTF-8}
-    username: ${SPRING_DATASOURCE_USERNAME:${MYSQL_USER:crm_user}}
-    password: ${SPRING_DATASOURCE_PASSWORD:${MYSQL_PASSWORD:crm_password123}}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:${MYSQL_HOST:localhost}}:${DB_PORT:${MYSQL_PORT:3306}}/${DB_NAME:${MYSQL_DATABASE:smart-crm-technician-scheduling}}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&useUnicode=true&characterEncoding=UTF-8}
+    username: ${SPRING_DATASOURCE_USERNAME:${MYSQL_USER:smart-crm-technician-scheduling}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${MYSQL_PASSWORD:12345}}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
