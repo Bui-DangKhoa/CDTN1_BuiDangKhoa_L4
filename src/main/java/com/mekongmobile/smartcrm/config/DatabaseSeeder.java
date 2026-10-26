@@ -1,9 +1,13 @@
 package com.mekongmobile.smartcrm.config;
 
 import com.mekongmobile.smartcrm.entities.AppUser;
+import com.mekongmobile.smartcrm.entities.Appointment;
+import com.mekongmobile.smartcrm.entities.Device;
 import com.mekongmobile.smartcrm.entities.IssueCategory;
 import com.mekongmobile.smartcrm.entities.Technician;
 import com.mekongmobile.smartcrm.entities.Ticket;
+import com.mekongmobile.smartcrm.repositories.AppointmentRepository;
+import com.mekongmobile.smartcrm.repositories.DeviceRepository;
 import com.mekongmobile.smartcrm.repositories.IssueCategoryRepository;
 import com.mekongmobile.smartcrm.repositories.TechnicianRepository;
 import com.mekongmobile.smartcrm.repositories.TicketRepository;
@@ -14,6 +18,8 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
 
 /**
  * Tự động nạp tài khoản mẫu kiểm thử nếu bảng app_user chưa có dữ liệu.
@@ -28,12 +34,15 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final IssueCategoryRepository issueCategoryRepository;
     private final TechnicianRepository technicianRepository;
     private final TicketRepository ticketRepository;
+    private final DeviceRepository deviceRepository;
+    private final AppointmentRepository appointmentRepository;
     private final JdbcTemplate jdbcTemplate;
 
     @Override
     public void run(String... args) {
         seedDefaultUsers();
         repairCorruptedData();
+        seedLookupDemoData();
     }
 
     private void seedDefaultUsers() {
@@ -153,5 +162,46 @@ public class DatabaseSeeder implements CommandLineRunner {
                 ticketRepository.save(t);
             }
         });
+    }
+
+    private void seedLookupDemoData() {
+        if (ticketRepository.findByTicketCode("BH-00125").isEmpty()) {
+            log.info("Khởi tạo dữ liệu mẫu phiếu bảo hành BH-00125 cho cổng tra cứu khách hàng (/lookup)...");
+            Device device = deviceRepository.findById(1L).orElse(null);
+            IssueCategory category = issueCategoryRepository.findById(1).orElse(null);
+            Technician technician = technicianRepository.findById(1L).orElse(null);
+
+            if (device != null && category != null && technician != null) {
+                Ticket ticket = Ticket.builder()
+                        .ticketId(125L)
+                        .ticketCode("BH-00125")
+                        .customerId(201L)
+                        .customerPhone("0901234567")
+                        .device(device)
+                        .centerId(1L)
+                        .technician(technician)
+                        .category(category)
+                        .issueDesc("Màn hình cảm ứng bị loạn, hẹn tiếp nhận kiểm tra và thay màn hình")
+                        .priority("CAO")
+                        .status("DANG_XU_LY")
+                        .receivedAt(LocalDateTime.now().minusDays(1))
+                        .dueDate(LocalDateTime.now().plusDays(2))
+                        .build();
+                ticket = ticketRepository.save(ticket);
+
+                if (appointmentRepository.findByTicket_TicketId(ticket.getTicketId()).isEmpty()) {
+                    Appointment appointment = Appointment.builder()
+                            .appointmentId(125L)
+                            .ticket(ticket)
+                            .technician(technician)
+                            .appointmentTime(LocalDateTime.now().plusDays(1).withHour(14).withMinute(0).withSecond(0).withNano(0))
+                            .status("CHO_XAC_NHAN")
+                            .createdAt(LocalDateTime.now().minusDays(1))
+                            .build();
+                    appointmentRepository.save(appointment);
+                    log.info("Đã tạo lịch hẹn mẫu thành công cho phiếu BH-00125 (SĐT: 0901234567)");
+                }
+            }
+        }
     }
 }

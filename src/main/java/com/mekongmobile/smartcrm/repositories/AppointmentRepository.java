@@ -60,11 +60,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     /**
      * US7 / FR7: Tìm kiếm lịch hẹn công khai theo mã phiếu (ticketCode) hoặc SĐT khách hàng.
+     * Sử dụng LEFT JOIN FETCH nạp sẵn ticket, device và technician để tránh LazyInitializationException khi render view.
      */
     @Query("""
         SELECT a FROM Appointment a
-        WHERE a.ticket.ticketCode = :keyword
-           OR a.ticket.customerPhone = :keyword
+        LEFT JOIN FETCH a.ticket t
+        LEFT JOIN FETCH t.device d
+        LEFT JOIN FETCH a.technician tech
+        WHERE t.ticketCode = :keyword
+           OR t.customerPhone = :keyword
         ORDER BY a.appointmentTime DESC
     """)
     List<Appointment> findByTicketCodeOrPhone(@Param("keyword") String keyword);

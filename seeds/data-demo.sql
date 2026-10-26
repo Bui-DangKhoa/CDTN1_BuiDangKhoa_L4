@@ -90,7 +90,9 @@ VALUES
 -- Phiếu 7: Đã gán cho KTV 1 - Thay pin / Nguồn, trạng thái ĐANG XỬ LÝ (dùng để test KTV bấm hoàn tất sửa chữa HOAN_TAT)
 (107, 'TK-202610-007', 202, '0912345678', 2, 1, 1, 2, 'Pin chai còn 68%, máy thường xuyên báo pin ảo và tự khởi động lại', 'CAO', 'DANG_XU_LY', '2026-10-21 10:30:00', '2026-10-24 15:00:00', NULL),
 -- Phiếu 8: Đã gán cho KTV 1 - Sửa chữa Camera, trạng thái ĐÃ PHÂN CÔNG
-(108, 'TK-202610-008', 205, '0977889900', 5, 1, 1, 5, 'Cụm camera tele zoom 5x bị mờ sương và kẹt chống rung OIS', 'TRUNG_BINH', 'DA_PHAN_CONG', '2026-10-21 14:00:00', '2026-10-25 12:00:00', NULL)
+(108, 'TK-202610-008', 205, '0977889900', 5, 1, 1, 5, 'Cụm camera tele zoom 5x bị mờ sương và kẹt chống rung OIS', 'TRUNG_BINH', 'DA_PHAN_CONG', '2026-10-21 14:00:00', '2026-10-25 12:00:00', NULL),
+-- Phiếu 9 (Mẫu tra cứu Cổng khách hàng /lookup): BH-00125 (SĐT: 0901234567)
+(125, 'BH-00125', 201, '0901234567', 1, 1, 1, 1, 'Màn hình cảm ứng bị loạn, hẹn tiếp nhận kiểm tra và thay màn hình', 'CAO', 'DANG_XU_LY', '2026-10-25 08:30:00', '2026-10-28 17:00:00', NULL)
 ON DUPLICATE KEY UPDATE
     `ticket_code` = VALUES(`ticket_code`),
     `customer_id` = VALUES(`customer_id`),
@@ -107,18 +109,22 @@ ON DUPLICATE KEY UPDATE
     `closed_at` = VALUES(`closed_at`);
 
 -- -----------------------------------------------------
--- 6. Seed Lịch hẹn KTV (appointment - QT-L4-01 / NFR2)
+-- 6. Seed Lịch hẹn KTV (appointment - QT-L4-01 / NFR2 / US7 Cổng Tra Cứu Khách Hàng)
 -- -----------------------------------------------------
 INSERT INTO `appointment` (`appointment_id`, `ticket_id`, `technician_id`, `appointment_time`, `status`, `created_at`)
 VALUES
--- Lịch hẹn cho Phiếu 103: Chờ khách hàng xác nhận qua cổng tra cứu /lookup
-(1, 103, 1, '2026-10-22 09:30:00', 'CHO_XAC_NHAN', '2026-10-19 14:15:00'),
--- Lịch hẹn cho Phiếu 104: Đã xác nhận
-(2, 104, 1, '2026-10-22 14:00:00', 'DA_XAC_NHAN', '2026-10-19 15:30:00'),
--- Lịch hẹn cho Phiếu 106: KTV 1 giao nhận màn hình
-(3, 106, 1, '2026-10-23 10:00:00', 'DA_XAC_NHAN', '2026-10-21 09:15:00'),
--- Lịch hẹn cho Phiếu 107: KTV 1 thay pin
-(4, 107, 1, '2026-10-24 14:30:00', 'CHO_XAC_NHAN', '2026-10-21 10:45:00')
+-- Lịch hẹn cho Phiếu 103 (TK-202610-003, SĐT: 0909123456): Chờ khách hàng xác nhận qua cổng tra cứu /lookup
+(1, 103, 1, '2026-10-27 09:30:00', 'CHO_XAC_NHAN', '2026-10-25 14:15:00'),
+-- Lịch hẹn cho Phiếu 104 (TK-202610-004, SĐT: 0933221100): Đã xác nhận giao nhận
+(2, 104, 1, '2026-10-27 14:00:00', 'DA_XAC_NHAN', '2026-10-25 15:30:00'),
+-- Lịch hẹn cho Phiếu 106 (TK-202610-006, SĐT: 0987654321): KTV 1 giao nhận màn hình
+(3, 106, 1, '2026-10-28 10:00:00', 'DA_XAC_NHAN', '2026-10-25 09:15:00'),
+-- Lịch hẹn cho Phiếu 107 (TK-202610-007, SĐT: 0912345678): KTV 1 thay pin, chờ xác nhận
+(4, 107, 1, '2026-10-29 14:30:00', 'CHO_XAC_NHAN', '2026-10-25 10:45:00'),
+-- Lịch hẹn cho Phiếu 125 (BH-00125, SĐT: 0901234567): Mẫu chuẩn Cổng Tra Cứu Khách Hàng /lookup, chờ xác nhận
+(5, 125, 1, '2026-10-28 15:00:00', 'CHO_XAC_NHAN', '2026-10-25 09:00:00'),
+-- Lịch hẹn cho Phiếu 101 (TK-202610-001, SĐT: 0987654321): Đã xác nhận
+(6, 101, 2, '2026-10-27 10:30:00', 'DA_XAC_NHAN', '2026-10-25 08:45:00')
 ON DUPLICATE KEY UPDATE
     `ticket_id` = VALUES(`ticket_id`),
     `technician_id` = VALUES(`technician_id`),
