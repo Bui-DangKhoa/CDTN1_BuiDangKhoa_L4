@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${APP_PORT:8080}
   servlet:
     context-path: /
     encoding:
@@ -13,19 +13,19 @@ spring:
     name: smart-crm-technician-scheduling
 
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:smart-crm-technician-scheduling}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&useUnicode=true&characterEncoding=UTF-8
-    username: smart-crm-technician-scheduling
-    password: 12345
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:${MYSQL_HOST:localhost}}:${DB_PORT:${MYSQL_PORT:3306}}/${DB_NAME:${MYSQL_DATABASE:smart_crm_db}}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh&useUnicode=true&characterEncoding=UTF-8}
+    username: ${SPRING_DATASOURCE_USERNAME:${MYSQL_USER:crm_user}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${MYSQL_PASSWORD:crm_password123}}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    show-sql: ${SHOW_SQL:true}
     open-in-view: false
     properties:
       hibernate:
-        "[format_sql]": true
+        "[format_sql]": false
         dialect: org.hibernate.dialect.MySQLDialect
 
   thymeleaf:
@@ -37,9 +37,13 @@ spring:
 
 logging:
   level:
-    root: INFO
-    "[com.mekongmobile.smartcrm]": DEBUG
-    "[org.hibernate.SQL]": DEBUG
+    root: ${LOG_LEVEL:INFO}
+    "[com.mekongmobile.smartcrm]": ${APP_LOG_LEVEL:DEBUG}
+    "[org.hibernate.SQL]": ${SQL_LOG_LEVEL:WARN}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:chuoi_bi_mat_32_ky_tu_sample}
 
 management:
   endpoints:
@@ -49,5 +53,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-
