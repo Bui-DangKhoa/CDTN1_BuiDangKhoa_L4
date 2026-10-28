@@ -127,18 +127,19 @@ public class GlobalExceptionHandler {
     }
 
     private HttpStatus resolveHttpStatus(AppException ex) {
-        if (ex.getStatus() != null && ex.getStatus() != HttpStatus.BAD_REQUEST) {
-            return ex.getStatus();
-        }
-        if (ex.getErrorCode() == null) {
+        String errorCode = ex.getErrorCode();
+        if (errorCode == null) {
             return HttpStatus.BAD_REQUEST;
         }
-        return switch (ex.getErrorCode().toUpperCase()) {
+        return switch (errorCode.toUpperCase()) {
             case "NOT_FOUND", "RESOURCE_NOT_FOUND" -> HttpStatus.NOT_FOUND;
             case "SCHEDULE_CONFLICT", "CONFLICT" -> HttpStatus.CONFLICT;
             case "BUSINESS_RULE_VIOLATION" -> HttpStatus.UNPROCESSABLE_ENTITY;
-            case "KTV_NOT_QUALIFIED", "INVALID_CHANGE_REASON", "BAD_REQUEST" -> HttpStatus.BAD_REQUEST;
-            default -> ex.getStatus() != null ? ex.getStatus() : HttpStatus.BAD_REQUEST;
+            case "UNAUTHORIZED", "INVALID_CREDENTIALS" -> HttpStatus.UNAUTHORIZED;
+            case "FORBIDDEN", "ACCESS_DENIED" -> HttpStatus.FORBIDDEN;
+            case "KTV_NOT_QUALIFIED", "INVALID_CHANGE_REASON", "INVALID_STATUS_TRANSITION",
+                 "INVALID_APPOINTMENT_TIME", "BAD_REQUEST", "VALIDATION_ERROR" -> HttpStatus.BAD_REQUEST;
+            default -> HttpStatus.BAD_REQUEST;
         };
     }
 }
