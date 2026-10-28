@@ -14,13 +14,15 @@ public interface TechnicianService {
 
     Optional<Technician> findById(Long id);
 
+    Optional<Technician> findByUserId(Long userId);
+
     Optional<Technician> findByFullName(String fullName);
 
     List<Technician> findActiveTechniciansByCenter(Long centerId);
 
     /**
-     * Xác định Kỹ thuật viên tương ứng với người dùng đăng nhập hiện tại.
+     * Xác định Kỹ thuật viên tương ứng với người dùng đăng nhập hiện tại bằng user_id.
+     * Trả về Optional.empty() nếu tài khoản không liên kết với KTV nào.
      */
-    Technician resolveTechnicianForUser(UserSessionDto currentUser);
+    Optional<Technician> resolveTechnicianForUser(UserSessionDto currentUser);
 }
-

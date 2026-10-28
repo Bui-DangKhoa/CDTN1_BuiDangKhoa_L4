@@ -135,7 +135,7 @@ public class ThymeleafViewsTest {
                                 .dueDate(LocalDateTime.now().plusHours(12))
                                 .build();
 
-                when(technicianService.resolveTechnicianForUser(any())).thenReturn(tech);
+                when(technicianService.resolveTechnicianForUser(any())).thenReturn(Optional.of(tech));
                 when(technicianService.findById(anyLong())).thenReturn(Optional.of(tech));
                 when(ticketService.getTicketsForTechnician(anyLong())).thenReturn(List.of(ticketDto));
 

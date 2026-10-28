@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * TẦNG 1: Controller phục vụ Màn hình Kỹ thuật viên cá nhân (Màn hình 3 / MH3).
@@ -38,15 +39,25 @@ public class TechnicianWebController {
 
         UserSessionDto currentUser = (UserSessionDto) session.getAttribute("currentUser");
 
-        // Xác định KTV đăng nhập qua tầng Service
-        Technician tech = technicianService.resolveTechnicianForUser(currentUser);
-        Long loggedInTechId = (tech != null) ? tech.getTechnicianId() : 1L;
+        // Xác định KTV đăng nhập qua user_id
+        Optional<Technician> techOpt = technicianService.resolveTechnicianForUser(currentUser);
+        if (techOpt.isEmpty()) {
+            log.warn("Tài khoản '{}' (userId: {}) chưa liên kết với kỹ thuật viên nào",
+                    currentUser != null ? currentUser.getUsername() : "null",
+                    currentUser != null ? currentUser.getUserId() : "null");
+            model.addAttribute("technician", null);
+            model.addAttribute("myTickets", List.of());
+            model.addAttribute("selectedTicket", null);
+            model.addAttribute("errorMessage", "Tài khoản chưa liên kết với kỹ thuật viên");
+            model.addAttribute("title", "Mekong Mobile Smart CRM - Màn hình Kỹ thuật viên");
+            return "technician/my-tickets";
+        }
+
+        Technician tech = techOpt.get();
+        Long loggedInTechId = tech.getTechnicianId();
 
         // QT-15: KTV chỉ xem danh sách phiếu gán cho cá nhân (DA_PHAN_CONG, DANG_XU_LY), che SĐT khách hàng
         List<TicketResponseDto> ticketDtos = ticketService.getActiveTicketsForTechnician(loggedInTechId);
-        if (ticketDtos.isEmpty() && currentUser != null && currentUser.getUserId() != null && !currentUser.getUserId().equals(loggedInTechId)) {
-            ticketDtos = ticketService.getActiveTicketsForTechnician(currentUser.getUserId());
-        }
         if (ticketDtos.isEmpty()) {
             ticketDtos = ticketService.getTicketsForTechnician(loggedInTechId);
         }
@@ -79,8 +90,13 @@ public class TechnicianWebController {
 
         try {
             UserSessionDto currentUser = (UserSessionDto) session.getAttribute("currentUser");
-            Technician tech = technicianService.resolveTechnicianForUser(currentUser);
-            Long changedById = (tech != null) ? tech.getTechnicianId() : ((currentUser != null) ? currentUser.getUserId() : 1L);
+            Optional<Technician> techOpt = technicianService.resolveTechnicianForUser(currentUser);
+            if (techOpt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Tài khoản chưa liên kết với kỹ thuật viên");
+                return "redirect:/technician/my-tickets";
+            }
+
+            Long changedById = techOpt.get().getTechnicianId();
 
             UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder()
                     .newStatus(nextStatus)

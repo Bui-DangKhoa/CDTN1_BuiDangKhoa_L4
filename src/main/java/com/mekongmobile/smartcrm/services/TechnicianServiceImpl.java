@@ -28,6 +28,11 @@ public class TechnicianServiceImpl implements TechnicianService {
     }
 
     @Override
+    public Optional<Technician> findByUserId(Long userId) {
+        return technicianRepository.findByUserId(userId);
+    }
+
+    @Override
     public Optional<Technician> findByFullName(String fullName) {
         return technicianRepository.findByFullName(fullName);
     }
@@ -38,18 +43,11 @@ public class TechnicianServiceImpl implements TechnicianService {
     }
 
     @Override
-    public Technician resolveTechnicianForUser(UserSessionDto currentUser) {
-        Technician tech = null;
-        if (currentUser != null && currentUser.getFullName() != null) {
-            tech = technicianRepository.findByFullName(currentUser.getFullName()).orElse(null);
+    public Optional<Technician> resolveTechnicianForUser(UserSessionDto currentUser) {
+        if (currentUser == null || currentUser.getUserId() == null) {
+            log.warn("resolveTechnicianForUser: currentUser hoặc userId bị null");
+            return Optional.empty();
         }
-        if (tech == null && currentUser != null && currentUser.getUserId() != null) {
-            tech = technicianRepository.findById(currentUser.getUserId()).orElse(null);
-        }
-        if (tech == null) {
-            tech = technicianRepository.findById(1L).orElse(null);
-        }
-        return tech;
+        return technicianRepository.findByUserId(currentUser.getUserId());
     }
 }
-
