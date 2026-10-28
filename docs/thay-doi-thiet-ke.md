@@ -59,3 +59,9 @@ Tài liệu ghi nhận toàn bộ các quyết định điều chỉnh kỹ thu�
 - **Thay đổi gì**: Đổi tên kho lưu trữ GitHub từ `smart-crm-technician-scheduling` sang `CDTN1_BuiDangKhoa_L4` (`https://github.com/Bui-DangKhoa/CDTN1_BuiDangKhoa_L4.git`); cập nhật đường dẫn và lệnh clone trong `README.md`, thẻ `<name>`/`<url>` trong `pom.xml`.
 - **Lý do**: Tuân thủ quy ước đặt tên repository nộp bài của học phần Chuyên đề tốt nghiệp 1 (`CDTN1_<HoTen>_<MaLuong>`).
 - **Ảnh hưởng tới thành phần nào**: `README.md`, `pom.xml`, `docs/thay-doi-thiet-ke.md`, cấu hình Git remote `origin`.
+
+
+### TD-11: Bổ sung liên kết khóa ngoại giữa bảng technician và app_user
+- **Thay đổi gì**: Thêm cột `user_id BIGINT NULL UNIQUE` và ràng buộc khóa ngoại trỏ tới `app_user(user_id)` vào bảng `technician` trong CSDL, đồng bộ Entity `Technician.java` và seed data `ktv1`.
+- **Lý do**: Khắc phục triệt để lỗi phân định KTV đăng nhập theo chuỗi họ tên hoặc coi `user_id = technician_id`, loại bỏ hoàn toàn lối dự phòng `findById(1L)` và đảm bảo an toàn dữ liệu cá nhân theo US4/QT-14.
+- **Ảnh hưởng tới thành phần nào**: `docs/schema.sql`, `seeds/data-demo.sql`, `Technician.java`, `TechnicianRepository.java`, `TechnicianServiceImpl.java`, `TechnicianWebController.java`.
