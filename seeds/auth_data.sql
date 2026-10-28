@@ -14,3 +14,11 @@ ON DUPLICATE KEY UPDATE
     `role` = VALUES(`role`),
     `center_id` = VALUES(`center_id`),
     `is_active` = VALUES(`is_active`);
+
+-- -----------------------------------------------------
+-- Liên kết tài khoản KTV với hồ sơ technician tương ứng (Idempotent)
+-- -----------------------------------------------------
+UPDATE `technician` t
+JOIN `app_user` u ON u.username = 'ktv1' AND u.full_name = t.full_name
+SET t.user_id = u.user_id
+WHERE t.employee_id = 1001;
