@@ -121,7 +121,12 @@ cp .env.example .env
 > **Kết quả kỳ vọng**: `Tests run: 25, Failures: 0, Errors: 0, Skipped: 0` – `BUILD SUCCESS`.
 
 ### Bước 4: Khởi chạy toàn bộ hệ thống bằng Docker Compose
+> **Lưu ý quan trọng**: Nếu trên máy đã có volume CSDL từ các phiên bản trước đó, vui lòng chạy `docker compose down -v` một lần để dọn sạch volume cũ, đảm bảo cấu trúc bảng `technician` được cập nhật cột `user_id` và nạp dữ liệu liên kết tài khoản mẫu chính xác nhất:
 ```bash
+# Dọn sạch volume CSDL cũ (nếu đã từng khởi chạy trước đó):
+docker compose down -v
+
+# Khởi chạy toàn bộ hệ thống Spring Boot & MySQL 8.0 container:
 docker compose up -d --build
 ```
 > Ứng dụng Spring Boot và CSDL MySQL 8.0 sẽ tự động khởi động và sẵn sàng hoạt động tại: **[http://localhost:8080](http://localhost:8080)**.
