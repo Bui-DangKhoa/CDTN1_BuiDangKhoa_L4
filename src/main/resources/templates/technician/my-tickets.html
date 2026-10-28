@@ -27,7 +27,7 @@
         </div>
     </header>
 
-    <main class="container-fluid px-4 py-3" style="max-width: 1200px;">
+    <main class="container-fluid px-4 py-3" style="max-width: 1320px;">
 
         <!-- Thông báo Thành công -->
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show fw-bold shadow-sm" style="color: #1B5E20 !important; background-color: #E8F5E9 !important; border: 1px solid #2E7D32 !important; font-size: 0.95rem;" role="alert">
@@ -60,7 +60,7 @@
         </div>
 
         <!-- 1. LOADING STATE (Spinner / Khung xương Skeleton) -->
-        <div id="uiLoadingState" class="crm-loading-state text-center my-3 py-4" style="display: none;">
+        <div id="uiLoadingState" class="crm-loading-state text-center my-3 py-4" style="display: none;" th:style="${param.loading != null ? 'display: block;' : 'display: none;'}">
             <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
                 <span class="visually-hidden">Đang tải...</span>
             </div>
@@ -77,7 +77,7 @@
             <!-- =========================================================================
                  CỘT TRÁI: Khung 1 — Phiếu của tôi (US4)
                  ========================================================================= -->
-            <div class="col-12 col-lg-5">
+            <div class="col-12 col-lg-6">
                 <div class="card shadow-sm border" style="border: 1px solid #e5e7eb !important; border-radius: 8px; background-color: #ffffff; min-height: 520px;">
                     <div class="card-body p-3">
                         <h6 class="fw-bold mb-1" style="color: #1976D2; font-size: 0.95rem;">
@@ -89,35 +89,35 @@
 
                         <!-- Bảng danh sách phiếu gán cho KTV -->
                         <div class="table-responsive">
-                            <table class="crm-table mb-2">
+                            <table class="crm-table mb-2 my-tickets-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 80px;">Mã phiếu</th>
-                                        <th style="width: 80px;">Thiết bị</th>
-                                        <th style="width: 75px;">Nhóm sự cố</th>
-                                        <th style="width: 105px;">Hạn (due_date) ▲</th>
-                                        <th style="width: 75px;">Trạng thái</th>
+                                        <th style="width: 16%; min-width: 85px;">Mã phiếu</th>
+                                        <th style="width: 22%; min-width: 95px;">Thiết bị</th>
+                                        <th style="width: 18%; min-width: 90px;">Nhóm sự cố</th>
+                                        <th style="width: 24%; min-width: 130px;">Hạn (due_date) ▲</th>
+                                        <th style="width: 20%; min-width: 105px;">Trạng thái</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <!-- Hiển thị dynamic nếu Controller truyền danh sách myTickets -->
-                                    <th:block th:if="${myTickets != null and not myTickets.empty}">
+                                    <th:block th:if="${myTickets != null and not myTickets.empty and param.empty == null}">
                                         <tr th:each="t, iter : ${myTickets}"
                                             th:classappend="${(selectedTicket != null and selectedTicket.ticketId == t.ticketId) or (selectedTicket == null and iter.index == 0) ? 'row-selected' : ''}"
                                             style="cursor: pointer;"
                                             th:onclick="'window.location.href=\'/technician/my-tickets?ticketId=' + ${t.ticketId} + '\''">
-                                            <td><strong th:text="${'#' + t.ticketCode}">#BH-00125</strong></td>
+                                            <td><strong th:text="${'#' + t.ticketCode}">…</strong></td>
                                             <td th:text="${t.deviceName}">iPhone 13</td>
                                             <td th:text="${t.categoryName}">Màn hình</td>
-                                            <td th:text="${t.dueDate != null ? #temporals.format(t.dueDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">30/10/2026 08:00</td>
-                                            <td>
+                                            <td class="text-nowrap" th:text="${t.dueDate != null ? #temporals.format(t.dueDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">30/10/2026 08:00</td>
+                                            <td class="text-nowrap">
                                                 <span th:text="${t.status == 'DANG_XU_LY' ? 'ĐANG XỬ LÝ' : (t.status == 'DA_PHAN_CONG' ? 'ĐÃ PHÂN CÔNG' : (t.status == 'HOAN_TAT' or t.status == 'HOAN_THANH' ? 'HOÀN TẤT' : t.status))}">ĐANG XỬ LÝ</span>
                                             </td>
                                         </tr>
                                     </th:block>
 
                                     <!-- 2. EMPTY STATE: Hiển thị khi danh sách phiếu của KTV rỗng -->
-                                    <th:block th:if="${myTickets == null or myTickets.empty}">
+                                    <th:block th:if="${myTickets == null or myTickets.empty or param.empty != null}">
                                         <tr id="emptyMyTicketsRow">
                                             <td colspan="5" class="text-center py-4">
                                                 <i class="bi bi-inbox text-muted" style="font-size: 2.25rem;"></i>
@@ -135,7 +135,7 @@
 
                         <!-- Ghi chú dòng được chọn theo Wireframe MH3 -->
                         <div class="mt-2 text-primary fst-italic" style="font-size: 0.85rem;" id="selectedRowNote">
-                            Dòng được chọn: <strong id="selectedTicketCodeText" th:text="${selectedTicket != null ? '#' + selectedTicket.ticketCode : '#BH-00125'}">#BH-00125</strong>
+                            Dòng được chọn: <strong id="selectedTicketCodeText" th:text="${selectedTicket != null ? '#' + selectedTicket.ticketCode : '—'}">…</strong>
                         </div>
 
                     </div>
@@ -145,7 +145,7 @@
             <!-- =========================================================================
                  CỘT PHẢI: Khung 2 (Vòng đời) & Khung 3 (Lịch sử sửa chữa)
                  ========================================================================= -->
-            <div class="col-12 col-lg-7 d-flex flex-column gap-3">
+            <div class="col-12 col-lg-6 d-flex flex-column gap-3">
 
                 <!-- Khung 2 — Vòng đời & Cập nhật trạng thái (FR5 / QT-06) -->
                 <div class="card shadow-sm border" style="border: 1px solid #e5e7eb !important; border-radius: 8px; background-color: #ffffff;">
@@ -211,7 +211,7 @@
                         <!-- Tiêu đề phụ cam đậm theo Wireframe MH3 -->
                         <div class="fw-bold mb-3" style="color: #E65100; font-size: 0.875rem;" id="deviceRepairSubtitle">
                             Thiết bị: <span id="historyDeviceName" th:text="${selectedTicket != null and selectedTicket.deviceName != null ? selectedTicket.deviceName : 'iPhone 13'}">iPhone 13</span> 
-                            (IMEI <span id="historySerialNo" th:text="${selectedTicket != null and selectedTicket.serialNo != null ? selectedTicket.serialNo : '356891234567890'}">356891234567890</span>)  |  
+                            (IMEI <span id="historySerialNo" th:text="${selectedTicket != null and selectedTicket.serialNo != null ? selectedTicket.serialNo : '—'}">…</span>)  |  
                             Lặp lại sự cố <span id="historyCategoryName" th:text="${selectedTicket != null and selectedTicket.categoryName != null ? selectedTicket.categoryName : 'Màn hình'}">Màn hình</span>: 
                             <span id="historyRepeatCount" th:text="${selectedTicket != null and selectedTicket.repeatCount != null ? selectedTicket.repeatCount : 2}">2</span> lần
                         </div>
@@ -231,26 +231,16 @@
                                     <!-- Dynamic nếu có -->
                                     <th:block th:if="${repairHistory != null and not repairHistory.empty}">
                                         <tr th:each="h : ${repairHistory}">
-                                            <td><strong th:text="${h.ticketCode}">#BH-00071</strong></td>
+                                            <td><strong th:text="${h.ticketCode}">…</strong></td>
                                             <td th:text="${h.repairedDate}">12/06/2026</td>
                                             <td th:text="${h.technicianName}">Trần Văn C</td>
                                             <td th:text="${h.solutionDesc}">Thay màn hình OLED</td>
                                         </tr>
                                     </th:block>
 
-                                    <!-- DỮ LIỆU MẪU KHỚP 100% WIREFRAME MH3 -->
                                     <th:block th:if="${repairHistory == null or repairHistory.empty}">
                                         <tr>
-                                            <td><strong>#BH-00071</strong></td>
-                                            <td>12/06/2026</td>
-                                            <td>Trần Văn C</td>
-                                            <td>Thay màn hình OLED</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>#BH-00098</strong></td>
-                                            <td>03/09/2026</td>
-                                            <td>Lê Thị D</td>
-                                            <td>Thay lại màn hình, kiểm tra cáp</td>
+                                            <td colspan="4" class="text-center text-muted py-3">Không có lịch sử sửa chữa trước đó cho thiết bị này.</td>
                                         </tr>
                                     </th:block>
                                 </tbody>

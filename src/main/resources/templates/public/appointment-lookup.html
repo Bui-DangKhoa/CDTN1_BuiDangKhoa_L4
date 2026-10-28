@@ -76,7 +76,7 @@
     <section class="lookup-hero">
         <div class="container">
             <h2 class="fw-bold mb-2">Tra Cứu Lịch Hẹn &amp; Tiến Độ Bảo Hành</h2>
-            <p class="text-white-50 mb-0">Nhập Mã phiếu bảo hành (vd: BH-00125) hoặc Số điện thoại để kiểm tra lịch tiếp nhận</p>
+            <p class="text-white-50 mb-0">Nhập Mã phiếu bảo hành (vd: BH-...) hoặc Số điện thoại để kiểm tra lịch tiếp nhận</p>
         </div>
     </section>
 
@@ -125,7 +125,7 @@
                             <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
                             <input type="text" name="keyword" id="keywordInput" class="form-control"
                                    th:value="${keyword}"
-                                   placeholder="Nhập Mã phiếu (vd: BH-00125) hoặc Số điện thoại" required autofocus>
+                                   placeholder="Nhập Mã phiếu (vd: BH-...) hoặc Số điện thoại" required autofocus>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -138,7 +138,7 @@
         </div>
 
         <!-- 3 UI States: 1. Loading Spinner / Skeleton State -->
-        <div id="uiStateLoading" class="spinner-overlay text-center my-5 py-4 flex-column align-items-center justify-content-center">
+        <div id="uiStateLoading" class="spinner-overlay text-center my-5 py-4 flex-column align-items-center justify-content-center" th:classappend="${param.loading != null ? 'active' : ''}">
             <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
                 <span class="visually-hidden">Đang tải...</span>
             </div>
@@ -151,9 +151,9 @@
         </div>
 
         <!-- Results Section -->
-        <div id="resultsContainer">
+        <div id="resultsContainer" th:style="${param.loading != null ? 'opacity: 0.2;' : ''}">
             <!-- 3 UI States: 2. Empty State -->
-            <div th:if="${searched != null and searched and (appointments == null or #lists.isEmpty(appointments))}"
+            <div th:if="${(searched != null and searched and (appointments == null or #lists.isEmpty(appointments))) or param.empty != null}"
                  id="uiStateEmpty" class="text-center py-5 my-3 bg-white rounded-3 shadow-sm border p-4">
                 <i class="bi bi-calendar-x text-muted" style="font-size: 3.5rem;"></i>
                 <h5 class="fw-bold mt-3 text-secondary">Không có phiếu bảo hành nào cần phân công</h5>
@@ -180,7 +180,7 @@
                     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
                         <div>
                             <span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1 me-2"
-                                  th:text="${app.ticket != null ? '#' + app.ticket.ticketCode : 'Mã: #' + app.appointmentId}">#BH-00125</span>
+                                  th:text="${app.ticket != null ? '#' + app.ticket.ticketCode : 'Mã: #' + app.appointmentId}">…</span>
                             <span class="text-secondary small" th:if="${app.ticket != null and app.ticket.device != null}"
                                   th:text="${app.ticket.device.deviceName}">iPhone 13</span>
                         </div>
@@ -210,7 +210,7 @@
                             <div class="text-muted small">Kỹ thuật viên phụ trách:</div>
                             <div class="fw-semibold text-dark mt-1">
                                 <i class="bi bi-person-badge text-primary me-1"></i>
-                                <span th:text="${app.technician != null ? app.technician.fullName : 'Đang điều phối'}">Nguyễn Văn B</span>
+                                <span th:text="${app.technician != null ? app.technician.fullName : 'Đang điều phối'}">…</span>
                             </div>
                         </div>
                         <div class="col-12" th:if="${app.ticket != null and app.ticket.issueDesc != null}">
