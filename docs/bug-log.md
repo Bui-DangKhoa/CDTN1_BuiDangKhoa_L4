@@ -9,19 +9,19 @@
 | Dòng | Nội dung |
 | :--- | :--- |
 | **1. Mã và mức độ** | BUG-001 · Major |
-| **2. Phát hiện bởi** | Kiểm thử tự động `AppointmentServiceTest.testScheduleConflict` |
+| **2. Phát hiện bởi** | Kiểm thử tự động `AppointmentServiceTest.testCreateAppointment_ScheduleConflict_QTL401` |
 | **3. Triệu chứng** | Khởi tạo lịch hẹn trùng giờ ném 500 thay vì thông báo bận lịch |
-| **4. Cách tái lập** | `./mvnw test -Dtest=AppointmentServiceTest#testScheduleConflict` |
+| **4. Cách tái lập** | `./mvnw test -Dtest=AppointmentServiceTest#testCreateAppointment_ScheduleConflict_QTL401` |
 | **5. Nguyên nhân** | Thiếu hàm kiểm tra chống trùng lịch `hasScheduleConflict` ở Tầng Service trước khi lưu DB |
 | **6. Cách sửa** | Bổ sung truy vấn JPQL kiểm tra khoảng thời gian và ném `AppException("SCHEDULE_CONFLICT")` |
-| **7. Commit và xác nhận** | Commit: `d44cf58` (Tích hợp RequestIdFilter, che SĐT và GlobalExceptionHandler) + Unit test `AppointmentServiceTest#testScheduleConflict` PASS 100% |
+| **7. Commit và xác nhận** | Commit: `4b866a2` (Chống gán trùng lịch hẹn KTV QT-L4-01) + Unit test `AppointmentServiceTest#testCreateAppointment_ScheduleConflict_QTL401` PASS 100% |
 
 ---
 
 ### Chi tiết các bước gỡ lỗi theo chuẩn 4 bước:
 
 1. **Bước 1: Tái lập (Reproduce)**
-   - Thực thi `./mvnw test -Dtest=AppointmentServiceTest#testScheduleConflict`.
+   - Thực thi `./mvnw test -Dtest=AppointmentServiceTest#testCreateAppointment_ScheduleConflict_QTL401`.
    - Giả lập trường hợp KTV `ID = 5` đã có lịch hẹn ở thời điểm `2026-10-20T09:00:00`.
    - Hệ thống không chặn ở tầng nghiệp vụ mà đẩy trực tiếp thao tác ghi xuống DB gây lỗi hoặc ghi đè lịch hẹn.
 
@@ -47,5 +47,5 @@
      ```
 
 4. **Bước 4: Xác nhận bằng test (Verify via Regression Test)**
-   - Kiểm thử đơn vị `AppointmentServiceTest#testScheduleConflict` thực thi và trả về kết quả `BUILD SUCCESS` (Pass 100%).
+   - Kiểm thử đơn vị `AppointmentServiceTest#testCreateAppointment_ScheduleConflict_QTL401` thực thi và trả về kết quả `BUILD SUCCESS` (Pass 100%).
    - Ngoại lệ trả về đúng mã lỗi `SCHEDULE_CONFLICT` với HTTP Status `409 CONFLICT`, không lộ stack trace hay câu lệnh SQL nội bộ.

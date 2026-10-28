@@ -83,18 +83,6 @@ class AppointmentServiceTest {
     }
 
     @Test
-    @DisplayName("BUG-001 / Cách tái lập: ./mvnw test -Dtest=AppointmentServiceTest#testScheduleConflict")
-    void testScheduleConflict() {
-        testCreateAppointment_ScheduleConflict_QTL401();
-    }
-
-    @Test
-    @DisplayName("TC-03: Invalid Data & Exception - Từ chối đặt lịch khi KTV bị trùng lịch hẹn (QT-L4-01)")
-    void TC03_scheduleAppointment_throwException_whenScheduleConflict() {
-        testCreateAppointment_ScheduleConflict_QTL401();
-    }
-
-    @Test
     @DisplayName("Happy Path - QT-L4-01: Đặt lịch hẹn không trùng khung giờ thành công")
     void testCreateAppointment_Success() {
         when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
