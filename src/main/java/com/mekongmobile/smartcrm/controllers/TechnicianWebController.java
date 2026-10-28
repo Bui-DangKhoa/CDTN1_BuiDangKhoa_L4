@@ -2,9 +2,11 @@ package com.mekongmobile.smartcrm.controllers;
 
 import com.mekongmobile.smartcrm.dto.TicketResponseDto;
 import com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto;
+import com.mekongmobile.smartcrm.dto.UserSessionDto;
 import com.mekongmobile.smartcrm.entities.Technician;
-import com.mekongmobile.smartcrm.repositories.TechnicianRepository;
+import com.mekongmobile.smartcrm.services.TechnicianService;
 import com.mekongmobile.smartcrm.services.TicketService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,20 +18,16 @@ import java.util.List;
 /**
  * TẦNG 1: Controller phục vụ Màn hình Kỹ thuật viên cá nhân (Màn hình 3 / MH3).
  * Đáp ứng US4, US5, US6 (FR4, FR5, FR6 - Quy tắc QT-06).
+ * Tuân thủ mô hình 3 lớp (C2, S2): Chỉ tương tác với Service, tuyệt đối không inject Repository.
  */
 @Controller
 @RequestMapping("/technician")
+@RequiredArgsConstructor
 @Slf4j
 public class TechnicianWebController {
 
     private final TicketService ticketService;
-    private final TechnicianRepository technicianRepository;
-
-    public TechnicianWebController(TicketService ticketService,
-                                   TechnicianRepository technicianRepository) {
-        this.ticketService = ticketService;
-        this.technicianRepository = technicianRepository;
-    }
+    private final TechnicianService technicianService;
 
     @GetMapping("/my-tickets")
     public String showMyTickets(
@@ -38,21 +36,10 @@ public class TechnicianWebController {
             Model model) {
         log.info("GET /technician/my-tickets - Xem danh sách phiếu của KTV đăng nhập");
 
-        com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
-                (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
+        UserSessionDto currentUser = (UserSessionDto) session.getAttribute("currentUser");
 
-        // Tìm kiếm Kỹ thuật viên tương ứng: ưu tiên theo họ tên tài khoản đăng nhập (vd: Trần Kỹ Thuật), sau đó theo ID
-        Technician tech = null;
-        if (currentUser != null && currentUser.getFullName() != null) {
-            tech = technicianRepository.findByFullName(currentUser.getFullName()).orElse(null);
-        }
-        if (tech == null && currentUser != null && currentUser.getUserId() != null) {
-            tech = technicianRepository.findById(currentUser.getUserId()).orElse(null);
-        }
-        if (tech == null) {
-            tech = technicianRepository.findById(1L).orElse(null);
-        }
-
+        // Xác định KTV đăng nhập qua tầng Service
+        Technician tech = technicianService.resolveTechnicianForUser(currentUser);
         Long loggedInTechId = (tech != null) ? tech.getTechnicianId() : 1L;
 
         // QT-15: KTV chỉ xem danh sách phiếu gán cho cá nhân (DA_PHAN_CONG, DANG_XU_LY), che SĐT khách hàng
@@ -91,13 +78,8 @@ public class TechnicianWebController {
         log.info("POST /technician/tickets/{}/status - Cập nhật trạng thái sang {}", id, nextStatus);
 
         try {
-            com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
-                    (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
-
-            Technician tech = null;
-            if (currentUser != null && currentUser.getFullName() != null) {
-                tech = technicianRepository.findByFullName(currentUser.getFullName()).orElse(null);
-            }
+            UserSessionDto currentUser = (UserSessionDto) session.getAttribute("currentUser");
+            Technician tech = technicianService.resolveTechnicianForUser(currentUser);
             Long changedById = (tech != null) ? tech.getTechnicianId() : ((currentUser != null) ? currentUser.getUserId() : 1L);
 
             UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder()
@@ -108,10 +90,10 @@ public class TechnicianWebController {
             ticketService.updateTicketStatus(id, dto);
             redirectAttributes.addFlashAttribute("successMessage", "Cập nhật trạng thái phiếu thành công!");
         } catch (Exception ex) {
-            log.warn("Lỗi chuyển đổi trạng thái QT-06 cho ticket {}: {}", id, ex.getMessage());
-            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            log.error("Lỗi cập nhật trạng thái phiếu id {}: {}", id, ex.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Không thể cập nhật trạng thái: " + ex.getMessage());
         }
 
-        return "redirect:/technician/my-tickets?ticketId=" + id;
+        return "redirect:/technician/my-tickets";
     }
 }

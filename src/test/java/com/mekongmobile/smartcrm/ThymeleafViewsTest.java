@@ -5,7 +5,7 @@ import com.mekongmobile.smartcrm.controllers.TicketController;
 import com.mekongmobile.smartcrm.dto.TechnicianResponseDto;
 import com.mekongmobile.smartcrm.dto.TicketResponseDto;
 import com.mekongmobile.smartcrm.entities.Technician;
-import com.mekongmobile.smartcrm.repositories.TechnicianRepository;
+import com.mekongmobile.smartcrm.services.TechnicianService;
 import com.mekongmobile.smartcrm.services.TicketService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,7 +38,7 @@ public class ThymeleafViewsTest {
         private TicketService ticketService;
 
         @MockBean
-        private TechnicianRepository technicianRepository;
+        private TechnicianService technicianService;
 
         @MockBean
         private AppointmentService appointmentService;
@@ -135,7 +135,8 @@ public class ThymeleafViewsTest {
                                 .dueDate(LocalDateTime.now().plusHours(12))
                                 .build();
 
-                when(technicianRepository.findById(anyLong())).thenReturn(Optional.of(tech));
+                when(technicianService.resolveTechnicianForUser(any())).thenReturn(tech);
+                when(technicianService.findById(anyLong())).thenReturn(Optional.of(tech));
                 when(ticketService.getTicketsForTechnician(anyLong())).thenReturn(List.of(ticketDto));
 
                 com.mekongmobile.smartcrm.dto.UserSessionDto techSession = com.mekongmobile.smartcrm.dto.UserSessionDto
