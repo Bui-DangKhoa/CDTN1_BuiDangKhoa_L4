@@ -12,13 +12,19 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,N
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `technician` (
   `technician_id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NULL DEFAULT NULL,
   `employee_id` BIGINT NOT NULL,
   `full_name` VARCHAR(120) NOT NULL,
   `center_id` BIGINT NOT NULL,
   `level` VARCHAR(15) NOT NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`technician_id`),
-  UNIQUE INDEX `employee_id` (`employee_id` ASC) VISIBLE)
+  UNIQUE INDEX `uk_technician_user` (`user_id` ASC) VISIBLE,
+  UNIQUE INDEX `employee_id` (`employee_id` ASC) VISIBLE,
+  CONSTRAINT `fk_technician_user`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `app_user` (`user_id`)
+    ON DELETE SET NULL)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_unicode_ci;

@@ -24,13 +24,14 @@ ON DUPLICATE KEY UPDATE
 -- -----------------------------------------------------
 -- 2. Seed Kỹ thuật viên (technician)
 -- -----------------------------------------------------
-INSERT INTO `technician` (`technician_id`, `employee_id`, `full_name`, `center_id`, `level`, `is_active`)
+INSERT INTO `technician` (`technician_id`, `user_id`, `employee_id`, `full_name`, `center_id`, `level`, `is_active`)
 VALUES
-(1, 1001, 'Trần Kỹ Thuật', 1, 'BAC_3', 1),
-(2, 1002, 'Lê Văn An', 1, 'BAC_2', 1),
-(3, 1003, 'Phạm Hoàng Bách', 1, 'BAC_1', 1),
-(4, 1004, 'Đỗ Minh Tuấn', 2, 'BAC_2', 1)
+(1, 2, 1001, 'Trần Kỹ Thuật', 1, 'BAC_3', 1),
+(2, NULL, 1002, 'Lê Văn An', 1, 'BAC_2', 1),
+(3, NULL, 1003, 'Phạm Hoàng Bách', 1, 'BAC_1', 1),
+(4, NULL, 1004, 'Đỗ Minh Tuấn', 2, 'BAC_2', 1)
 ON DUPLICATE KEY UPDATE
+    `user_id` = VALUES(`user_id`),
     `employee_id` = VALUES(`employee_id`),
     `full_name` = VALUES(`full_name`),
     `center_id` = VALUES(`center_id`),

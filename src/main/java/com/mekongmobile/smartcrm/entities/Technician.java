@@ -20,6 +20,10 @@ public class Technician {
     @Column(name = "technician_id")
     private Long technicianId;
 
+    /** Khóa ngoại liên kết tài khoản người dùng (app_user.user_id) - TD-11 */
+    @Column(name = "user_id", unique = true)
+    private Long userId;
+
     @Column(name = "employee_id", nullable = false, unique = true)
     private Long employeeId;
 

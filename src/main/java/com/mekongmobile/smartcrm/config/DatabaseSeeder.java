@@ -83,6 +83,13 @@ public class DatabaseSeeder implements CommandLineRunner {
             jdbcTemplate.execute("ALTER TABLE `ticket` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             jdbcTemplate.execute("ALTER TABLE `technician` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             jdbcTemplate.execute("ALTER TABLE `app_user` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            // Idempotent: Bổ sung cột user_id nếu CSDL đã tồn tại mà chưa có cột (TD-11)
+            try {
+                jdbcTemplate.execute("ALTER TABLE `technician` ADD COLUMN `user_id` BIGINT NULL UNIQUE");
+            } catch (Exception ignored) {}
+            try {
+                jdbcTemplate.execute("UPDATE `technician` SET `user_id` = 2 WHERE `technician_id` = 1 AND `user_id` IS NULL");
+            } catch (Exception ignored) {}
         } catch (Exception e) {
             log.debug("Bỏ qua ALTER TABLE charset (có thể do môi trường test/h2/quyền hạn): {}", e.getMessage());
         }
