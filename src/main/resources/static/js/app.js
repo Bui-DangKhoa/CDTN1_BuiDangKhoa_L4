@@ -184,7 +184,7 @@ function showErrorState(message, requestId) {
 // Mở Modal Phân công & Đặt lịch từ dòng dữ liệu trên Màn hình 1
 function openAssignModalFromRow(btn) {
     const ticketId = btn.dataset.ticketId || '1';
-    const ticketCode = btn.dataset.ticketCode || 'BH-00125';
+    const ticketCode = btn.dataset.ticketCode || '—';
     const deviceName = btn.dataset.deviceName || 'iPhone 13';
     const categoryName = btn.dataset.categoryName || 'Màn hình';
     const dueDate = btn.dataset.dueDate || '30/10/2026 08:00';
@@ -264,25 +264,11 @@ function openAssignModalFromRow(btn) {
     }
 }
 
-// Mô phỏng / Kiểm tra cảnh báo trùng lịch hẹn (QT-L4-01)
+// Kiểm tra cảnh báo trùng lịch hẹn (QT-L4-01)
+// Báo trùng lịch chỉ được lấy từ phản hồi lỗi backend (errorCode SCHEDULE_CONFLICT, message của server)
 function checkTechnicianScheduleConflict() {
-    const techSelect = document.getElementById('modalTechnicianSelect') || document.getElementById('technicianId');
-    const timeSlotSelect = document.getElementById('modalTimeSlot') || document.getElementById('appointmentSlot');
     const conflictAlert = document.getElementById('modalConflictAlert') || document.getElementById('conflictAlert');
-
-    if (!techSelect || !timeSlotSelect || !conflictAlert) return;
-
-    const selectedTechText = techSelect.options[techSelect.selectedIndex]?.text || '';
-    const selectedSlot = timeSlotSelect.value;
-
-    // Giả lập theo Wireframe MH2: KTV Nguyễn Văn B bị trùng vào khung 14:00 - 15:00
-    if (selectedTechText.includes('Nguyễn Văn B') && selectedSlot === '14:00 - 15:00') {
-        conflictAlert.style.display = '';
-        const conflictText = document.getElementById('modalConflictText') || document.getElementById('conflictText');
-        if (conflictText) {
-            conflictText.textContent = `❌ KTV Nguyễn Văn B đã có lịch hẹn trong khung giờ 14:00 - 15:00. Vui lòng chọn khung giờ khác!`;
-        }
-    } else {
+    if (conflictAlert) {
         conflictAlert.style.display = 'none';
     }
 }
