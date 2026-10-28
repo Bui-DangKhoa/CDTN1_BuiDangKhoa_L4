@@ -147,7 +147,8 @@ public class AppointmentController {
             List<TechnicianResponseDto> eligibleTechs = ticketService.getEligibleTechniciansForTicket(ticketId);
             model.addAttribute("ticket", ticket);
             model.addAttribute("technicians", eligibleTechs);
-        } catch (Exception ignored) {
+        } catch (Exception ex) {
+            log.warn("Không thể nạp thông tin ticket hoặc KTV cho ticketId {}: {}", ticketId, ex.getMessage());
         }
     }
 }

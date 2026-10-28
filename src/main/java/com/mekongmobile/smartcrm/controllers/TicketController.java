@@ -172,7 +172,6 @@ public class TicketController {
             model.addAttribute("ticket", ticket);
             model.addAttribute("technicians", eligibleTechnicians);
             model.addAttribute("title", "Phân công Kỹ thuật viên - Phiếu #" + ticket.getTicketCode());
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ex) { log.warn("Không thể nạp thông tin ticket hoặc KTV cho ticketId {}: {}", ticketId, ex.getMessage()); }
     }
 }

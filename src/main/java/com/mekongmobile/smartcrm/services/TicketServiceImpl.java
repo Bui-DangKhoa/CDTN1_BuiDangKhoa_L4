@@ -441,7 +441,7 @@ public class TicketServiceImpl implements TicketService {
                         ticket.getCategory().getCategoryId(),
                         ticket.getTicketId()
                 );
-            } catch (Exception ignored) {
+            } catch (Exception ex) {
                 repeatCount = 0;
             }
         }
