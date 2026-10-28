@@ -255,6 +255,18 @@ function openAssignModalFromRow(btn) {
     // Reset cảnh báo trùng lịch
     const conflictAlert = document.getElementById('modalConflictAlert');
     if (conflictAlert) conflictAlert.style.display = 'none';
+    // Đảm bảo nạp danh sách khung giờ nếu chưa có từ template
+    const timeSlotSelect = document.getElementById('modalTimeSlot');
+    if (timeSlotSelect && timeSlotSelect.options.length <= 1) {
+        const hourPairs = [[8, 9], [9, 10], [10, 11], [13, 14], [14, 15], [15, 16], [16, 17]];
+        hourPairs.forEach(([start, end]) => {
+            const label = `${String(start).padStart(2, '0')}:00 - ${String(end).padStart(2, '0')}:00`;
+            const opt = document.createElement('option');
+            opt.value = label;
+            opt.textContent = label;
+            timeSlotSelect.appendChild(opt);
+        });
+    }
 
     // Mở Bootstrap 5 modal
     const assignModalEl = document.getElementById('assignModal');

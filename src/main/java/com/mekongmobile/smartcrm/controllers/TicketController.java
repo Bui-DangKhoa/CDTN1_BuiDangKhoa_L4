@@ -29,6 +29,11 @@ public class TicketController {
 
     private final TicketService ticketService;
 
+    public static final java.util.List<String> DEFAULT_TIME_SLOTS = java.util.List.of(
+            "08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00",
+            "13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00", "16:00 - 17:00"
+    );
+
     /**
      * MÀN HÌNH 1: Hiển thị danh sách phiếu bảo hành chưa phân công xếp theo SLA dueDate tăng dần.
      * QT-14: Quản lý chỉ lấy danh sách phiếu thuộc center_id phụ trách.
@@ -54,6 +59,7 @@ public class TicketController {
         model.addAttribute("totalUnassigned", totalUnassigned);
         model.addAttribute("overdueCount", overdueCount);
         model.addAttribute("currentUser", currentUser);
+        model.addAttribute("timeSlots", DEFAULT_TIME_SLOTS);
         model.addAttribute("title", "Smart CRM - Danh sách phiếu chưa gán KTV");
 
         return "tickets/unassigned-list";
@@ -77,6 +83,7 @@ public class TicketController {
             model.addAttribute("ticket", ticket);
             model.addAttribute("technicians", eligibleTechnicians);
             model.addAttribute("assignRequest", request);
+            model.addAttribute("timeSlots", DEFAULT_TIME_SLOTS);
             model.addAttribute("title", "Phân công Kỹ thuật viên - Phiếu #" + ticket.getTicketCode());
 
             return "tickets/assign-form";
@@ -171,6 +178,7 @@ public class TicketController {
             List<TechnicianResponseDto> eligibleTechnicians = ticketService.getEligibleTechniciansForTicket(ticketId);
             model.addAttribute("ticket", ticket);
             model.addAttribute("technicians", eligibleTechnicians);
+            model.addAttribute("timeSlots", DEFAULT_TIME_SLOTS);
             model.addAttribute("title", "Phân công Kỹ thuật viên - Phiếu #" + ticket.getTicketCode());
         } catch (Exception ex) { log.warn("Không thể nạp thông tin ticket hoặc KTV cho ticketId {}: {}", ticketId, ex.getMessage()); }
     }

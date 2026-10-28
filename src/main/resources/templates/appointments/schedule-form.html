@@ -53,7 +53,7 @@
                 <!-- Thông tin phiếu được chọn nếu có ticketId -->
                 <div th:if="${ticket != null}" class="info-summary-box">
                     <div>
-                        Phiếu: <strong style="color: #60a5fa;" th:text="${'#' + ticket.ticketCode}">#BH-00125</strong>
+                        Phiếu: <strong style="color: #60a5fa;" th:text="${'#' + ticket.ticketCode}">…</strong>
                         | Thiết bị: <strong th:text="${ticket.deviceName}">iPhone 13</strong>
                         <span th:if="${ticket.serialNo != null}" th:text="${' (SN: ' + ticket.serialNo + ')'}">(SN: SER-001)</span>
                     </div>
@@ -97,18 +97,15 @@
 
                         <select id="technicianId" th:field="*{technicianId}" class="form-control" required>
                             <option value="">-- Chọn Kỹ thuật viên --</option>
-                            <th:block th:if="${technicians != null}">
+                            <th:block th:if="${technicians != null and not technicians.empty}">
                                 <option th:each="tech : ${technicians}"
                                         th:value="${tech.technicianId}"
                                         th:text="${tech.fullName + ' (Mã NV: ' + tech.employeeId + ' - Bậc ' + tech.level + ')'}">
-                                    Nguyễn Văn B (Mã NV: 201 - Bậc 4)
+                                    …
                                 </option>
                             </th:block>
-                            <!-- Tùy chọn mặc định nếu form mở tự do không kèm context -->
-                            <th:block th:if="${technicians == null}">
-                                <option value="1">KTV Nguyễn Văn A (Mã NV: 101 - Bậc 3)</option>
-                                <option value="2">KTV Trần Văn B (Mã NV: 102 - Bậc 4)</option>
-                                <option value="3">KTV Lê Thị C (Mã NV: 103 - Bậc 5)</option>
+                            <th:block th:if="${technicians == null or technicians.empty}">
+                                <option value="" disabled>-- Không có kỹ thuật viên khả dụng --</option>
                             </th:block>
                         </select>
                         <div th:if="${#fields.hasErrors('technicianId')}" class="field-error" th:errors="*{technicianId}">

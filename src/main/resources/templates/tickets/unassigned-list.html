@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title != null ? title : 'Smart CRM - Danh Sách Phiếu Chưa Phân Công'}">Smart CRM - Danh Sách Phiếu Chưa Phân Công</title>
+    <title th:text="${title != null ? title : 'Smart CRM - Danh Sách Phiếu Chưa Phân Công'}">Smart CRM - Danh Sách Phiếu
+        Chưa Phân Công</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -14,6 +16,7 @@
     <!-- CRM Stylesheet -->
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
+
 <body class="crm-body">
 
     <!-- Header bar theo Wireframe MH1: Nền xanh #1976D2 -->
@@ -24,14 +27,20 @@
         <div class="crm-user-info d-flex align-items-center gap-2">
             <span>
                 <span th:if="${session.currentUser != null and session.currentUser.role == 'QUAN_LY'}">Quản lý: </span>
-                <span th:if="${session.currentUser != null and session.currentUser.role == 'KY_THUAT_VIEN'}">Kỹ thuật viên: </span>
+                <span th:if="${session.currentUser != null and session.currentUser.role == 'KY_THUAT_VIEN'}">Kỹ thuật
+                    viên: </span>
                 <span th:if="${session.currentUser == null}">Quản lý: </span>
-                <strong th:text="${session.currentUser != null ? session.currentUser.fullName : 'Nguyễn Quản Lý'}">Nguyễn Quản Lý</strong>
+                <strong
+                    th:text="${session.currentUser != null ? session.currentUser.fullName : 'Nguyễn Quản Lý'}">Nguyễn
+                    Quản Lý</strong>
                 | Trung tâm Bảo hành Quận 10
-                (<span class="badge bg-light text-primary" th:text="${session.currentUser != null ? session.currentUser.role : 'QUAN_LY'}">QUAN_LY</span>) |
+                (<span class="badge bg-light text-primary"
+                    th:text="${session.currentUser != null ? session.currentUser.role : 'QUAN_LY'}">QUAN_LY</span>) |
             </span>
             <a th:href="@{/logout}" class="text-white text-decoration-underline fw-semibold">[Đăng xuất]</a>
-            <a th:href="@{/lookup}" target="_blank" class="badge bg-light text-primary text-decoration-none px-2 py-1 ms-2" style="font-size: 0.75rem; border-radius: 4px;">
+            <a th:href="@{/lookup}" target="_blank"
+                class="badge bg-light text-primary text-decoration-none px-2 py-1 ms-2"
+                style="font-size: 0.75rem; border-radius: 4px;">
                 <i class="bi bi-search me-1"></i> Cổng Khách hàng ➔
             </a>
         </div>
@@ -40,7 +49,9 @@
     <main class="container-fluid px-4 py-3" style="max-width: 1250px;">
 
         <!-- Thông báo Thành công -->
-        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show fw-bold shadow-sm" style="color: #1B5E20 !important; background-color: #E8F5E9 !important; border: 1px solid #2E7D32 !important; font-size: 0.95rem;" role="alert">
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show fw-bold shadow-sm"
+            style="color: #1B5E20 !important; background-color: #E8F5E9 !important; border: 1px solid #2E7D32 !important; font-size: 0.95rem;"
+            role="alert">
             <span class="me-2 fs-6">✓</span>
             <span th:text="${successMessage}">Thao tác thành công!</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -48,21 +59,24 @@
 
         <!-- 3. ERROR STATE: Alert Banner màu đỏ thông báo lỗi an toàn kèm mã tra cứu requestId và nút Thử lại -->
         <div th:if="${errorMessage != null or param.error != null}" id="uiServerErrorAlert"
-             class="alert alert-danger alert-dismissible fade show fw-medium shadow-sm d-flex align-items-center justify-content-between p-3 mb-3 crm-error-banner"
-             role="alert">
+            class="alert alert-danger alert-dismissible fade show fw-medium shadow-sm d-flex align-items-center justify-content-between p-3 mb-3 crm-error-banner"
+            role="alert">
             <div class="d-flex align-items-center gap-3">
                 <span class="fs-4">❌</span>
                 <div>
-                    <div class="fw-bold" th:text="${errorMessage != null ? errorMessage : 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.'}">
+                    <div class="fw-bold"
+                        th:text="${errorMessage != null ? errorMessage : 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.'}">
                         Đã xảy ra lỗi trong quá trình xử lý!
                     </div>
                     <div class="small mt-1 text-secondary">
-                        Mã tra cứu sự cố: <strong class="crm-request-id-badge" th:text="${requestId != null ? requestId : 'N/A'}">REQ-UUID</strong>
+                        Mã tra cứu sự cố: <strong class="crm-request-id-badge"
+                            th:text="${requestId != null ? requestId : 'N/A'}">REQ-UUID</strong>
                     </div>
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-outline-danger btn-sm px-3 fw-bold" onclick="window.location.reload()">
+                <button type="button" class="btn btn-outline-danger btn-sm px-3 fw-bold"
+                    onclick="window.location.reload()">
                     <i class="bi bi-arrow-clockwise me-1"></i> Thử lại
                 </button>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -71,8 +85,8 @@
 
         <!-- Dynamic Client-side Error Banner (cho AJAX / Fetch hoặc Network Error) -->
         <div id="uiDynamicErrorBanner"
-             class="alert alert-danger alert-dismissible fade show fw-medium shadow-sm align-items-center justify-content-between p-3 mb-3 crm-error-banner"
-             style="display: none;" role="alert">
+            class="alert alert-danger alert-dismissible fade show fw-medium shadow-sm align-items-center justify-content-between p-3 mb-3 crm-error-banner"
+            style="display: none;" role="alert">
             <div class="d-flex align-items-center gap-3">
                 <span class="fs-4">❌</span>
                 <div>
@@ -83,15 +97,18 @@
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-outline-danger btn-sm px-3 fw-bold" onclick="window.location.reload()">
+                <button type="button" class="btn btn-outline-danger btn-sm px-3 fw-bold"
+                    onclick="window.location.reload()">
                     <i class="bi bi-arrow-clockwise me-1"></i> Thử lại
                 </button>
-                <button type="button" class="btn-close" onclick="document.getElementById('uiDynamicErrorBanner').style.display='none'" aria-label="Close"></button>
+                <button type="button" class="btn-close"
+                    onclick="document.getElementById('uiDynamicErrorBanner').style.display='none'"
+                    aria-label="Close"></button>
             </div>
         </div>
 
         <!-- 1. LOADING STATE (Spinner / Khung xương Skeleton "Đang tải danh sách phiếu bảo hành... Vui lòng chờ trong giây lát.") -->
-        <div id="uiLoadingState" class="crm-loading-state text-center my-3 py-4" style="display: none;">
+        <div id="uiLoadingState" class="crm-loading-state text-center my-3 py-4" style="display: none;" th:style="${param.loading != null ? 'display: block;' : 'display: none;'}">
             <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
                 <span class="visually-hidden">Đang tải...</span>
             </div>
@@ -109,7 +126,9 @@
             <!-- Thẻ 1: Phiếu chưa gán (Số lượng hiển thị màu đen: 24) -->
             <div class="crm-kpi-card" style="width: 210px;">
                 <div class="kpi-label">Phiếu chưa gán</div>
-                <div class="kpi-value" th:text="${totalUnassigned != null ? totalUnassigned : (tickets != null ? tickets.size() : 24)}">24</div>
+                <div class="kpi-value"
+                    th:text="${totalUnassigned != null ? totalUnassigned : (tickets != null ? tickets.size() : 24)}">24
+                </div>
             </div>
 
             <!-- Thẻ 2: Quá hạn SLA (Khung viền đỏ cảnh báo, số lượng màu đỏ kèm icon !) -->
@@ -161,142 +180,150 @@
             </button>
         </section>
 
-        <!-- Bảng dữ liệu (Data Table) kèm ghi chú Post-it theo Wireframe MH1 -->
-        <div class="d-flex align-items-start gap-3">
-            <div class="table-responsive flex-grow-1 border rounded" style="border-color: #BDBDBD !important;">
+        <!-- Bảng dữ liệu (Data Table) theo Wireframe MH1 -->
+        <div class="table-responsive border rounded" style="border-color: #BDBDBD !important;">
                 <table class="crm-table mb-0">
-                <thead>
-                    <tr>
-                        <th style="width: 45px; text-align: center;">
-                            <input type="checkbox" id="selectAllCheckbox" title="Chọn tất cả">
-                        </th>
-                        <th style="width: 120px;">Mã phiếu</th>
-                        <th style="width: 150px;">Thiết bị</th>
-                        <th style="width: 140px;">Nhóm sự cố</th>
-                        <th style="width: 120px;">Mức ưu tiên</th>
-                        <th style="width: 170px;">Hạn SLA</th>
-                        <th style="width: 160px;">Trạng thái SLA</th>
-                        <th style="width: 150px; text-align: center;">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody id="ticketTableBody">
-                    <!-- 2. EMPTY STATE: Khi bộ lọc tìm kiếm không có kết quả -->
-                    <tr id="emptyFilterRow" style="display: none;">
-                        <td colspan="8" class="text-center py-5">
-                            <div class="py-3">
-                                <i class="bi bi-inbox text-muted" style="font-size: 2.75rem;"></i>
-                                <h6 class="fw-bold text-secondary mt-2 mb-1">Không có phiếu bảo hành nào cần phân công</h6>
-                                <p class="text-muted small mb-3">Không tìm thấy phiếu yêu cầu nào phù hợp với bộ lọc hiện tại.</p>
-                                <button type="button" class="btn btn-outline-primary btn-sm px-3 fw-semibold" onclick="resetTicketFilter()">
-                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Xóa bộ lọc
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-
-                    <!-- Hiển thị dữ liệu động nếu Controller truyền tickets -->
-                    <th:block th:if="${tickets != null and not tickets.empty}">
-                        <tr th:each="t : ${tickets}" class="ticket-row"
-                            th:classappend="${t.priority == 'CAO' ? 'row-urgent' : ''}"
-                            th:data-category="${t.categoryName}"
-                            th:data-priority="${t.priority}"
-                            th:data-sla="${t.priority == 'CAO' ? 'SAP_QUA_HAN' : 'CON_HAN'}">
-                            
-                            <td class="text-center">
-                                <input type="checkbox" class="ticket-checkbox">
-                            </td>
-                            <td>
-                                <strong th:text="${'#' + t.ticketCode}">#BH-00125</strong>
-                            </td>
-                            <td>
-                                <span th:text="${t.deviceName != null ? t.deviceName : 'Thiết bị'}">iPhone 13</span>
-                            </td>
-                            <td th:text="${t.categoryName != null ? t.categoryName : 'Khác'}">Màn hình</td>
-                            
-                            <!-- Cột Mức ưu tiên -->
-                            <td>
-                                <span th:if="${t.priority == 'CAO'}" class="text-danger fw-semibold">Cao</span>
-                                <span th:if="${t.priority == 'TRUNG_BINH'}" class="text-warning-emphasis fw-semibold">Trung bình</span>
-                                <span th:if="${t.priority == 'THAP'}" class="text-secondary fw-semibold">Thấp</span>
-                                <span th:if="${t.priority != 'CAO' and t.priority != 'TRUNG_BINH' and t.priority != 'THAP'}" th:text="${t.priority}">Mặc định</span>
-                            </td>
-
-                            <!-- Cột Hạn SLA (dd/MM/yyyy HH:mm) -->
-                            <td>
-                                <span th:if="${t.dueDate != null}"
-                                      th:text="${#temporals.format(t.dueDate, 'dd/MM/yyyy HH:mm')}">30/10/2026 08:00</span>
-                                <span th:if="${t.dueDate == null}" class="text-muted">Chưa xác định</span>
-                            </td>
-
-                            <!-- Cột Trạng thái SLA với chấm màu -->
-                            <td>
-                                <!-- Mức độ CAO: Sắp quá hạn / Quá hạn -->
-                                <span th:if="${t.priority == 'CAO'}" class="sla-badge text-danger">
-                                    <span class="sla-dot red"></span>
-                                    <span>Sắp quá hạn</span>
-                                </span>
-                                <!-- Còn hạn -->
-                                <span th:if="${t.priority != 'CAO'}" class="sla-badge text-success">
-                                    <span class="sla-dot green"></span>
-                                    <span>Còn hạn</span>
-                                </span>
-                            </td>
-
-                            <!-- Cột Thao tác: Nút xanh Phân công -->
-                            <td class="text-center">
-                                <button type="button" class="btn btn-crm-primary btn-sm"
-                                        th:data-ticket-id="${t.ticketId}"
-                                        th:data-ticket-code="${t.ticketCode}"
-                                        th:data-device-name="${t.deviceName}"
-                                        th:data-category-name="${t.categoryName}"
-                                        th:data-due-date="${t.dueDate != null ? #temporals.format(t.dueDate, 'dd/MM/yyyy HH:mm') : ''}"
-                                        th:data-repeat-count="${t.repeatCount != null ? t.repeatCount : 0}"
-                                        th:data-current-tech-id="${t.technicianId != null ? t.technicianId : ''}"
-                                        th:data-current-tech-name="${t.technicianName != null ? t.technicianName : ''}"
-                                        onclick="openAssignModalFromRow(this)">
-                                    Phân công
-                                </button>
-                            </td>
+                    <thead>
+                        <tr>
+                            <th style="width: 45px; text-align: center;">
+                                <input type="checkbox" id="selectAllCheckbox" title="Chọn tất cả">
+                            </th>
+                            <th style="width: 120px;">Mã phiếu</th>
+                            <th style="width: 150px;">Thiết bị</th>
+                            <th style="width: 140px;">Nhóm sự cố</th>
+                            <th style="width: 120px;">Mức ưu tiên</th>
+                            <th style="width: 170px;">Hạn SLA</th>
+                            <th style="width: 160px;">Trạng thái SLA</th>
+                            <th style="width: 150px; text-align: center;">Thao tác</th>
                         </tr>
-                    </th:block>
-
-                    <!-- 2. EMPTY STATE: Hiển thị khi danh sách phiếu rỗng từ máy chủ -->
-                    <th:block th:if="${tickets == null or tickets.empty}">
-                        <tr id="emptyServerRow">
+                    </thead>
+                    <tbody id="ticketTableBody">
+                        <!-- 2. EMPTY STATE: Khi bộ lọc tìm kiếm không có kết quả -->
+                        <tr id="emptyFilterRow" style="display: none;">
                             <td colspan="8" class="text-center py-5">
-                                <div class="py-4">
-                                    <i class="bi bi-inbox text-muted" style="font-size: 3.5rem;"></i>
-                                    <h5 class="fw-bold text-secondary mt-3 mb-2">Không có phiếu bảo hành nào cần phân công</h5>
-                                    <p class="text-muted small mb-3">Hiện tại tất cả phiếu bảo hành đã được điều phối hoặc không có phiếu nào cần phân công.</p>
-                                    <button type="button" class="btn btn-outline-primary btn-sm px-4 fw-semibold" onclick="resetTicketFilter(); window.location.reload();">
+                                <div class="py-3">
+                                    <i class="bi bi-inbox text-muted" style="font-size: 2.75rem;"></i>
+                                    <h6 class="fw-bold text-secondary mt-2 mb-1">Không có phiếu bảo hành nào cần phân
+                                        công</h6>
+                                    <p class="text-muted small mb-3">Không tìm thấy phiếu yêu cầu nào phù hợp với bộ lọc
+                                        hiện tại.</p>
+                                    <button type="button" class="btn btn-outline-primary btn-sm px-3 fw-semibold"
+                                        onclick="resetTicketFilter()">
                                         <i class="bi bi-arrow-counterclockwise me-1"></i> Xóa bộ lọc
                                     </button>
                                 </div>
                             </td>
                         </tr>
-                    </th:block>
-                </tbody>
-            </table>
+
+                        <!-- Hiển thị dữ liệu động nếu Controller truyền tickets -->
+                        <th:block th:if="${tickets != null and not tickets.empty and param.empty == null}">
+                            <tr th:each="t : ${tickets}" class="ticket-row"
+                                th:classappend="${t.priority == 'CAO' ? 'row-urgent' : ''}"
+                                th:data-category="${t.categoryName}" th:data-priority="${t.priority}"
+                                th:data-sla="${t.priority == 'CAO' ? 'SAP_QUA_HAN' : 'CON_HAN'}">
+
+                                <td class="text-center">
+                                    <input type="checkbox" class="ticket-checkbox">
+                                </td>
+                                <td>
+                                    <strong th:text="${'#' + t.ticketCode}">…</strong>
+                                </td>
+                                <td>
+                                    <span th:text="${t.deviceName != null ? t.deviceName : 'Thiết bị'}">iPhone 13</span>
+                                </td>
+                                <td th:text="${t.categoryName != null ? t.categoryName : 'Khác'}">Màn hình</td>
+
+                                <!-- Cột Mức ưu tiên -->
+                                <td>
+                                    <span th:if="${t.priority == 'CAO'}" class="text-danger fw-semibold">Cao</span>
+                                    <span th:if="${t.priority == 'TRUNG_BINH'}"
+                                        class="text-warning-emphasis fw-semibold">Trung bình</span>
+                                    <span th:if="${t.priority == 'THAP'}" class="text-secondary fw-semibold">Thấp</span>
+                                    <span
+                                        th:if="${t.priority != 'CAO' and t.priority != 'TRUNG_BINH' and t.priority != 'THAP'}"
+                                        th:text="${t.priority}">Mặc định</span>
+                                </td>
+
+                                <!-- Cột Hạn SLA (dd/MM/yyyy HH:mm) -->
+                                <td>
+                                    <span th:if="${t.dueDate != null}"
+                                        th:text="${#temporals.format(t.dueDate, 'dd/MM/yyyy HH:mm')}">30/10/2026
+                                        08:00</span>
+                                    <span th:if="${t.dueDate == null}" class="text-muted">Chưa xác định</span>
+                                </td>
+
+                                <!-- Cột Trạng thái SLA với chấm màu -->
+                                <td>
+                                    <!-- Mức độ CAO: Sắp quá hạn / Quá hạn -->
+                                    <span th:if="${t.priority == 'CAO'}" class="sla-badge text-danger">
+                                        <span class="sla-dot red"></span>
+                                        <span>Sắp quá hạn</span>
+                                    </span>
+                                    <!-- Còn hạn -->
+                                    <span th:if="${t.priority != 'CAO'}" class="sla-badge text-success">
+                                        <span class="sla-dot green"></span>
+                                        <span>Còn hạn</span>
+                                    </span>
+                                </td>
+
+                                <!-- Cột Thao tác: Nút xanh Phân công -->
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-crm-primary btn-sm"
+                                        th:data-ticket-id="${t.ticketId}" th:data-ticket-code="${t.ticketCode}"
+                                        th:data-device-name="${t.deviceName}" th:data-category-name="${t.categoryName}"
+                                        th:data-due-date="${t.dueDate != null ? #temporals.format(t.dueDate, 'dd/MM/yyyy HH:mm') : ''}"
+                                        th:data-repeat-count="${t.repeatCount != null ? t.repeatCount : 0}"
+                                        th:data-current-tech-id="${t.technicianId != null ? t.technicianId : ''}"
+                                        th:data-current-tech-name="${t.technicianName != null ? t.technicianName : ''}"
+                                        onclick="openAssignModalFromRow(this)">
+                                        Phân công
+                                    </button>
+                                </td>
+                            </tr>
+                        </th:block>
+
+                        <!-- 2. EMPTY STATE: Hiển thị khi danh sách phiếu rỗng từ máy chủ -->
+                        <th:block th:if="${tickets == null or tickets.empty or param.empty != null}">
+                            <tr id="emptyServerRow">
+                                <td colspan="8" class="text-center py-5">
+                                    <div class="py-4">
+                                        <i class="bi bi-inbox text-muted" style="font-size: 3.5rem;"></i>
+                                        <h5 class="fw-bold text-secondary mt-3 mb-2">Không có phiếu bảo hành nào cần phân công</h5>
+                                        <p class="text-muted small mb-3">Hiện tại tất cả phiếu bảo hành đã được điều
+                                            phối hoặc không có phiếu nào cần phân công.</p>
+                                        <button type="button" class="btn btn-outline-primary btn-sm px-4 fw-semibold"
+                                            onclick="resetTicketFilter(); window.location.reload();">
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i> Xóa bộ lọc
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </th:block>
+                    </tbody>
+                </table>
             </div>
 
-            <!-- Sticky Note Annotation bên phải bảng theo Wireframe MH1 -->
+            <!-- Sticky Note Annotation bên phải bảng theo Wireframe MH1 (Đã comment) -->
+            <!--
             <div class="d-none d-lg-block pt-5" style="width: 170px;">
                 <div class="post-it-sticky">
                     Click [Phân công] → mở Modal ở MH2
                 </div>
             </div>
-        </div>
+            -->
 
-        <!-- Phân trang theo Wireframe MH1 -->
-        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 text-secondary" style="font-size: 0.875rem;">
-            <div>
-                Hiển thị 1-<span th:text="${tickets != null and not tickets.empty ? tickets.size() : 10}">10</span> / <span th:text="${totalUnassigned != null ? totalUnassigned : 24}">24</span>
+            <!-- Phân trang theo Wireframe MH1 -->
+            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 text-secondary"
+                style="font-size: 0.875rem;">
+                <div>
+                    Hiển thị 1-<span th:text="${tickets != null and not tickets.empty ? tickets.size() : 10}">10</span>
+                    / <span th:text="${totalUnassigned != null ? totalUnassigned : 24}">24</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-crm-secondary btn-sm" style="min-width: 38px;">&lt;</button>
+                    <button type="button" class="btn btn-crm-secondary btn-sm" style="min-width: 38px;">&gt;</button>
+                </div>
             </div>
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-crm-secondary btn-sm" style="min-width: 38px;">&lt;</button>
-                <button type="button" class="btn btn-crm-secondary btn-sm" style="min-width: 38px;">&gt;</button>
-            </div>
-        </div>
 
     </main>
 
@@ -306,24 +333,29 @@
     <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content shadow border-0" style="border-radius: 8px; background-color: #ffffff;">
-                
+
                 <!-- Header Modal -->
-                <div class="modal-header py-3 px-4" style="border-bottom: 1px solid #e0e0e0; background-color: #ffffff;">
+                <div class="modal-header py-3 px-4"
+                    style="border-bottom: 1px solid #e0e0e0; background-color: #ffffff;">
                     <h5 class="modal-title fw-bold" id="assignModalLabel" style="font-size: 1.05rem; color: #212529;">
-                        Phân công Kỹ thuật viên &amp; Đặt lịch hẹn - Phiếu #<span id="modalTicketCodeTitle">BH-00125</span>
+                        Phân công Kỹ thuật viên &amp; Đặt lịch hẹn - Phiếu #<span
+                            id="modalTicketCodeTitle">—</span>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <div class="modal-body px-4 py-3" style="background-color: #ffffff;">
                     <!-- Khung tóm tắt thông tin phiếu -->
-                    <div id="modalSummaryBox" class="p-2 mb-3 bg-white border rounded text-secondary" style="font-size: 0.85rem; border: 1px solid #e5e7eb !important;">
-                        <span id="modalSummaryText">Thiết bị: iPhone 13 | Nhóm sự cố: Màn hình | Hạn SLA: 30/10/2026 08:00</span>
+                    <div id="modalSummaryBox" class="p-2 mb-3 bg-white border rounded text-secondary"
+                        style="font-size: 0.85rem; border: 1px solid #e5e7eb !important;">
+                        <span id="modalSummaryText">Thiết bị: iPhone 13 | Nhóm sự cố: Màn hình | Hạn SLA: 30/10/2026
+                            08:00</span>
                     </div>
 
                     <!-- Khung cảnh báo lỗi lặp (US6/FR6 & US5/FR5) -->
                     <div id="modalRepeatAlert" class="alert-wireframe-warning mb-3" style="display: block;">
-                        ⚠️ Cảnh báo: Thiết bị đã lặp lại sự cố <strong id="modalRepeatCategory">Màn hình</strong> <span id="modalRepeatCount">2</span> lần trước đó.
+                        ⚠️ Cảnh báo: Thiết bị đã lặp lại sự cố <strong id="modalRepeatCategory">Màn hình</strong> <span
+                            id="modalRepeatCount">2</span> lần trước đó.
                     </div>
 
                     <form id="modalAssignForm" method="post" th:action="@{/tickets/1/assign}">
@@ -338,15 +370,16 @@
 
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <label class="form-label mb-0" style="font-size: 0.85rem;" for="modalTechnicianSelect">
+                                    <label class="form-label mb-0" style="font-size: 0.85rem;"
+                                        for="modalTechnicianSelect">
                                         Chọn Kỹ thuật viên (Lọc tay nghề &gt;= 3):
                                     </label>
-                                    <span class="note-callout">Lọc KTV có tay nghề &gt;= 3 (QT-08)</span>
+                                    <!-- Sticky note: Lọc KTV có tay nghề >= 3 (QT-08) -->
+                                    <!-- <span class="note-callout">Lọc KTV có tay nghề &gt;= 3 (QT-08)</span> -->
                                 </div>
-                                <select id="modalTechnicianSelect" name="technicianId" class="form-select form-select-sm" onchange="checkTechnicianScheduleConflict()">
-                                    <option value="2" selected>Nguyễn Văn B (Bậc 4 - Đang giữ 3 phiếu) ▾</option>
-                                    <option value="1">Trần Văn C (Bậc 5 - Đang giữ 1 phiếu)</option>
-                                    <option value="3">Lê Thị D (Bậc 3 - Đang giữ 2 phiếu)</option>
+                                <select id="modalTechnicianSelect" name="technicianId"
+                                    class="form-select form-select-sm" onchange="checkTechnicianScheduleConflict()">
+                                    <option value="">-- Chọn Kỹ thuật viên phù hợp --</option>
                                 </select>
                             </div>
 
@@ -355,9 +388,12 @@
                                     <label class="form-label mb-0" style="font-size: 0.85rem;" for="changeReason">
                                         Lý do thay đổi KTV (Bắt buộc nếu đổi KTV cũ - QT-07): *
                                     </label>
-                                    <span class="note-callout">Chỉ bắt buộc khi đổi KTV cũ (QT-07)</span>
+                                    <!-- Sticky note: Chỉ bắt buộc khi đổi KTV cũ (QT-07) -->
+                                    <!-- <span class="note-callout">Chỉ bắt buộc khi đổi KTV cũ (QT-07)</span> -->
                                 </div>
-                                <textarea name="changeReason" id="changeReason" class="form-control" rows="3" minlength="10" placeholder="Nhập lý do thay đổi KTV (tối thiểu 10 ký tự)..."></textarea>
+                                <textarea name="changeReason" id="changeReason" class="form-control" rows="3"
+                                    minlength="10"
+                                    placeholder="Nhập lý do thay đổi KTV (tối thiểu 10 ký tự)..."></textarea>
                                 <div id="changeReasonError" class="text-danger small mt-1" style="display: none;">
                                     Lý do thay đổi KTV phải có ít nhất 10 ký tự khi thay đổi KTV cũ (QT-07).
                                 </div>
@@ -372,12 +408,14 @@
 
                             <div class="row g-2 align-items-center mb-2">
                                 <div class="col-sm-5">
-                                    <label class="form-label mb-0" style="font-size: 0.85rem;" for="modalAppointmentDate">
+                                    <label class="form-label mb-0" style="font-size: 0.85rem;"
+                                        for="modalAppointmentDate">
                                         Ngày hẹn giao – nhận:
                                     </label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <input type="date" id="modalAppointmentDate" name="appointmentDate" class="form-control form-control-sm" value="2026-10-30">
+                                    <input type="date" id="modalAppointmentDate" name="appointmentDate"
+                                        class="form-control form-control-sm" value="2026-10-30">
                                 </div>
                             </div>
 
@@ -388,23 +426,20 @@
                                     </label>
                                 </div>
                                 <div class="col-sm-7">
-                                    <select id="modalTimeSlot" name="timeSlot" class="form-select form-select-sm" onchange="checkTechnicianScheduleConflict()">
-                                        <option value="08:00 - 09:00">08:00 - 09:00</option>
-                                        <option value="09:00 - 10:00">09:00 - 10:00</option>
-                                        <option value="10:00 - 11:00">10:00 - 11:00</option>
-                                        <option value="13:00 - 14:00">13:00 - 14:00</option>
-                                        <option value="14:00 - 15:00" selected>14:00 - 15:00 ▾</option>
-                                        <option value="15:00 - 16:00">15:00 - 16:00</option>
-                                        <option value="16:00 - 17:00">16:00 - 17:00</option>
+                                    <select id="modalTimeSlot" name="timeSlot" class="form-select form-select-sm"
+                                        onchange="checkTechnicianScheduleConflict()">
+                                        <option value="">-- Chọn khung giờ hẹn --</option>
+                                        <th:block th:if="${timeSlots != null}">
+                                            <option th:each="slot : ${timeSlots}" th:value="${slot}" th:text="${slot}">…</option>
+                                        </th:block>
                                     </select>
                                 </div>
                             </div>
 
                             <!-- Khung cảnh báo gán trùng lịch (Chỉ hiển thị khi bị gán trùng - QT-L4-01) -->
-                            <div id="modalConflictAlert" class="alert-wireframe-danger mt-2" style="display: block;">
+                            <div id="modalConflictAlert" class="alert-wireframe-danger mt-2" style="display: none;">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span id="modalConflictText">❌ KTV Nguyễn Văn B đã có lịch hẹn trong khung giờ 14:00 - 15:00. Vui lòng chọn khung giờ khác!</span>
-                                    <span class="note-callout ms-2" style="background-color: #ffffff; border-color: #D32F2F; color: #B71C1C;">Chỉ hiển thị khi trùng lịch (QT-L4-01)</span>
+                                    <span id="modalConflictText"></span>
                                 </div>
                             </div>
                         </div>
@@ -429,4 +464,5 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/app.js}"></script>
 </body>
+
 </html>

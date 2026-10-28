@@ -22,7 +22,7 @@
         </a>
         <div class="crm-user-info d-flex align-items-center gap-2">
             <span>
-                Quản lý: <strong th:text="${session.currentUser != null ? session.currentUser.fullName : 'Nguyễn Quản Lý'}">Nguyễn Quản Lý</strong>
+                Quản lý: <strong th:text="${session.currentUser != null ? session.currentUser.fullName : 'Quản trị viên'}">Quản trị viên</strong>
                 | Trung tâm Bảo hành Quận 10
             </span>
             <a th:href="@{/tickets/unassigned}">[Quay lại danh sách]</a>
@@ -38,7 +38,7 @@
             <!-- Header Modal -->
             <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #e0e0e0;">
                 <h5 class="card-title fw-bold mb-0" style="font-size: 1.05rem; color: #212529;">
-                    Phân công Kỹ thuật viên &amp; Đặt lịch hẹn - Phiếu <span style="color: #1976D2;" th:text="${ticket != null ? '#' + ticket.ticketCode : '#BH-00125'}">#BH-00125</span>
+                    Phân công Kỹ thuật viên &amp; Đặt lịch hẹn - Phiếu <span style="color: #1976D2;" th:text="${ticket != null ? '#' + ticket.ticketCode : '—'}">—</span>
                 </h5>
                 <a th:href="@{/tickets/unassigned}" class="text-secondary text-decoration-none fs-5" title="Đóng">&times;</a>
             </div>
@@ -83,7 +83,8 @@
                                 <label class="form-label mb-0" style="font-size: 0.85rem;" for="technicianId">
                                     Chọn Kỹ thuật viên (Lọc tay nghề &gt;= 3):
                                 </label>
-                                <span class="note-callout">Lọc KTV có tay nghề &gt;= 3 (QT-08)</span>
+                                <!-- Sticky note: Lọc KTV có tay nghề >= 3 (QT-08) -->
+                                <!-- <span class="note-callout">Lọc KTV có tay nghề &gt;= 3 (QT-08)</span> -->
                             </div>
 
                             <select id="technicianId" th:field="*{technicianId}" class="form-select form-select-sm" onchange="checkTechnicianScheduleConflict()">
@@ -92,13 +93,11 @@
                                     <option th:each="tech : ${technicians}"
                                             th:value="${tech.technicianId}"
                                             th:text="${tech.fullName + ' (Bậc ' + tech.level + ' - Đang giữ ' + (tech.activeTicketsCount != null ? tech.activeTicketsCount : 0) + ' phiếu)'}">
-                                        Nguyễn Văn B (Bậc 4 - Đang giữ 3 phiếu)
+                                        …
                                     </option>
                                 </th:block>
                                 <th:block th:if="${technicians == null or technicians.empty}">
-                                    <option value="2" selected>Nguyễn Văn B (Bậc 4 - Đang giữ 3 phiếu) ▾</option>
-                                    <option value="1">Trần Văn C (Bậc 5 - Đang giữ 1 phiếu)</option>
-                                    <option value="3">Lê Thị D (Bậc 3 - Đang giữ 2 phiếu)</option>
+                                    <option value="" disabled>-- Hiện chưa có KTV đủ điều kiện --</option>
                                 </th:block>
                             </select>
                             <div th:if="${#fields != null and #fields.hasErrors('technicianId')}" class="text-danger mt-1" style="font-size: 0.775rem;" th:errors="*{technicianId}">
@@ -111,7 +110,8 @@
                                 <label class="form-label mb-0" style="font-size: 0.85rem;" for="changeReason">
                                     Lý do thay đổi KTV (Bắt buộc nếu đổi KTV cũ - QT-07): *
                                 </label>
-                                <span class="note-callout">Chỉ bắt buộc khi đổi KTV cũ (QT-07)</span>
+                                <!-- Sticky note: Chỉ bắt buộc khi đổi KTV cũ (QT-07) -->
+                                <!-- <span class="note-callout">Chỉ bắt buộc khi đổi KTV cũ (QT-07)</span> -->
                             </div>
                             <textarea id="changeReason" th:field="*{changeReason}" rows="3" minlength="10" class="form-control"
                                       placeholder="Nhập lý do thay đổi KTV (tối thiểu 10 ký tự)..."></textarea>
@@ -149,22 +149,18 @@
                             </div>
                             <div class="col-sm-7">
                                 <select id="appointmentSlot" name="timeSlot" class="form-select form-select-sm" onchange="checkTechnicianScheduleConflict()">
-                                    <option value="08:00 - 09:00">08:00 - 09:00</option>
-                                    <option value="09:00 - 10:00">09:00 - 10:00</option>
-                                    <option value="10:00 - 11:00">10:00 - 11:00</option>
-                                    <option value="13:00 - 14:00">13:00 - 14:00</option>
-                                    <option value="14:00 - 15:00" selected>14:00 - 15:00 ▾</option>
-                                    <option value="15:00 - 16:00">15:00 - 16:00</option>
-                                    <option value="16:00 - 17:00">16:00 - 17:00</option>
+                                    <option value="">-- Chọn khung giờ hẹn --</option>
+                                    <th:block th:if="${timeSlots != null}">
+                                        <option th:each="slot : ${timeSlots}" th:value="${slot}" th:text="${slot}">…</option>
+                                    </th:block>
                                 </select>
                             </div>
                         </div>
 
                         <!-- Khung cảnh báo gán trùng lịch (Chỉ hiển thị khi bị gán trùng - QT-L4-01) -->
-                        <div id="conflictAlert" class="alert-wireframe-danger mt-2" style="display: block;">
+                        <div id="conflictAlert" class="alert-wireframe-danger mt-2" th:style="${conflictMessage != null ? 'display: block;' : 'display: none;'}">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span id="conflictText">❌ KTV Nguyễn Văn B đã có lịch hẹn trong khung giờ 14:00 - 15:00. Vui lòng chọn khung giờ khác!</span>
-                                <span class="note-callout ms-2" style="background-color: #ffffff; border-color: #D32F2F; color: #B71C1C;">Chỉ hiển thị khi trùng lịch (QT-L4-01)</span>
+                                <span id="conflictText" th:text="${conflictMessage}"></span>
                             </div>
                         </div>
                     </div>
