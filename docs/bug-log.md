@@ -10,11 +10,11 @@
 | :--- | :--- |
 | **1. Mã và mức độ** | BUG-001 · Major |
 | **2. Phát hiện bởi** | Kiểm thử tự động `AppointmentServiceTest.testScheduleConflict` |
-| **3. Triệu chứng** | Khởi tạo lịch hẹn trùng giờ ném HTTP 500 (Internal Server Error) do xung đột dữ liệu thay vì trả về thông báo bận lịch thân thiện cho người dùng. |
-| **4. Cách tái lập** | Chạy lệnh kiểm thử tự động: `./mvnw test -Dtest=AppointmentServiceTest#testScheduleConflict` |
-| **5. Nguyên nhân** | Thiếu hàm kiểm tra chống trùng lịch `hasScheduleConflict` ở Tầng Service (`AppointmentService`) trước khi gọi lệnh `save()` xuống cơ sở dữ liệu. |
-| **6. Cách sửa** | Bổ sung truy vấn JPQL `existsByTechnician_TechnicianIdAndAppointmentTimeAndStatusNot` tại `AppointmentRepository` để kiểm tra khung thời gian và ném `AppException("SCHEDULE_CONFLICT", "Kỹ thuật viên đã có lịch hẹn khác...")`. Tích hợp `GlobalExceptionHandler` trả về HTTP 409 Conflict chuẩn JSON. |
-| **7. Commit và xác nhận** | Commit: `d44cf58` (Tích hợp RequestIdFilter, che SĐT và GlobalExceptionHandler) + Unit test `AppointmentServiceTest#testScheduleConflict` **PASS 100%**. |
+| **3. Triệu chứng** | Khởi tạo lịch hẹn trùng giờ ném 500 thay vì thông báo bận lịch |
+| **4. Cách tái lập** | `./mvnw test -Dtest=AppointmentServiceTest#testScheduleConflict` |
+| **5. Nguyên nhân** | Thiếu hàm kiểm tra chống trùng lịch `hasScheduleConflict` ở Tầng Service trước khi lưu DB |
+| **6. Cách sửa** | Bổ sung truy vấn JPQL kiểm tra khoảng thời gian và ném `AppException("SCHEDULE_CONFLICT")` |
+| **7. Commit và xác nhận** | Commit: `d44cf58` (Tích hợp RequestIdFilter, che SĐT và GlobalExceptionHandler) + Unit test `AppointmentServiceTest#testScheduleConflict` PASS 100% |
 
 ---
 

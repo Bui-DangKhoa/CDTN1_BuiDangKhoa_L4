@@ -18,13 +18,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import com.mekongmobile.smartcrm.controllers.PublicAppointmentController;
+import com.mekongmobile.smartcrm.services.AppointmentService;
+
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest({ TicketController.class, TechnicianWebController.class })
+@WebMvcTest({ TicketController.class, TechnicianWebController.class, PublicAppointmentController.class })
 public class ThymeleafViewsTest {
 
         @Autowired
@@ -35,6 +39,9 @@ public class ThymeleafViewsTest {
 
         @MockBean
         private TechnicianRepository technicianRepository;
+
+        @MockBean
+        private AppointmentService appointmentService;
 
         @Test
         @DisplayName("MH1: Render /tickets/unassigned thành công, trả về view tickets/unassigned-list")
@@ -144,5 +151,61 @@ public class ThymeleafViewsTest {
                                 .andExpect(status().isOk())
                                 .andExpect(view().name("technician/my-tickets"))
                                 .andExpect(model().attributeExists("technician", "myTickets"));
+        }
+
+        @Test
+        @DisplayName("UI State: MH1 hiển thị Empty State khi danh sách phiếu rỗng")
+        void testRenderUnassignedList_EmptyState() throws Exception {
+                when(ticketService.getUnassignedTicketsSortedByDueDate(any())).thenReturn(List.of());
+
+                com.mekongmobile.smartcrm.dto.UserSessionDto managerSession = com.mekongmobile.smartcrm.dto.UserSessionDto
+                                .builder()
+                                .userId(1L)
+                                .username("quanly1")
+                                .fullName("Nguyễn Quản Lý")
+                                .role("QUAN_LY")
+                                .centerId(1L)
+                                .build();
+
+                mockMvc.perform(get("/tickets/unassigned").sessionAttr("currentUser", managerSession))
+                                .andExpect(status().isOk())
+                                .andExpect(view().name("tickets/unassigned-list"))
+                                .andExpect(content().string(containsString("Không có phiếu bảo hành nào cần phân công")))
+                                .andExpect(content().string(containsString("Xóa bộ lọc")));
+        }
+
+        @Test
+        @DisplayName("UI State: MH1 hiển thị Error State kèm requestId và nút Thử lại")
+        void testRenderUnassignedList_ErrorState() throws Exception {
+                when(ticketService.getUnassignedTicketsSortedByDueDate(any())).thenReturn(List.of());
+
+                com.mekongmobile.smartcrm.dto.UserSessionDto managerSession = com.mekongmobile.smartcrm.dto.UserSessionDto
+                                .builder()
+                                .userId(1L)
+                                .username("quanly1")
+                                .role("QUAN_LY")
+                                .centerId(1L)
+                                .build();
+
+                mockMvc.perform(get("/tickets/unassigned")
+                                .sessionAttr("currentUser", managerSession)
+                                .flashAttr("errorMessage", "Đã xảy ra lỗi kết nối CSDL"))
+                                .andExpect(status().isOk())
+                                .andExpect(content().string(containsString("Đã xảy ra lỗi kết nối CSDL")))
+                                .andExpect(content().string(containsString("Mã tra cứu sự cố:")))
+                                .andExpect(content().string(containsString("Thử lại")));
+        }
+
+        @Test
+        @DisplayName("UI State: Cổng Tra cứu công khai /lookup hiển thị đầy đủ Loading, Empty và Error states")
+        void testRenderPublicLookup_UIStates() throws Exception {
+                when(appointmentService.findAppointmentsByKeyword("KHONG_CO_KET_QUA")).thenReturn(List.of());
+
+                mockMvc.perform(get("/lookup").param("keyword", "KHONG_CO_KET_QUA"))
+                                .andExpect(status().isOk())
+                                .andExpect(view().name("public/appointment-lookup"))
+                                .andExpect(content().string(containsString("Không có phiếu bảo hành nào cần phân công")))
+                                .andExpect(content().string(containsString("Xóa bộ lọc")))
+                                .andExpect(content().string(containsString("Đang tải danh sách phiếu bảo hành... Vui lòng chờ trong giây lát.")));
         }
 }
