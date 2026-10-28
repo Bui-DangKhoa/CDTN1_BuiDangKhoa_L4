@@ -815,6 +815,20 @@ body {
     font-weight: 500;
 }
 
+/* Bảng Phiếu của tôi (Khung 1 - US4) hiển thị trọn vẹn không cần kéo thanh cuộn ngang */
+.my-tickets-table {
+    width: 100%;
+}
+.my-tickets-table thead th {
+    padding: 0.55rem 0.65rem !important;
+    font-size: 0.825rem !important;
+    white-space: nowrap;
+}
+.my-tickets-table tbody td {
+    padding: 0.55rem 0.65rem !important;
+    font-size: 0.825rem !important;
+}
+
 /* Trạng thái SLA với chấm màu theo wireframe */
 .sla-badge {
     display: inline-flex;
@@ -949,19 +963,19 @@ body {
     flex-wrap: nowrap;
     overflow-x: auto;
     padding: 0.5rem 0;
-    gap: 0.65rem;
+    gap: 0.45rem;
 }
 
 .lifecycle-step {
-    padding: 0.55rem 0.85rem;
+    padding: 0.45rem 0.65rem;
     border-radius: 12px;
-    font-size: 0.775rem;
+    font-size: 0.75rem;
     font-weight: 700;
     border: 1px solid #1976D2;
     text-align: center;
     white-space: nowrap;
     flex-shrink: 0;
-    min-width: 90px;
+    min-width: 78px;
 }
 
 .lifecycle-step.completed {
