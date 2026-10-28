@@ -134,6 +134,53 @@ function applyTicketFilter() {
     }
 }
 
+// Xóa bộ lọc trên Màn hình 1 (Empty State action)
+function resetTicketFilter() {
+    const categorySelect = document.getElementById('categoryFilter');
+    const prioritySelect = document.getElementById('priorityFilter');
+    const slaSelect = document.getElementById('slaFilter');
+
+    if (categorySelect) categorySelect.value = 'all';
+    if (prioritySelect) prioritySelect.value = 'ALL';
+    if (slaSelect) slaSelect.value = 'ALL';
+
+    applyTicketFilter();
+}
+
+// Xử lý 3 trạng thái UI (Loading, Empty, Error)
+function showLoadingState(message) {
+    const loader = document.getElementById('uiLoadingState') || document.getElementById('uiStateLoading');
+    const content = document.getElementById('ticketTableContainer') || document.getElementById('resultsContainer') || document.getElementById('mainContentArea');
+    if (loader) {
+        loader.style.display = 'block';
+        if (message) {
+            const msgEl = loader.querySelector('.loading-text') || loader.querySelector('p');
+            if (msgEl) msgEl.textContent = message;
+        }
+    }
+    if (content) {
+        content.style.opacity = '0.3';
+    }
+}
+
+function hideLoadingState() {
+    const loader = document.getElementById('uiLoadingState') || document.getElementById('uiStateLoading');
+    const content = document.getElementById('ticketTableContainer') || document.getElementById('resultsContainer') || document.getElementById('mainContentArea');
+    if (loader) loader.style.display = 'none';
+    if (content) content.style.opacity = '1';
+}
+
+function showErrorState(message, requestId) {
+    const banner = document.getElementById('uiDynamicErrorBanner');
+    const msgEl = document.getElementById('uiDynamicErrorMessage');
+    const reqEl = document.getElementById('uiDynamicRequestId');
+    if (banner) {
+        if (msgEl) msgEl.innerText = message || 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.';
+        if (reqEl) reqEl.innerText = requestId || 'N/A';
+        banner.style.display = 'flex';
+    }
+}
+
 // Mở Modal Phân công & Đặt lịch từ dòng dữ liệu trên Màn hình 1
 function openAssignModalFromRow(btn) {
     const ticketId = btn.dataset.ticketId || '1';

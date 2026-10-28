@@ -29,17 +29,47 @@
 
     <main class="container-fluid px-4 py-3" style="max-width: 1200px;">
 
-        <!-- Thông báo Thành công / Lỗi (Alert States - Màu chữ đậm rõ nét) -->
+        <!-- Thông báo Thành công -->
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show fw-bold shadow-sm" style="color: #1B5E20 !important; background-color: #E8F5E9 !important; border: 1px solid #2E7D32 !important; font-size: 0.95rem;" role="alert">
             <span class="me-2 fs-6">✓</span>
             <span th:text="${successMessage}">Cập nhật thành công!</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show fw-bold shadow-sm" style="color: #B71C1C !important; background-color: #FFEBEE !important; border: 1px solid #C62828 !important; font-size: 0.95rem;" role="alert">
-            <span class="me-2 fs-6">❌</span>
-            <span th:text="${errorMessage}">Đã xảy ra lỗi!</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <!-- 3. ERROR STATE: Alert Banner màu đỏ thông báo lỗi an toàn kèm mã tra cứu requestId và nút Thử lại -->
+        <div th:if="${errorMessage != null or param.error != null}" id="uiServerErrorAlert"
+             class="alert alert-danger alert-dismissible fade show fw-medium shadow-sm d-flex align-items-center justify-content-between p-3 mb-3 crm-error-banner"
+             role="alert">
+            <div class="d-flex align-items-center gap-3">
+                <span class="fs-4">❌</span>
+                <div>
+                    <div class="fw-bold" th:text="${errorMessage != null ? errorMessage : 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.'}">
+                        Đã xảy ra lỗi!
+                    </div>
+                    <div class="small mt-1 text-secondary">
+                        Mã tra cứu sự cố: <strong class="crm-request-id-badge" th:text="${requestId != null ? requestId : 'N/A'}">REQ-UUID</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-outline-danger btn-sm px-3 fw-bold" onclick="window.location.reload()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Thử lại
+                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <!-- 1. LOADING STATE (Spinner / Khung xương Skeleton) -->
+        <div id="uiLoadingState" class="crm-loading-state text-center my-3 py-4" style="display: none;">
+            <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <h6 class="fw-bold text-primary mb-2">Đang tải danh sách phiếu bảo hành... Vui lòng chờ trong giây lát.</h6>
+            <div class="mx-auto mt-3" style="max-width: 800px;">
+                <div class="crm-skeleton-line" style="width: 100%; height: 24px;"></div>
+                <div class="crm-skeleton-line" style="width: 90%; height: 18px;"></div>
+                <div class="crm-skeleton-line" style="width: 95%; height: 18px;"></div>
+            </div>
         </div>
 
         <div class="row g-3">
@@ -86,31 +116,17 @@
                                         </tr>
                                     </th:block>
 
-                                    <!-- DỮ LIỆU MẪU THEO ĐÚNG 100% WIREFRAME MH3 (Fallback khi chưa có DB) -->
+                                    <!-- 2. EMPTY STATE: Hiển thị khi danh sách phiếu của KTV rỗng -->
                                     <th:block th:if="${myTickets == null or myTickets.empty}">
-                                        <!-- Dòng 1: Đang chọn (highlight) -->
-                                        <tr class="row-selected" style="cursor: pointer;" onclick="selectRowMock('#BH-00125', 'iPhone 13', 'Màn hình', 'DANG_XU_LY')">
-                                            <td><strong>#BH-00125</strong></td>
-                                            <td>iPhone 13</td>
-                                            <td>Màn hình</td>
-                                            <td>30/10/2026 08:00</td>
-                                            <td>ĐANG XỬ LÝ</td>
-                                        </tr>
-                                        <!-- Dòng 2 -->
-                                        <tr style="cursor: pointer;" onclick="selectRowMock('#BH-00130', 'Xiaomi 13', 'Sạc', 'DA_PHAN_CONG')">
-                                            <td><strong>#BH-00130</strong></td>
-                                            <td>Xiaomi 13</td>
-                                            <td>Sạc</td>
-                                            <td>31/10/2026 10:00</td>
-                                            <td>ĐÃ PHÂN CÔNG</td>
-                                        </tr>
-                                        <!-- Dòng 3 -->
-                                        <tr style="cursor: pointer;" onclick="selectRowMock('#BH-00133', 'Oppo A78', 'Loa', 'DA_PHAN_CONG')">
-                                            <td><strong>#BH-00133</strong></td>
-                                            <td>Oppo A78</td>
-                                            <td>Loa</td>
-                                            <td>01/11/2026 15:00</td>
-                                            <td>ĐÃ PHÂN CÔNG</td>
+                                        <tr id="emptyMyTicketsRow">
+                                            <td colspan="5" class="text-center py-4">
+                                                <i class="bi bi-inbox text-muted" style="font-size: 2.25rem;"></i>
+                                                <div class="fw-bold text-secondary mt-2 mb-1">Không có phiếu bảo hành nào cần xử lý</div>
+                                                <p class="text-muted small mb-3">Bạn chưa được phân công phiếu mới hoặc đã hoàn tất tất cả công việc.</p>
+                                                <a th:href="@{/technician/my-tickets}" class="btn btn-outline-primary btn-sm px-3 fw-semibold">
+                                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Xóa bộ lọc / Làm mới
+                                                </a>
+                                            </td>
                                         </tr>
                                     </th:block>
                                 </tbody>

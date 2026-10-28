@@ -39,17 +39,69 @@
 
     <main class="container-fluid px-4 py-3" style="max-width: 1250px;">
 
-        <!-- Thông báo Thành công / Lỗi (Alert States - Màu chữ đậm rõ nét) -->
+        <!-- Thông báo Thành công -->
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show fw-bold shadow-sm" style="color: #1B5E20 !important; background-color: #E8F5E9 !important; border: 1px solid #2E7D32 !important; font-size: 0.95rem;" role="alert">
             <span class="me-2 fs-6">✓</span>
             <span th:text="${successMessage}">Thao tác thành công!</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show fw-bold shadow-sm" style="color: #B71C1C !important; background-color: #FFEBEE !important; border: 1px solid #C62828 !important; font-size: 0.95rem;" role="alert">
-            <span class="me-2 fs-6">❌</span>
-            <span th:text="${errorMessage}">Đã xảy ra lỗi trong quá trình xử lý!</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <!-- 3. ERROR STATE: Alert Banner màu đỏ thông báo lỗi an toàn kèm mã tra cứu requestId và nút Thử lại -->
+        <div th:if="${errorMessage != null or param.error != null}" id="uiServerErrorAlert"
+             class="alert alert-danger alert-dismissible fade show fw-medium shadow-sm d-flex align-items-center justify-content-between p-3 mb-3 crm-error-banner"
+             role="alert">
+            <div class="d-flex align-items-center gap-3">
+                <span class="fs-4">❌</span>
+                <div>
+                    <div class="fw-bold" th:text="${errorMessage != null ? errorMessage : 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.'}">
+                        Đã xảy ra lỗi trong quá trình xử lý!
+                    </div>
+                    <div class="small mt-1 text-secondary">
+                        Mã tra cứu sự cố: <strong class="crm-request-id-badge" th:text="${requestId != null ? requestId : 'N/A'}">REQ-UUID</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-outline-danger btn-sm px-3 fw-bold" onclick="window.location.reload()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Thử lại
+                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <!-- Dynamic Client-side Error Banner (cho AJAX / Fetch hoặc Network Error) -->
+        <div id="uiDynamicErrorBanner"
+             class="alert alert-danger alert-dismissible fade show fw-medium shadow-sm align-items-center justify-content-between p-3 mb-3 crm-error-banner"
+             style="display: none;" role="alert">
+            <div class="d-flex align-items-center gap-3">
+                <span class="fs-4">❌</span>
+                <div>
+                    <div class="fw-bold" id="uiDynamicErrorMessage">Hệ thống đang gặp sự cố. Vui lòng thử lại sau.</div>
+                    <div class="small mt-1 text-secondary">
+                        Mã tra cứu sự cố: <strong class="crm-request-id-badge" id="uiDynamicRequestId">N/A</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-outline-danger btn-sm px-3 fw-bold" onclick="window.location.reload()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Thử lại
+                </button>
+                <button type="button" class="btn-close" onclick="document.getElementById('uiDynamicErrorBanner').style.display='none'" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <!-- 1. LOADING STATE (Spinner / Khung xương Skeleton "Đang tải danh sách phiếu bảo hành... Vui lòng chờ trong giây lát.") -->
+        <div id="uiLoadingState" class="crm-loading-state text-center my-3 py-4" style="display: none;">
+            <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <h6 class="fw-bold text-primary mb-2">Đang tải danh sách phiếu bảo hành... Vui lòng chờ trong giây lát.</h6>
+            <div class="mx-auto mt-3" style="max-width: 800px;">
+                <div class="crm-skeleton-line" style="width: 100%; height: 26px;"></div>
+                <div class="crm-skeleton-line" style="width: 95%; height: 20px;"></div>
+                <div class="crm-skeleton-line" style="width: 90%; height: 20px;"></div>
+                <div class="crm-skeleton-line" style="width: 85%; height: 20px;"></div>
+            </div>
         </div>
 
         <!-- 2 Thẻ chỉ số KPI ở trên cùng theo Wireframe MH1 -->
@@ -128,10 +180,17 @@
                     </tr>
                 </thead>
                 <tbody id="ticketTableBody">
-                    <!-- TRẠNG THÁI RỖNG khi bộ lọc không tìm thấy kết quả -->
+                    <!-- 2. EMPTY STATE: Khi bộ lọc tìm kiếm không có kết quả -->
                     <tr id="emptyFilterRow" style="display: none;">
-                        <td colspan="8" class="text-center py-4 text-muted">
-                            Không tìm thấy phiếu yêu cầu nào phù hợp với bộ lọc hiện tại.
+                        <td colspan="8" class="text-center py-5">
+                            <div class="py-3">
+                                <i class="bi bi-inbox text-muted" style="font-size: 2.75rem;"></i>
+                                <h6 class="fw-bold text-secondary mt-2 mb-1">Không có phiếu bảo hành nào cần phân công</h6>
+                                <p class="text-muted small mb-3">Không tìm thấy phiếu yêu cầu nào phù hợp với bộ lọc hiện tại.</p>
+                                <button type="button" class="btn btn-outline-primary btn-sm px-3 fw-semibold" onclick="resetTicketFilter()">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Xóa bộ lọc
+                                </button>
+                            </div>
                         </td>
                     </tr>
 
@@ -201,131 +260,18 @@
                         </tr>
                     </th:block>
 
-                    <!-- DỮ LIỆU MẪU THEO ĐÚNG 100% WIREFRAME MH1 (Fallback khi chạy demo chưa nạp DB) -->
+                    <!-- 2. EMPTY STATE: Hiển thị khi danh sách phiếu rỗng từ máy chủ -->
                     <th:block th:if="${tickets == null or tickets.empty}">
-                        <!-- Hàng 1: #BH-00125 -->
-                        <tr class="ticket-row row-urgent"
-                            data-category="màn hình"
-                            data-priority="CAO"
-                            data-sla="SAP_QUA_HAN">
-                            <td class="text-center"><input type="checkbox" class="ticket-checkbox"></td>
-                            <td><strong>#BH-00125</strong></td>
-                            <td>iPhone 13</td>
-                            <td>Màn hình</td>
-                            <td><span class="text-danger fw-semibold">Cao</span></td>
-                            <td>30/10/2026 08:00</td>
-                            <td>
-                                <span class="sla-badge" style="color: #E65100;">
-                                    <span class="sla-dot yellow"></span>
-                                    <span>Sắp quá hạn</span>
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-crm-primary btn-sm"
-                                        data-ticket-id="125"
-                                        data-ticket-code="BH-00125"
-                                        data-device-name="iPhone 13"
-                                        data-category-name="Màn hình"
-                                        data-due-date="30/10/2026 08:00"
-                                        data-repeat-count="2"
-                                        data-current-tech-id="1"
-                                        data-current-tech-name="Trần Văn C"
-                                        onclick="openAssignModalFromRow(this)">
-                                    Phân công
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- Hàng 2: #BH-00124 -->
-                        <tr class="ticket-row row-urgent"
-                            data-category="sạc"
-                            data-priority="CAO"
-                            data-sla="QUA_HAN">
-                            <td class="text-center"><input type="checkbox" class="ticket-checkbox"></td>
-                            <td><strong>#BH-00124</strong></td>
-                            <td>Samsung A54</td>
-                            <td>Sạc</td>
-                            <td><span class="text-danger fw-semibold">Cao</span></td>
-                            <td>28/10/2026 17:00</td>
-                            <td>
-                                <span class="sla-badge text-danger">
-                                    <span class="sla-dot red"></span>
-                                    <span>Quá hạn</span>
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-crm-primary btn-sm"
-                                        data-ticket-id="124"
-                                        data-ticket-code="BH-00124"
-                                        data-device-name="Samsung A54"
-                                        data-category-name="Sạc"
-                                        data-due-date="28/10/2026 17:00"
-                                        data-repeat-count="0"
-                                        onclick="openAssignModalFromRow(this)">
-                                    Phân công
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- Hàng 3: #BH-00126 -->
-                        <tr class="ticket-row"
-                            data-category="pin"
-                            data-priority="TRUNG_BINH"
-                            data-sla="CON_HAN">
-                            <td class="text-center"><input type="checkbox" class="ticket-checkbox"></td>
-                            <td><strong>#BH-00126</strong></td>
-                            <td>Samsung S23</td>
-                            <td>Pin</td>
-                            <td><span class="text-warning-emphasis fw-semibold">Trung bình</span></td>
-                            <td>31/10/2026 17:00</td>
-                            <td>
-                                <span class="sla-badge text-success">
-                                    <span class="sla-dot green"></span>
-                                    <span>Còn hạn</span>
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-crm-primary btn-sm"
-                                        data-ticket-id="126"
-                                        data-ticket-code="BH-00126"
-                                        data-device-name="Samsung S23"
-                                        data-category-name="Pin"
-                                        data-due-date="31/10/2026 17:00"
-                                        data-repeat-count="0"
-                                        onclick="openAssignModalFromRow(this)">
-                                    Phân công
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- Hàng 4: #BH-00127 -->
-                        <tr class="ticket-row"
-                            data-category="khác"
-                            data-priority="THAP"
-                            data-sla="CON_HAN">
-                            <td class="text-center"><input type="checkbox" class="ticket-checkbox"></td>
-                            <td><strong>#BH-00127</strong></td>
-                            <td>Oppo Reno8</td>
-                            <td>Camera</td>
-                            <td><span class="text-secondary fw-semibold">Thấp</span></td>
-                            <td>02/11/2026 12:00</td>
-                            <td>
-                                <span class="sla-badge text-success">
-                                    <span class="sla-dot green"></span>
-                                    <span>Còn hạn</span>
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-crm-primary btn-sm"
-                                        data-ticket-id="127"
-                                        data-ticket-code="BH-00127"
-                                        data-device-name="Oppo Reno8"
-                                        data-category-name="Camera"
-                                        data-due-date="02/11/2026 12:00"
-                                        data-repeat-count="0"
-                                        onclick="openAssignModalFromRow(this)">
-                                    Phân công
-                                </button>
+                        <tr id="emptyServerRow">
+                            <td colspan="8" class="text-center py-5">
+                                <div class="py-4">
+                                    <i class="bi bi-inbox text-muted" style="font-size: 3.5rem;"></i>
+                                    <h5 class="fw-bold text-secondary mt-3 mb-2">Không có phiếu bảo hành nào cần phân công</h5>
+                                    <p class="text-muted small mb-3">Hiện tại tất cả phiếu bảo hành đã được điều phối hoặc không có phiếu nào cần phân công.</p>
+                                    <button type="button" class="btn btn-outline-primary btn-sm px-4 fw-semibold" onclick="resetTicketFilter(); window.location.reload();">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i> Xóa bộ lọc
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </th:block>

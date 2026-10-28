@@ -990,4 +990,86 @@ body {
     flex-shrink: 0;
 }
 
+/* ==========================================================================
+   3 UI STATES: LOADING STATE (SPINNER / SKELETON), EMPTY STATE & ERROR STATE
+   ========================================================================== */
+
+/* 1. Loading State */
+.crm-loading-state {
+    padding: 2.5rem 1rem;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+@keyframes crmShimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.crm-skeleton-line {
+    height: 16px;
+    background: linear-gradient(90deg, #f0f3f6 25%, #e2e8f0 50%, #f0f3f6 75%);
+    background-size: 200% 100%;
+    animation: crmShimmer 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+}
+
+.crm-skeleton-box {
+    background: linear-gradient(90deg, #f0f3f6 25%, #e2e8f0 50%, #f0f3f6 75%);
+    background-size: 200% 100%;
+    animation: crmShimmer 1.5s infinite;
+    border-radius: 6px;
+}
+
+/* 2. Empty State */
+.crm-empty-state {
+    padding: 3rem 1.5rem;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px dashed #cfd8dc;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.crm-empty-state-icon {
+    font-size: 3.25rem;
+    color: #90a4ae;
+    margin-bottom: 1rem;
+}
+
+.crm-empty-state-title {
+    font-weight: 700;
+    color: #37474f;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.crm-empty-state-desc {
+    color: #78909c;
+    font-size: 0.875rem;
+    max-width: 480px;
+    margin: 0 auto 1.25rem;
+}
+
+/* 3. Error State */
+.crm-error-banner {
+    color: #B71C1C !important;
+    background-color: #FFEBEE !important;
+    border: 1px solid #C62828 !important;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+}
+
+.crm-request-id-badge {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
 
