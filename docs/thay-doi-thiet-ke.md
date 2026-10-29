@@ -31,7 +31,7 @@ Tài liệu ghi nhận toàn bộ các quyết định điều chỉnh kỹ thu�
 ## 2. Các thay đổi kỹ thuật nâng cấp trong Bài tập 2 (Buổi 9 – Buổi 12 / Sprint 2)
 
 ### TD-05: Bổ sung DTO Mapper che SĐT khách hàng trên Cổng tra cứu công khai (QT-15)
-- **Thay đổi gì**: Bổ sung logic che 3 số giữa của SĐT khách hàng (ví dụ: `0901234567` &rarr; `090***4567`) trong DTO Mapper khi trả dữ liệu ra Cổng tra cứu công khai (`/lookup`).
+- **Thay đổi gì**: Bổ sung logic che 4 số giữa của SĐT khách hàng (ví dụ: `0901234567` &rarr; `090****567`) trong DTO Mapper khi trả dữ liệu ra Cổng tra cứu công khai (`/lookup`).
 - **Lý do**: Tuân thủ quy định bảo vệ dữ liệu cá nhân khách hàng (Nghị định 13/2023/NĐ-CP) và hiện thực hóa quy tắc nghiệp vụ QT-15 trên giao diện tra cứu không cần đăng nhập.
 - **Ảnh hưởng tới thành phần nào**: `PublicAppointmentController.java`, `CustomerDtoMapper.java`, `appointment-lookup.html`, `AuthAndSecurityTest.java`.
 
