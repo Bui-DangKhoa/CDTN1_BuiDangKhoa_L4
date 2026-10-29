@@ -42,4 +42,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     long countPreviousSameIssues(@org.springframework.data.repository.query.Param("deviceId") Long deviceId,
                                  @org.springframework.data.repository.query.Param("categoryId") Integer categoryId,
                                  @org.springframework.data.repository.query.Param("ticketId") Long ticketId);
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM Ticket t LEFT JOIN FETCH t.technician WHERE t.device.deviceId = :deviceId AND (:excludeTicketId IS NULL OR t.ticketId != :excludeTicketId) AND t.status IN :statuses ORDER BY COALESCE(t.closedAt, t.receivedAt) DESC")
+    List<Ticket> findRepairHistory(@org.springframework.data.repository.query.Param("deviceId") Long deviceId,
+                                  @org.springframework.data.repository.query.Param("excludeTicketId") Long excludeTicketId,
+                                  @org.springframework.data.repository.query.Param("statuses") java.util.Collection<String> statuses);
 }

@@ -48,6 +48,7 @@ public class TechnicianWebController {
             model.addAttribute("technician", null);
             model.addAttribute("myTickets", List.of());
             model.addAttribute("selectedTicket", null);
+            model.addAttribute("repairHistory", List.of());
             model.addAttribute("errorMessage", "Tài khoản chưa liên kết với kỹ thuật viên");
             model.addAttribute("title", "Mekong Mobile Smart CRM - Màn hình Kỹ thuật viên");
             return "technician/my-tickets";
@@ -72,9 +73,16 @@ public class TechnicianWebController {
             selectedTicket = ticketDtos.get(0);
         }
 
+                List<com.mekongmobile.smartcrm.dto.DeviceRepairHistoryDto> repairHistory = List.of();
+        if (selectedTicket != null && selectedTicket.getDeviceId() != null) {
+            repairHistory = ticketService.getDeviceRepairHistory(
+                    selectedTicket.getDeviceId(), selectedTicket.getTicketId());
+        }
+
         model.addAttribute("technician", tech);
         model.addAttribute("myTickets", ticketDtos);
         model.addAttribute("selectedTicket", selectedTicket);
+        model.addAttribute("repairHistory", repairHistory);
         model.addAttribute("title", "Mekong Mobile Smart CRM - Màn hình Kỹ thuật viên");
 
         return "technician/my-tickets";

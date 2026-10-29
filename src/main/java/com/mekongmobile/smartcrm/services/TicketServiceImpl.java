@@ -2,6 +2,7 @@ package com.mekongmobile.smartcrm.services;
 
 import com.mekongmobile.smartcrm.dto.TicketRequestDto;
 import com.mekongmobile.smartcrm.dto.TicketResponseDto;
+import com.mekongmobile.smartcrm.dto.DeviceRepairHistoryDto;
 import com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto;
 import com.mekongmobile.smartcrm.entities.Device;
 import com.mekongmobile.smartcrm.entities.IssueCategory;
@@ -478,5 +479,29 @@ public class TicketServiceImpl implements TicketService {
                 .repeatCount(repeatCount)
                 .build();
     }
-}
+    @Override
+    @Transactional(readOnly = true)
+    public List<DeviceRepairHistoryDto> getDeviceRepairHistory(Long deviceId, Long excludeTicketId) {
+        if (deviceId == null) {
+            return List.of();
+        }
 
+        List<String> closedStatuses = List.of("HOAN_TAT", "HOAN_THANH", "DONG");
+        List<Ticket> pastTickets = ticketRepository.findRepairHistory(deviceId, excludeTicketId, closedStatuses);
+
+        return pastTickets.stream().map(t -> {
+            String techName = (t.getTechnician() != null) ? t.getTechnician().getFullName() : "—";
+            String dateStr = DeviceRepairHistoryDto.formatRepairedDate(t.getClosedAt(), t.getReceivedAt());
+            String solution = (t.getResolution() != null && !t.getResolution().isBlank())
+                    ? t.getResolution()
+                    : t.getIssueDesc();
+
+            return DeviceRepairHistoryDto.builder()
+                    .ticketCode(t.getTicketCode())
+                    .repairedDate(dateStr)
+                    .technicianName(techName)
+                    .solutionDesc(solution)
+                    .build();
+        }).collect(java.util.stream.Collectors.toList());
+    }
+}

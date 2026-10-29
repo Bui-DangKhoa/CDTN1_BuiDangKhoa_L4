@@ -127,5 +127,12 @@ public interface TicketService {
      * QT-08: Lấy danh sách KTV đủ điều kiện (cùng centerId, proficiency >= 3 cho danh mục sự cố).
      */
     List<com.mekongmobile.smartcrm.dto.TechnicianResponseDto> getEligibleTechniciansForTicket(Long ticketId);
+    /**
+     * US5 / FR5: Lấy lịch sử sửa chữa của thiết bị (các phiếu trước đó đã hoàn tất hoặc đóng).
+     *
+     * @param deviceId ID của thiết bị cần xem lịch sử
+     * @param excludeTicketId ID của phiếu hiện tại đang xem (bị loại trừ khỏi lịch sử cũ)
+     * @return danh sách lịch sử sửa chữa sắp xếp từ mới nhất đến cũ nhất
+     */
+    java.util.List<com.mekongmobile.smartcrm.dto.DeviceRepairHistoryDto> getDeviceRepairHistory(Long deviceId, Long excludeTicketId);
 }
-
