@@ -155,4 +155,135 @@ class AppointmentServiceTest {
         assertEquals("090****567", dtos.get(0).getCustomerPhone());
         assertFalse(dtos.get(0).getCustomerPhone().contains("1234"));
     }
+
+    @Test
+    @DisplayName("TC-APPT-07: getAppointmentById - Trả về DTO thông tin lịch hẹn khi tồn tại")
+    void getAppointmentById_valid_returnsDto() {
+        Appointment app = Appointment.builder()
+                .appointmentId(100L)
+                .ticket(mockTicket)
+                .technician(mockTechnician)
+                .appointmentTime(appointmentTime)
+                .status("CHO_XAC_NHAN")
+                .build();
+
+        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(app));
+
+        com.mekongmobile.smartcrm.dto.AppointmentResponseDto dto = appointmentService.getAppointmentById(100L);
+
+        assertNotNull(dto);
+        assertEquals(100L, dto.getAppointmentId());
+        assertEquals("CHO_XAC_NHAN", dto.getStatus());
+    }
+
+    @Test
+    @DisplayName("TC-APPT-08: getAppointmentById - Ném lỗi APPOINTMENT_NOT_FOUND khi không tìm thấy lịch hẹn")
+    void getAppointmentById_notFound_throwsException() {
+        when(appointmentRepository.findById(999L)).thenReturn(Optional.empty());
+
+        AppException ex = assertThrows(AppException.class, () -> appointmentService.getAppointmentById(999L));
+        assertEquals("APPOINTMENT_NOT_FOUND", ex.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("TC-APPT-09: updateAppointment - Đổi giờ nhẹ không tự trùng chính mình (QT-L4-01 loại trừ self ID)")
+    void updateAppointment_slightTimeAdjustment_noSelfConflict_success() {
+        Appointment app = Appointment.builder()
+                .appointmentId(100L)
+                .ticket(mockTicket)
+                .technician(mockTechnician)
+                .appointmentTime(appointmentTime) // 09:00
+                .status("CHO_XAC_NHAN")
+                .build();
+
+        LocalDateTime newTime = LocalDateTime.of(2026, 10, 20, 9, 5); // Đổi nhẹ sang 09:05
+        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(app));
+        when(appointmentRepository.existsActiveAppointmentInWindowExcludingSelf(
+                eq(5L), eq(newTime.minusMinutes(30)), eq(newTime.plusMinutes(30)), eq(100L)))
+                .thenReturn(false);
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        com.mekongmobile.smartcrm.dto.UpdateAppointmentRequest request = com.mekongmobile.smartcrm.dto.UpdateAppointmentRequest.builder()
+                .appointmentTime(newTime)
+                .build();
+
+        com.mekongmobile.smartcrm.dto.AppointmentResponseDto updated = appointmentService.updateAppointment(100L, request);
+
+        assertNotNull(updated);
+        assertEquals(newTime, updated.getAppointmentTime());
+        verify(appointmentRepository).save(app);
+    }
+
+    @Test
+    @DisplayName("TC-APPT-10: updateAppointment - Xung đột trong khung giờ < 30 phút với lịch hẹn khác -> ném SCHEDULE_CONFLICT")
+    void updateAppointment_inside30MinWindow_throwsScheduleConflict() {
+        Appointment app = Appointment.builder()
+                .appointmentId(100L)
+                .ticket(mockTicket)
+                .technician(mockTechnician)
+                .appointmentTime(appointmentTime) // 09:00
+                .status("CHO_XAC_NHAN")
+                .build();
+
+        LocalDateTime newTime = LocalDateTime.of(2026, 10, 20, 9, 45); // KTV có hẹn khác lúc 10:00 (cách 15 phút < 30)
+        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(app));
+        when(appointmentRepository.existsActiveAppointmentInWindowExcludingSelf(
+                eq(5L), eq(newTime.minusMinutes(30)), eq(newTime.plusMinutes(30)), eq(100L)))
+                .thenReturn(true);
+
+        com.mekongmobile.smartcrm.dto.UpdateAppointmentRequest request = com.mekongmobile.smartcrm.dto.UpdateAppointmentRequest.builder()
+                .appointmentTime(newTime)
+                .build();
+
+        AppException ex = assertThrows(AppException.class, () -> appointmentService.updateAppointment(100L, request));
+        assertEquals("SCHEDULE_CONFLICT", ex.getErrorCode());
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+    }
+
+    @Test
+    @DisplayName("TC-APPT-11: updateAppointment - Đổi giờ tại đúng biên 30 phút so với lịch hẹn khác -> hợp lệ thành công")
+    void updateAppointment_boundaryExact30Min_success() {
+        Appointment app = Appointment.builder()
+                .appointmentId(100L)
+                .ticket(mockTicket)
+                .technician(mockTechnician)
+                .appointmentTime(appointmentTime) // 09:00
+                .status("CHO_XAC_NHAN")
+                .build();
+
+        LocalDateTime boundaryTime = LocalDateTime.of(2026, 10, 20, 9, 30); // Đúng 30 phút trước 10:00
+        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(app));
+        when(appointmentRepository.existsActiveAppointmentInWindowExcludingSelf(
+                eq(5L), eq(boundaryTime.minusMinutes(30)), eq(boundaryTime.plusMinutes(30)), eq(100L)))
+                .thenReturn(false);
+        when(appointmentRepository.save(any(Appointment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        com.mekongmobile.smartcrm.dto.UpdateAppointmentRequest request = com.mekongmobile.smartcrm.dto.UpdateAppointmentRequest.builder()
+                .appointmentTime(boundaryTime)
+                .build();
+
+        com.mekongmobile.smartcrm.dto.AppointmentResponseDto updated = appointmentService.updateAppointment(100L, request);
+
+        assertNotNull(updated);
+        assertEquals(boundaryTime, updated.getAppointmentTime());
+        verify(appointmentRepository).save(app);
+    }
+
+    @Test
+    @DisplayName("TC-APPT-12: cancelAppointment - Ném lỗi APPOINTMENT_NOT_DELETABLE khi lịch hẹn đã được khách hàng xác nhận (DA_XAC_NHAN)")
+    void cancelAppointment_statusDaXacNhan_throwsAppointmentNotDeletable() {
+        Appointment app = Appointment.builder()
+                .appointmentId(100L)
+                .ticket(mockTicket)
+                .technician(mockTechnician)
+                .appointmentTime(appointmentTime)
+                .status("DA_XAC_NHAN")
+                .build();
+
+        when(appointmentRepository.findById(100L)).thenReturn(Optional.of(app));
+
+        AppException ex = assertThrows(AppException.class, () -> appointmentService.cancelAppointment(100L));
+        assertEquals("APPOINTMENT_NOT_DELETABLE", ex.getErrorCode());
+        assertEquals("DA_XAC_NHAN", app.getStatus()); // Không bị đổi sang DA_HUY
+    }
 }

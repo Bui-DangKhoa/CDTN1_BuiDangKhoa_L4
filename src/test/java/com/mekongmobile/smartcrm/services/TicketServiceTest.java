@@ -49,6 +49,9 @@ class TicketServiceTest {
     @Mock
     private IssueCategoryRepository categoryRepository;
 
+    @Mock
+    private AppointmentService appointmentService;
+
     @InjectMocks
     private TicketServiceImpl ticketService;
 
@@ -350,5 +353,102 @@ class TicketServiceTest {
         assertNotNull(dto);
         assertEquals(2, dto.getRepeatCount());
         verify(ticketRepository).countPreviousSameIssues(eq(1L), eq(1), eq(10L), eq(TicketServiceImpl.CLOSED_STATUSES));
+    }
+
+    @Test
+    @DisplayName("TC-12: updateTicket - Cập nhật thông tin phiếu và tính lại hạn SLA due_date khi thay đổi mức ưu tiên (QT-04)")
+    void updateTicket_validPriorityChange_recalculatesDueDate() {
+        LocalDateTime receivedAt = LocalDateTime.of(2026, 10, 20, 8, 0);
+        mockTicket.setReceivedAt(receivedAt);
+        mockTicket.setPriority("CAO");
+        mockTicket.setDueDate(receivedAt.plusHours(24));
+
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto request = com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto.builder()
+                .issueDesc("Mô tả sự cố mới đã kiểm tra lại")
+                .priority("THAP")
+                .categoryId(1)
+                .customerPhone("0908889999")
+                .build();
+
+        com.mekongmobile.smartcrm.dto.TicketResponseDto updated = ticketService.updateTicket(10L, request);
+
+        assertNotNull(updated);
+        assertEquals("THAP", updated.getPriority());
+        assertEquals(receivedAt.plusHours(120), updated.getDueDate());
+        assertEquals("Mô tả sự cố mới đã kiểm tra lại", updated.getIssueDesc());
+        verify(ticketRepository).save(mockTicket);
+    }
+
+    @Test
+    @DisplayName("TC-13: updateTicket - Ném lỗi TICKET_NOT_FOUND khi không tìm thấy phiếu hoặc phiếu đã bị xóa mềm")
+    void updateTicket_ticketNotFound_throwsException() {
+        when(ticketRepository.findById(999L)).thenReturn(Optional.empty());
+
+        com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto request = com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto.builder()
+                .issueDesc("Mô tả")
+                .priority("CAO")
+                .categoryId(1)
+                .build();
+
+        AppException ex = assertThrows(AppException.class, () -> ticketService.updateTicket(999L, request));
+        assertEquals("TICKET_NOT_FOUND", ex.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("TC-14: deleteTicket - Xóa mềm thành công khi phiếu ở trạng thái MOI và không có lịch hẹn hiệu lực (QT-13)")
+    void deleteTicket_statusMoiAndNoActiveAppointment_success() {
+        mockTicket.setStatus("MOI");
+        mockTicket.setDeletedAt(null);
+
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+        when(appointmentService.hasActiveAppointment(10L)).thenReturn(false);
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertDoesNotThrow(() -> ticketService.deleteTicket(10L, 1L));
+
+        assertNotNull(mockTicket.getDeletedAt());
+        assertEquals("DA_XOA", mockTicket.getStatus());
+        verify(ticketRepository).save(mockTicket);
+        verify(statusLogRepository).save(any(TicketStatusLog.class));
+    }
+
+    @Test
+    @DisplayName("TC-15: deleteTicket - Ném lỗi TICKET_NOT_DELETABLE khi trạng thái phiếu khác MOI")
+    void deleteTicket_statusNotMoi_throwsTicketNotDeletable() {
+        mockTicket.setStatus("DANG_XU_LY");
+
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+
+        AppException ex = assertThrows(AppException.class, () -> ticketService.deleteTicket(10L, 1L));
+        assertEquals("TICKET_NOT_DELETABLE", ex.getErrorCode());
+        assertNull(mockTicket.getDeletedAt());
+        verify(ticketRepository, never()).save(any(Ticket.class));
+    }
+
+    @Test
+    @DisplayName("TC-16: deleteTicket - Ném lỗi TICKET_NOT_DELETABLE khi phiếu còn lịch hẹn có hiệu lực")
+    void deleteTicket_hasActiveAppointment_throwsTicketNotDeletable() {
+        mockTicket.setStatus("MOI");
+
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+        when(appointmentService.hasActiveAppointment(10L)).thenReturn(true);
+
+        AppException ex = assertThrows(AppException.class, () -> ticketService.deleteTicket(10L, 1L));
+        assertEquals("TICKET_NOT_DELETABLE", ex.getErrorCode());
+        assertNull(mockTicket.getDeletedAt());
+        verify(ticketRepository, never()).save(any(Ticket.class));
+    }
+
+    @Test
+    @DisplayName("TC-17: getTicketById - Ném lỗi TICKET_NOT_FOUND khi phiếu đã bị xóa mềm (deleted_at != null)")
+    void getTicketById_softDeletedTicket_throwsTicketNotFound() {
+        mockTicket.setDeletedAt(LocalDateTime.now());
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+
+        AppException ex = assertThrows(AppException.class, () -> ticketService.getTicketById(10L));
+        assertEquals("TICKET_NOT_FOUND", ex.getErrorCode());
     }
 }
