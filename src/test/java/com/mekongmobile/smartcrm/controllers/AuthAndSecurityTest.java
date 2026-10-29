@@ -135,4 +135,26 @@ class AuthAndSecurityTest {
                 .andExpect(redirectedUrl("/lookup?keyword=BH-00125"))
                 .andExpect(flash().attributeExists("successMessage"));
     }
+    @Test
+    @DisplayName("TC-SEC-07: QT-15 - Tra cứu tại /lookup hiển thị SĐT đã che (090****567) và không chứa SĐT gốc (0901234567)")
+    void testLookupCustomerPhoneMasked_QT15() throws Exception {
+        com.mekongmobile.smartcrm.dto.AppointmentResponseDto dto = com.mekongmobile.smartcrm.dto.AppointmentResponseDto.builder()
+                .appointmentId(100L)
+                .ticketCode("BH-00125")
+                .customerPhone("090****567")
+                .technicianName("Nguyễn Văn Kỹ Thuật")
+                .deviceName("iPhone 13")
+                .issueDesc("Lỗi màn hình cảm ứng")
+                .appointmentTime(LocalDateTime.now().plusDays(1))
+                .status("CHO_XAC_NHAN")
+                .build();
+
+        when(appointmentService.findAppointmentsByKeyword("BH-00125")).thenReturn(java.util.List.of(dto));
+
+        mockMvc.perform(get("/lookup").param("keyword", "BH-00125"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("public/appointment-lookup"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("090****567")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("0901234567"))));
+    }
 }

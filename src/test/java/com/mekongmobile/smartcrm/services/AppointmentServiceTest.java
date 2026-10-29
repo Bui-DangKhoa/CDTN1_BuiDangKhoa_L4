@@ -133,4 +133,26 @@ class AppointmentServiceTest {
         assertEquals("DA_HUY", cancelled.getStatus());
         verify(appointmentRepository, times(1)).save(appointment);
     }
+    @Test
+    @DisplayName("TC-APPT-06: findAppointmentsByKeyword - Che 4 số giữa SĐT khách hàng theo QT-15 qua MaskingUtil")
+    void testFindAppointmentsByKeyword_MasksPhoneNumber() {
+        mockTicket.setCustomerPhone("0901234567");
+        Appointment app = Appointment.builder()
+                .appointmentId(100L)
+                .ticket(mockTicket)
+                .technician(mockTechnician)
+                .appointmentTime(appointmentTime)
+                .status("CHO_XAC_NHAN")
+                .build();
+
+        when(appointmentRepository.findByTicketCodeOrPhone("TCK-2026-001")).thenReturn(java.util.List.of(app));
+
+        java.util.List<com.mekongmobile.smartcrm.dto.AppointmentResponseDto> dtos =
+                appointmentService.findAppointmentsByKeyword("TCK-2026-001");
+
+        assertNotNull(dtos);
+        assertEquals(1, dtos.size());
+        assertEquals("090****567", dtos.get(0).getCustomerPhone());
+        assertFalse(dtos.get(0).getCustomerPhone().contains("1234"));
+    }
 }

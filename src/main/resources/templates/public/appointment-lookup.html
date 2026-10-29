@@ -180,9 +180,9 @@
                     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
                         <div>
                             <span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1 me-2"
-                                  th:text="${app.ticket != null ? '#' + app.ticket.ticketCode : 'Mã: #' + app.appointmentId}">…</span>
-                            <span class="text-secondary small" th:if="${app.ticket != null and app.ticket.device != null}"
-                                  th:text="${app.ticket.device.deviceName}">iPhone 13</span>
+                                  th:text="${app.ticketCode != null ? '#' + app.ticketCode : (app.ticket != null ? '#' + app.ticket.ticketCode : 'Mã: #' + app.appointmentId)}">…</span>
+                            <span class="text-secondary small" th:if="${app.deviceName != null or (app.ticket != null and app.ticket.device != null)}"
+                                  th:text="${app.deviceName != null ? app.deviceName : app.ticket.device.deviceName}">…</span>
                         </div>
                         <div>
                             <!-- Trạng thái Lịch hẹn -->
@@ -203,19 +203,26 @@
                             <div class="text-muted small">Thời gian hẹn giao - nhận máy:</div>
                             <div class="fw-bold fs-6 text-dark mt-1">
                                 <i class="bi bi-calendar-event text-primary me-1"></i>
-                                <span th:text="${#temporals.format(app.appointmentTime, 'dd/MM/yyyy HH:mm')}">30/10/2026 14:00</span>
+                                <span th:text="${#temporals.format(app.appointmentTime, 'dd/MM/yyyy HH:mm')}">…</span>
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="text-muted small">Kỹ thuật viên phụ trách:</div>
                             <div class="fw-semibold text-dark mt-1">
                                 <i class="bi bi-person-badge text-primary me-1"></i>
-                                <span th:text="${app.technician != null ? app.technician.fullName : 'Đang điều phối'}">…</span>
+                                <span th:text="${app.technicianName != null ? app.technicianName : (app.technician != null ? app.technician.fullName : 'Đang điều phối')}">…</span>
                             </div>
                         </div>
-                        <div class="col-12" th:if="${app.ticket != null and app.ticket.issueDesc != null}">
+                        <div class="col-sm-6" th:if="${app.customerPhone != null}">
+                            <div class="text-muted small">Số điện thoại liên hệ (QT-15):</div>
+                            <div class="fw-semibold text-dark mt-1">
+                                <i class="bi bi-telephone text-primary me-1"></i>
+                                <span id="lookupCustomerPhone" th:text="${app.customerPhone}">…</span>
+                            </div>
+                        </div>
+                        <div class="col-12" th:if="${app.issueDesc != null or (app.ticket != null and app.ticket.issueDesc != null)}">
                             <div class="text-muted small">Mô tả sự cố:</div>
-                            <div class="small text-secondary mt-1" th:text="${app.ticket.issueDesc}">Máy vỡ màn hình, cảm ứng chập chờn</div>
+                            <div class="small text-secondary mt-1" th:text="${app.issueDesc != null ? app.issueDesc : app.ticket.issueDesc}">…</div>
                         </div>
                     </div>
 
