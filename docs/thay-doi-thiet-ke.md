@@ -31,9 +31,9 @@ Tài liệu ghi nhận toàn bộ các quyết định điều chỉnh kỹ thu�
 ## 2. Các thay đổi kỹ thuật nâng cấp trong Bài tập 2 (Buổi 9 – Buổi 12 / Sprint 2)
 
 ### TD-05: Bổ sung DTO Mapper che SĐT khách hàng trên Cổng tra cứu công khai (QT-15)
-- **Thay đổi gì**: Bổ sung logic che 4 số giữa của SĐT khách hàng (ví dụ: `0901234567` &rarr; `090****567`) trong DTO Mapper khi trả dữ liệu ra Cổng tra cứu công khai (`/lookup`).
+- **Thay đổi gì**: Bổ sung logic che 4 số giữa của SĐT khách hàng (ví dụ: `0901234567` &rarr; `090****567`) trong `AppointmentService` (qua `MaskingUtil`) khi trả dữ liệu ra Cổng tra cứu công khai (`/lookup`).
 - **Lý do**: Tuân thủ quy định bảo vệ dữ liệu cá nhân khách hàng (Nghị định 13/2023/NĐ-CP) và hiện thực hóa quy tắc nghiệp vụ QT-15 trên giao diện tra cứu không cần đăng nhập.
-- **Ảnh hưởng tới thành phần nào**: `PublicAppointmentController.java`, `CustomerDtoMapper.java`, `appointment-lookup.html`, `AuthAndSecurityTest.java`.
+- **Ảnh hưởng tới thành phần nào**: `PublicAppointmentController.java`, `AppointmentService.java`, `appointment-lookup.html`, `AuthAndSecurityTest.java`.
 
 ### TD-06: Chuyển ô changeReason thành input form động cho Quản lý (QT-07)
 - **Thay đổi gì**: Chuyển ô nhập lý do thay đổi KTV từ văn bản cố định sang form động `<textarea name="changeReason" id="changeReason" class="form-control" rows="3" minlength="10" placeholder="Nhập lý do thay đổi KTV (tối thiểu 10 ký tự)..."></textarea>`, bổ sung validation Javascript chặn submit nếu đổi KTV cũ mà nhập dưới 10 ký tự.

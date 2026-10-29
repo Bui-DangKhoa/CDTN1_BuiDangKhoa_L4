@@ -1,6 +1,7 @@
 package com.mekongmobile.smartcrm.controllers;
 
 import com.mekongmobile.smartcrm.entities.Appointment;
+import com.mekongmobile.smartcrm.dto.AppointmentResponseDto;
 import com.mekongmobile.smartcrm.exceptions.AppException;
 import com.mekongmobile.smartcrm.services.AppointmentService;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +42,7 @@ public class PublicAppointmentController {
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             String cleanKeyword = keyword.trim();
-            List<Appointment> appointments = appointmentService.findAppointmentsByKeyword(cleanKeyword);
+            List<AppointmentResponseDto> appointments = appointmentService.findAppointmentsByKeyword(cleanKeyword);
 
             model.addAttribute("keyword", cleanKeyword);
             model.addAttribute("appointments", appointments);

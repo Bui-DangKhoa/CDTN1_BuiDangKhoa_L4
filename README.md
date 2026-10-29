@@ -38,7 +38,7 @@ graph TD
         TicketCtrl["TicketController và TicketRestController"]
         ApptCtrl["AppointmentController và PublicAppointmentController"]
         TechCtrl["TechnicianWebController"]
-        DTO["DTO Request-Response và DTO Mapper (QT-15 che SĐT)"]
+        DTO["DTO Request-Response và AppointmentService (QT-15 che SĐT với MaskingUtil)"]
         ExceptionHandler["GlobalExceptionHandler (Xử lý tập trung, bảo mật mã lỗi)"]
     end
 
@@ -157,7 +157,7 @@ Hệ thống đã nạp sẵn dữ liệu kiểm thử (Seed Data) đại diện
 | **QT-08** | **Kiểm tra tay nghề KTV** | KTV được phân công phải cùng Trung tâm bảo hành (`center_id`) với phiếu và có tay nghề xử lý nhóm sự cố đó đạt **bậc $\ge$ 3**. | `TechnicianRepository.findEligibleTechnicians(...)`, `TicketServiceImpl.assignTechnician(...)` | `TicketServiceTest.java` (Từ chối KTV bậc 2 hoặc khác trung tâm). |
 | **QT-L4-01** | **Chống trùng lịch hẹn KTV** | Không cho phép đặt lịch hẹn cho KTV nếu KTV đó đã có lịch hẹn khác trong cùng khung giờ, trừ khi lịch hẹn cũ đã bị hủy (`DA_HUY`). | `AppointmentRepository.existsByTechnician...`, `AppointmentService.scheduleAppointment(...)` | `AppointmentServiceTest.java` (Ném ngoại lệ `SCHEDULE_CONFLICT` khi trùng khung giờ). |
 | **QT-14** | **Phân quyền & Phân vùng dữ liệu** | Quản lý trung tâm chỉ được xem và điều phối các phiếu bảo hành thuộc trung tâm mình phụ trách (`center_id`); không nhìn thấy phiếu của trung tâm khác. | `AuthInterceptor.java`, `TicketServiceImpl.getUnassignedTicketsSortedByDueDate(centerId)` | `AuthAndSecurityTest.java` & Đăng nhập `quanly1` chỉ hiển thị phiếu của Center 1. |
-| **QT-15** | **Bảo mật SĐT Cổng công khai** | Trên Cổng tra cứu công khai cho khách hàng (`/lookup`), số điện thoại của khách hàng phải được che 4 số giữa (ví dụ: `0901234567` &rarr; `090****567`). | `PublicAppointmentController.java`, `CustomerDtoMapper.java` | `CustomerDtoMapperTest` / `AuthAndSecurityTest.java`. |
+| **QT-15** | **Bảo mật SĐT Cổng công khai** | Trên Cổng tra cứu công khai cho khách hàng (`/lookup`), số điện thoại của khách hàng phải được che 4 số giữa (ví dụ: `0901234567` &rarr; `090****567`). | `PublicAppointmentController.java`, `AppointmentService.java` | `AuthAndSecurityTest.java` (PASS kiểm chứng che SĐT). |
 
 ---
 

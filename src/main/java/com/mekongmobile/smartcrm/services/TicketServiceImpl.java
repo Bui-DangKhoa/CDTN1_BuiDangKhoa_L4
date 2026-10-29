@@ -372,14 +372,7 @@ public class TicketServiceImpl implements TicketService {
     // QT-15: Che 4 số giữa SĐT khách hàng dạng 090****567 tại ranh giới DTO Mapper
     @Override
     public String maskPhoneNumber(String phone) {
-        if (phone == null || phone.isBlank()) {
-            return "090****567";
-        }
-        String trimmed = phone.trim();
-        if (trimmed.length() >= 7) {
-            return trimmed.substring(0, 3) + "****" + trimmed.substring(trimmed.length() - 3);
-        }
-        return trimmed;
+        return com.mekongmobile.smartcrm.config.MaskingUtil.maskPhoneNumber(phone);
     }
 
     @Override

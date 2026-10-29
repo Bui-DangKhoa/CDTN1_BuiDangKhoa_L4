@@ -123,12 +123,48 @@ public class AppointmentService {
     /**
      * US7 / FR7: Tra cứu thông tin lịch hẹn theo mã phiếu bảo hành hoặc SĐT khách hàng.
      */
+    /**
+     * US7 / FR7 + QT-15: Chuyển đổi Appointment sang AppointmentResponseDto,
+     * che 4 số giữa SĐT khách hàng qua MaskingUtil tại ranh giới DTO/Mapper.
+     */
+    public com.mekongmobile.smartcrm.dto.AppointmentResponseDto mapToDto(Appointment app) {
+        if (app == null) {
+            return null;
+        }
+        Ticket ticket = app.getTicket();
+        Technician tech = app.getTechnician();
+        String rawPhone = (ticket != null) ? ticket.getCustomerPhone() : null;
+        String maskedPhone = com.mekongmobile.smartcrm.config.MaskingUtil.maskPhoneNumber(rawPhone);
+
+        return com.mekongmobile.smartcrm.dto.AppointmentResponseDto.builder()
+                .appointmentId(app.getAppointmentId())
+                .ticketId(ticket != null ? ticket.getTicketId() : null)
+                .ticketCode(ticket != null ? ticket.getTicketCode() : null)
+                .technicianId(tech != null ? tech.getTechnicianId() : null)
+                .technicianName(tech != null ? tech.getFullName() : null)
+                .appointmentTime(app.getAppointmentTime())
+                .status(app.getStatus())
+                .createdAt(app.getCreatedAt())
+                .customerPhone(maskedPhone)
+                .deviceName(ticket != null && ticket.getDevice() != null ? ticket.getDevice().getDeviceName() : null)
+                .issueDesc(ticket != null ? ticket.getIssueDesc() : null)
+                .ticket(ticket)
+                .technician(tech)
+                .build();
+    }
+
+    /**
+     * US7 / FR7: Tra cứu thông tin lịch hẹn theo mã phiếu bảo hành hoặc SĐT khách hàng.
+     */
     @Transactional(readOnly = true)
-    public List<Appointment> findAppointmentsByKeyword(String keyword) {
+    public List<com.mekongmobile.smartcrm.dto.AppointmentResponseDto> findAppointmentsByKeyword(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             return List.of();
         }
-        return appointmentRepository.findByTicketCodeOrPhone(keyword.trim());
+        return appointmentRepository.findByTicketCodeOrPhone(keyword.trim())
+                .stream()
+                .map(this::mapToDto)
+                .toList();
     }
 
     /**
