@@ -895,19 +895,6 @@ body {
     box-shadow: 1px 1px 4px rgba(0,0,0,0.08);
 }
 
-.post-it-sticky {
-    background-color: #FFF9C4;
-    border: 1px solid #FBC02D;
-    color: #333333;
-    padding: 0.55rem 0.75rem;
-    font-size: 0.775rem;
-    line-height: 1.35;
-    border-radius: 2px;
-    box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
-    position: relative;
-    display: inline-block;
-}
-
 /* Alert Cảnh báo & Thông báo hệ thống rõ nét, tương phản cao (không bị mờ) */
 .alert {
     border-radius: 6px;
