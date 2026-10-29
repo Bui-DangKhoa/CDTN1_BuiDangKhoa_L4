@@ -338,4 +338,17 @@ class TicketServiceTest {
 
         verify(ticketRepository).findRepairHistory(eq(1L), eq(99L), any());
     }
+    @Test
+    @DisplayName("TC-11: countPreviousSameIssues - Chỉ đếm các phiếu đã đóng/hoàn tất (CLOSED_STATUSES), 2 phiếu đã đóng + 1 phiếu đang mở cùng thiết bị & nhóm thì repeatCount = 2")
+    void TC11_calculateRepeatCount_countOnlyClosedTickets() {
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+        when(ticketRepository.countPreviousSameIssues(eq(1L), eq(1), eq(10L), eq(TicketServiceImpl.CLOSED_STATUSES)))
+                .thenReturn(2L);
+
+        com.mekongmobile.smartcrm.dto.TicketResponseDto dto = ticketService.getTicketById(10L);
+
+        assertNotNull(dto);
+        assertEquals(2, dto.getRepeatCount());
+        verify(ticketRepository).countPreviousSameIssues(eq(1L), eq(1), eq(10L), eq(TicketServiceImpl.CLOSED_STATUSES));
+    }
 }

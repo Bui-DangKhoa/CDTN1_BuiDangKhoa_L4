@@ -40,6 +40,8 @@ public class TicketServiceImpl implements TicketService {
     private final TechnicianRepository technicianRepository;
     private final AppointmentService appointmentService;
 
+    public static final List<String> CLOSED_STATUSES = List.of("HOAN_TAT", "HOAN_THANH", "DONG");
+
     /** QT-06: Thứ tự vòng đời trạng thái đơn hướng MOI → DA_PHAN_CONG → DANG_XU_LY → HOAN_TAT → DONG. */
     private static final java.util.Map<String, Integer> STATUS_ORDER = java.util.Map.of(
             "MOI", 0,
@@ -440,7 +442,8 @@ public class TicketServiceImpl implements TicketService {
                 repeatCount = (int) ticketRepository.countPreviousSameIssues(
                         ticket.getDevice().getDeviceId(),
                         ticket.getCategory().getCategoryId(),
-                        ticket.getTicketId()
+                        ticket.getTicketId(),
+                        CLOSED_STATUSES
                 );
             } catch (Exception ex) {
                 repeatCount = 0;
@@ -486,8 +489,7 @@ public class TicketServiceImpl implements TicketService {
             return List.of();
         }
 
-        List<String> closedStatuses = List.of("HOAN_TAT", "HOAN_THANH", "DONG");
-        List<Ticket> pastTickets = ticketRepository.findRepairHistory(deviceId, excludeTicketId, closedStatuses);
+        List<Ticket> pastTickets = ticketRepository.findRepairHistory(deviceId, excludeTicketId, CLOSED_STATUSES);
 
         return pastTickets.stream().map(t -> {
             String techName = (t.getTechnician() != null) ? t.getTechnician().getFullName() : "—";
