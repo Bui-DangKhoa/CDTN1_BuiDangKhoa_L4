@@ -112,7 +112,10 @@ public class TicketRestController {
             jakarta.servlet.http.HttpSession session) {
         com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
                 (session != null) ? (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser") : null;
-        Long changedBy = (currentUser != null && currentUser.getUserId() != null) ? currentUser.getUserId() : 1L;
+        if (currentUser == null || currentUser.getUserId() == null) {
+            throw new com.mekongmobile.smartcrm.exceptions.AppException("UNAUTHORIZED", "Vui lòng đăng nhập để thực hiện thao tác xóa mềm phiếu");
+        }
+        Long changedBy = currentUser.getUserId();
         ticketService.deleteTicket(id, changedBy);
         return ResponseEntity.ok(ApiResponse.of("Xóa mềm phiếu bảo hành thành công (QT-13)", null));
     }

@@ -181,4 +181,25 @@ class AuthAndSecurityTest {
 
         org.mockito.Mockito.verify(ticketService).deleteTicket(101L, 99L);
     }
+
+    @Test
+    @DisplayName("TC-SEC-09: DELETE /api/v1/tickets/{id} - Không có người dùng trong session -> Ném AppException UNAUTHORIZED")
+    void testDeleteTicketWithoutUserInSessionThrowsUnauthorized() throws Exception {
+        TicketRestController controller = new TicketRestController(ticketService);
+        org.springframework.test.web.servlet.MockMvc standaloneMockMvc = org.springframework.test.web.servlet.setup.MockMvcBuilders
+                .standaloneSetup(controller)
+                .setControllerAdvice(new com.mekongmobile.smartcrm.exceptions.GlobalExceptionHandler())
+                .build();
+
+        standaloneMockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/v1/tickets/101"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        org.springframework.mock.web.MockHttpSession emptySession = new org.springframework.mock.web.MockHttpSession();
+        com.mekongmobile.smartcrm.exceptions.AppException ex = org.junit.jupiter.api.Assertions.assertThrows(
+                com.mekongmobile.smartcrm.exceptions.AppException.class,
+                () -> controller.deleteTicket(101L, emptySession)
+        );
+        org.junit.jupiter.api.Assertions.assertEquals("UNAUTHORIZED", ex.getErrorCode());
+    }
 }
