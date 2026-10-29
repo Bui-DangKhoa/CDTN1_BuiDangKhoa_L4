@@ -213,7 +213,6 @@ public class TicketServiceImpl implements TicketService {
         }
 
         String fromStatus = ticket.getStatus();
-        ticket.setStatus("DA_XOA");
         ticket.setDeletedAt(LocalDateTime.now());
         ticketRepository.save(ticket);
 

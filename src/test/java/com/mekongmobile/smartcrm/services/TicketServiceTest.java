@@ -410,7 +410,7 @@ class TicketServiceTest {
         assertDoesNotThrow(() -> ticketService.deleteTicket(10L, 1L));
 
         assertNotNull(mockTicket.getDeletedAt());
-        assertEquals("DA_XOA", mockTicket.getStatus());
+        assertEquals("MOI", mockTicket.getStatus());
         verify(ticketRepository).save(mockTicket);
         verify(statusLogRepository).save(any(TicketStatusLog.class));
     }

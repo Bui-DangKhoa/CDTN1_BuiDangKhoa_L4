@@ -60,12 +60,10 @@ Tài liệu ghi nhận toàn bộ các quyết định điều chỉnh kỹ thu�
 - **Lý do**: Tuân thủ quy ước đặt tên repository nộp bài của học phần Chuyên đề tốt nghiệp 1 (`CDTN1_<HoTen>_<MaLuong>`).
 - **Ảnh hưởng tới thành phần nào**: `README.md`, `pom.xml`, `docs/thay-doi-thiet-ke.md`, cấu hình Git remote `origin`.
 
-
 ### TD-11: Bổ sung liên kết khóa ngoại giữa bảng technician và app_user
 - **Thay đổi gì**: Thêm cột `user_id BIGINT NULL UNIQUE` và ràng buộc khóa ngoại trỏ tới `app_user(user_id)` vào bảng `technician` trong CSDL, đồng bộ Entity `Technician.java` và seed data `ktv1`.
 - **Lý do**: Khắc phục triệt để lỗi phân định KTV đăng nhập theo chuỗi họ tên hoặc coi `user_id = technician_id`, loại bỏ hoàn toàn lối dự phòng `findById(1L)` và đảm bảo an toàn dữ liệu cá nhân theo US4/QT-14.
 - **Ảnh hưởng tới thành phần nào**: `docs/schema.sql`, `seeds/data-demo.sql`, `Technician.java`, `TechnicianRepository.java`, `TechnicianServiceImpl.java`, `TechnicianWebController.java`.
-
 
 ### TD-12: Bổ sung cột resolution vào bảng ticket phục vụ lịch sử sửa chữa thiết bị
 - **Thay đổi gì**: Thêm cột `resolution VARCHAR(500) NULL` vào bảng `ticket` trong CSDL, đồng bộ Entity `Ticket.java`, tạo `DeviceRepairHistoryDto`, cập nhật truy vấn `findRepairHistory` và seed dữ liệu mẫu.
@@ -76,3 +74,8 @@ Tài liệu ghi nhận toàn bộ các quyết định điều chỉnh kỹ thu�
 - **Thay đổi gì**: Thêm cột `deleted_at DATETIME NULL DEFAULT NULL` và chỉ mục `idx_ticket_deleted` vào bảng `ticket` trong CSDL, đồng bộ Entity `Ticket.java` và seed dữ liệu demo.
 - **Lý do**: Đáp ứng yêu cầu xóa mềm (Soft Delete) theo quy tắc QT-13 của SRS (nghiêm cấm xóa vật lý phiếu sửa chữa và lịch hẹn để bảo toàn dữ liệu nhật ký QT-06).
 - **Ảnh hưởng tới thành phần nào**: `docs/schema.sql`, `seeds/data-demo.sql`, `Ticket.java`, `TicketRepository.java`, `TicketServiceImpl.java`.
+
+### TD-14: Chuẩn hóa trạng thái xóa mềm ticket và bổ sung endpoint CRUD đầy đủ
+- **Thay đổi gì**: Thêm các REST endpoint PUT/DELETE cho Ticket và Appointment, quy định `ticket.status` luôn giữ nguyên (`MOI`) khi xóa mềm mà không bao giờ gán thành `DA_XOA`, chỉ ghi nhận giá trị `to_status = 'DA_XOA'` vào bảng `ticket_status_log` phục vụ kiểm toán QT-06/QT-13.
+- **Lý do**: Đảm bảo toàn vẹn dữ liệu vòng đời đơn hướng theo QT-06, tuân thủ nguyên tắc không xóa vật lý của QT-13 và hoàn thiện đầy đủ 4 thao tác CRUD (chuẩn chấm điểm S1) với kiểm soát lỗi chặt chẽ (404/409/422).
+- **Ảnh hưởng tới thành phần nào**: `TicketRestController.java`, `AppointmentRestController.java`, `TicketServiceImpl.java`, `AppointmentServiceImpl.java`, `ticket_status_log`.
