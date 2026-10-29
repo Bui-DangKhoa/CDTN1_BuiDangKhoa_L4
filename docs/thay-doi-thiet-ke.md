@@ -65,3 +65,9 @@ Tài liệu ghi nhận toàn bộ các quyết định điều chỉnh kỹ thu�
 - **Thay đổi gì**: Thêm cột `user_id BIGINT NULL UNIQUE` và ràng buộc khóa ngoại trỏ tới `app_user(user_id)` vào bảng `technician` trong CSDL, đồng bộ Entity `Technician.java` và seed data `ktv1`.
 - **Lý do**: Khắc phục triệt để lỗi phân định KTV đăng nhập theo chuỗi họ tên hoặc coi `user_id = technician_id`, loại bỏ hoàn toàn lối dự phòng `findById(1L)` và đảm bảo an toàn dữ liệu cá nhân theo US4/QT-14.
 - **Ảnh hưởng tới thành phần nào**: `docs/schema.sql`, `seeds/data-demo.sql`, `Technician.java`, `TechnicianRepository.java`, `TechnicianServiceImpl.java`, `TechnicianWebController.java`.
+
+
+### TD-12: Bổ sung cột resolution vào bảng ticket phục vụ lịch sử sửa chữa thiết bị
+- **Thay đổi gì**: Thêm cột `resolution VARCHAR(500) NULL` vào bảng `ticket` trong CSDL, đồng bộ Entity `Ticket.java`, tạo `DeviceRepairHistoryDto`, cập nhật truy vấn `findRepairHistory` và seed dữ liệu mẫu.
+- **Lý do**: Cung cấp dữ liệu thực tế cho Khung 3 "Lịch sử sửa chữa thiết bị" (US5/FR5) theo đúng Wireframe MH3, loại bỏ hoàn toàn dữ liệu ghi cứng mà không dùng sai ngữ nghĩa của `issue_desc`.
+- **Ảnh hưởng tới thành phần nào**: `docs/schema.sql`, `seeds/data-demo.sql`, `Ticket.java`, `DeviceRepairHistoryDto.java`, `TicketRepository.java`, `TicketServiceImpl.java`, `TechnicianWebController.java`.
