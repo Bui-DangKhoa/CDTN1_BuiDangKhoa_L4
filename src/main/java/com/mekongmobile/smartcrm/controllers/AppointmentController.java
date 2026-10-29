@@ -114,7 +114,7 @@ public class AppointmentController {
         Appointment appointment = appointmentService.scheduleAppointment(
                 request.getTicketId(), request.getTechnicianId(), request.getAppointmentTime());
 
-        AppointmentResponseDto responseDto = appointmentService.mapToDto(appointment);
+        AppointmentResponseDto responseDto = appointmentService.getAppointmentById(appointment.getAppointmentId());
 
         return new ResponseEntity<>(
                 ApiResponse.of("Đặt lịch hẹn thành công (QT-L4-01)", responseDto),

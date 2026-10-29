@@ -221,6 +221,14 @@ public class AppointmentService {
      * US7 / FR7 + QT-15: Chuyển đổi Appointment sang AppointmentResponseDto,
      * che 4 số giữa SĐT khách hàng qua MaskingUtil tại ranh giới DTO/Mapper.
      */
+    private String getDeviceNameSafely(Ticket ticket) {
+        try {
+            return ticket.getDevice() != null ? ticket.getDevice().getDeviceName() : null;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
     public AppointmentResponseDto mapToDto(Appointment app) {
         if (app == null) {
             return null;
@@ -240,7 +248,7 @@ public class AppointmentService {
                 .status(app.getStatus())
                 .createdAt(app.getCreatedAt())
                 .customerPhone(maskedPhone)
-                .deviceName(ticket != null && ticket.getDevice() != null ? ticket.getDevice().getDeviceName() : null)
+                .deviceName(ticket != null ? getDeviceNameSafely(ticket) : null)
                 .issueDesc(ticket != null ? ticket.getIssueDesc() : null)
                 .ticket(ticket)
                 .technician(tech)
