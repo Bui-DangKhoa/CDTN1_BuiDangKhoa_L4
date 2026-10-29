@@ -56,7 +56,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     @Query("""
         SELECT COUNT(a) > 0 FROM Appointment a
         WHERE a.technician.technicianId = :technicianId
-          AND a.appointmentTime >= :windowStart
+          AND a.appointmentTime > :windowStart
           AND a.appointmentTime < :windowEnd
           AND a.status <> 'DA_HUY'
     """)
@@ -71,7 +71,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     @Query("""
         SELECT COUNT(a) > 0 FROM Appointment a
         WHERE a.technician.technicianId = :technicianId
-          AND a.appointmentTime >= :windowStart
+          AND a.appointmentTime > :windowStart
           AND a.appointmentTime < :windowEnd
           AND a.status <> 'DA_HUY'
           AND a.appointmentId <> :appointmentId

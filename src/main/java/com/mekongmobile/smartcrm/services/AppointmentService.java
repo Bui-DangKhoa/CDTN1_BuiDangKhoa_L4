@@ -1,5 +1,8 @@
 package com.mekongmobile.smartcrm.services;
 
+import com.mekongmobile.smartcrm.dto.AppointmentResponseDto;
+import com.mekongmobile.smartcrm.dto.CreateAppointmentRequest;
+import com.mekongmobile.smartcrm.dto.UpdateAppointmentRequest;
 import com.mekongmobile.smartcrm.entities.Appointment;
 import com.mekongmobile.smartcrm.entities.Technician;
 import com.mekongmobile.smartcrm.entities.Ticket;
@@ -8,6 +11,7 @@ import com.mekongmobile.smartcrm.repositories.AppointmentRepository;
 import com.mekongmobile.smartcrm.repositories.TechnicianRepository;
 import com.mekongmobile.smartcrm.repositories.TicketRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +25,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
-@lombok.extern.slf4j.Slf4j
+@Slf4j
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
@@ -37,7 +41,7 @@ public class AppointmentService {
 
         Ticket ticket = ticketRepository.findById(ticketId)
                 .filter(t -> t.getDeletedAt() == null)
-                .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
+                .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
 
         Technician technician = technicianRepository.findById(technicianId)
                 .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy kỹ thuật viên với ID: " + technicianId));
@@ -47,7 +51,7 @@ public class AppointmentService {
 
     /**
      * QT-L4-01 / NFR2: Đặt lịch hẹn cho KTV khi đã có sẵn thực thể Ticket và Technician
-     * (dùng chung trong transaction phân công KTV của {@code TicketServiceImpl.assignTechnician}).
+     * (dùng chung trong transaction phân công KTV của TicketServiceImpl.assignTechnician).
      */
     public Appointment scheduleAppointment(Ticket ticket, Technician technician, LocalDateTime appointmentTime) {
         if (appointmentTime == null) {
@@ -80,6 +84,81 @@ public class AppointmentService {
     }
 
     /**
+     * Tra cứu chi tiết lịch hẹn theo ID.
+     */
+    @Transactional(readOnly = true)
+    public AppointmentResponseDto getAppointmentById(Long appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new AppException("APPOINTMENT_NOT_FOUND", "Không tìm thấy lịch hẹn với ID: " + appointmentId));
+        return mapToDto(appointment);
+    }
+
+    /**
+     * Tra cứu danh sách lịch hẹn (lọc theo ticketId hoặc technicianId nếu có).
+     */
+    @Transactional(readOnly = true)
+    public List<AppointmentResponseDto> getAllAppointments(Long ticketId, Long technicianId) {
+        List<Appointment> list;
+        if (ticketId != null) {
+            list = appointmentRepository.findByTicket_TicketId(ticketId);
+        } else if (technicianId != null) {
+            list = appointmentRepository.findByTechnician_TechnicianId(technicianId);
+        } else {
+            list = appointmentRepository.findAll();
+        }
+        return list.stream().map(this::mapToDto).toList();
+    }
+
+    /**
+     * Cập nhật thông tin lịch hẹn (Appointment PUT).
+     * Kiểm tra chống trùng lịch QT-L4-01 trong khung giờ ±30 phút, LOẠI TRỪ chính appointmentId đang cập nhật.
+     */
+    @Transactional
+    public AppointmentResponseDto updateAppointment(Long appointmentId, UpdateAppointmentRequest request) {
+        log.info("Cập nhật lịch hẹn ID: {}, request: {}", appointmentId, request);
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new AppException("APPOINTMENT_NOT_FOUND", "Không tìm thấy lịch hẹn với ID: " + appointmentId));
+
+        if ("DA_HUY".equalsIgnoreCase(appointment.getStatus())) {
+            throw new AppException("BUSINESS_RULE_VIOLATION", "Không thể cập nhật lịch hẹn đã bị hủy");
+        }
+
+        Long technicianId = (request.getTechnicianId() != null)
+                ? request.getTechnicianId()
+                : appointment.getTechnician().getTechnicianId();
+
+        Technician technician = appointment.getTechnician();
+        if (request.getTechnicianId() != null && !request.getTechnicianId().equals(technician.getTechnicianId())) {
+            technician = technicianRepository.findById(technicianId)
+                    .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy kỹ thuật viên với ID: " + technicianId));
+            appointment.setTechnician(technician);
+        }
+
+        LocalDateTime newTime = request.getAppointmentTime();
+        if (newTime == null) {
+            throw new AppException("INVALID_APPOINTMENT_TIME", "Thời gian hẹn không được để trống");
+        }
+
+        // QT-L4-01: Kiểm tra xung đột trong khung giờ ±30 phút, loại trừ chính appointmentId đang cập nhật
+        LocalDateTime windowStart = newTime.minusMinutes(30);
+        LocalDateTime windowEnd = newTime.plusMinutes(30);
+
+        boolean hasConflict = appointmentRepository.existsActiveAppointmentInWindowExcludingSelf(
+                technicianId, windowStart, windowEnd, appointmentId);
+
+        if (hasConflict) {
+            log.warn("Vi phạm quy tắc QT-L4-01: KTV {} đã có lịch hẹn khác trong khoảng ±30 phút quanh {}",
+                    technician.getFullName(), newTime);
+            throw new AppException("SCHEDULE_CONFLICT", "KTV đã có lịch hẹn khác trong khung giờ này");
+        }
+
+        appointment.setAppointmentTime(newTime);
+        Appointment saved = appointmentRepository.save(appointment);
+        log.info("Cập nhật lịch hẹn ID {} thành công (QT-L4-01)", saved.getAppointmentId());
+        return mapToDto(saved);
+    }
+
+    /**
      * Hủy toàn bộ lịch hẹn còn hiệu lực của một phiếu (dùng khi đổi KTV – QT-07),
      * giải phóng khung giờ của KTV cũ trước khi tạo lịch hẹn mới.
      */
@@ -94,7 +173,7 @@ public class AppointmentService {
     }
 
     /**
-     * Hủy lịch hẹn và giải phóng khung giờ cho KTV.
+     * Kiểm tra phiếu bảo hành có lịch hẹn nào đang còn hiệu lực hay không.
      */
     @Transactional(readOnly = true)
     public boolean hasActiveAppointment(Long ticketId) {
@@ -104,10 +183,19 @@ public class AppointmentService {
         return appointmentRepository.existsByTicket_TicketIdAndStatusNot(ticketId, "DA_HUY");
     }
 
+    /**
+     * Hủy lịch hẹn và giải phóng khung giờ cho KTV (hủy mềm status = DA_HUY).
+     * Chỉ cho phép hủy khi lịch hẹn chưa ở trạng thái DA_XAC_NHAN, nếu không ném APPOINTMENT_NOT_DELETABLE.
+     */
     public Appointment cancelAppointment(Long appointmentId) {
         log.info("Tiếp nhận yêu cầu hủy lịch hẹn ID: {}", appointmentId);
         Appointment appointment = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy lịch hẹn với ID: " + appointmentId));
+                .orElseThrow(() -> new AppException("APPOINTMENT_NOT_FOUND", "Không tìm thấy lịch hẹn với ID: " + appointmentId));
+
+        if ("DA_XAC_NHAN".equalsIgnoreCase(appointment.getStatus())) {
+            log.warn("Không thể hủy lịch hẹn ID {} vì đã ở trạng thái DA_XAC_NHAN", appointmentId);
+            throw new AppException("APPOINTMENT_NOT_DELETABLE", "Không thể hủy lịch hẹn đã được khách hàng xác nhận");
+        }
 
         appointment.setStatus("DA_HUY");
         Appointment saved = appointmentRepository.save(appointment);
@@ -121,7 +209,7 @@ public class AppointmentService {
     public Appointment confirmAppointment(Long appointmentId) {
         log.info("Khách hàng xác nhận lịch hẹn ID: {}", appointmentId);
         Appointment appointment = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy lịch hẹn với ID: " + appointmentId));
+                .orElseThrow(() -> new AppException("APPOINTMENT_NOT_FOUND", "Không tìm thấy lịch hẹn với ID: " + appointmentId));
 
         appointment.setStatus("DA_XAC_NHAN");
         Appointment saved = appointmentRepository.save(appointment);
@@ -130,13 +218,10 @@ public class AppointmentService {
     }
 
     /**
-     * US7 / FR7: Tra cứu thông tin lịch hẹn theo mã phiếu bảo hành hoặc SĐT khách hàng.
-     */
-    /**
      * US7 / FR7 + QT-15: Chuyển đổi Appointment sang AppointmentResponseDto,
      * che 4 số giữa SĐT khách hàng qua MaskingUtil tại ranh giới DTO/Mapper.
      */
-    public com.mekongmobile.smartcrm.dto.AppointmentResponseDto mapToDto(Appointment app) {
+    public AppointmentResponseDto mapToDto(Appointment app) {
         if (app == null) {
             return null;
         }
@@ -145,7 +230,7 @@ public class AppointmentService {
         String rawPhone = (ticket != null) ? ticket.getCustomerPhone() : null;
         String maskedPhone = com.mekongmobile.smartcrm.config.MaskingUtil.maskPhoneNumber(rawPhone);
 
-        return com.mekongmobile.smartcrm.dto.AppointmentResponseDto.builder()
+        return AppointmentResponseDto.builder()
                 .appointmentId(app.getAppointmentId())
                 .ticketId(ticket != null ? ticket.getTicketId() : null)
                 .ticketCode(ticket != null ? ticket.getTicketCode() : null)
@@ -166,7 +251,7 @@ public class AppointmentService {
      * US7 / FR7: Tra cứu thông tin lịch hẹn theo mã phiếu bảo hành hoặc SĐT khách hàng.
      */
     @Transactional(readOnly = true)
-    public List<com.mekongmobile.smartcrm.dto.AppointmentResponseDto> findAppointmentsByKeyword(String keyword) {
+    public List<AppointmentResponseDto> findAppointmentsByKeyword(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             return List.of();
         }
@@ -179,9 +264,9 @@ public class AppointmentService {
     /**
      * Đặt lịch hẹn tiếp nhận DTO từ Web UI / REST API.
      */
-    public com.mekongmobile.smartcrm.dto.AppointmentResponseDto createAppointment(com.mekongmobile.smartcrm.dto.CreateAppointmentRequest request) {
+    public AppointmentResponseDto createAppointment(CreateAppointmentRequest request) {
         Appointment appointment = scheduleAppointment(request.getTicketId(), request.getTechnicianId(), request.getAppointmentTime());
-        return com.mekongmobile.smartcrm.dto.AppointmentResponseDto.builder()
+        return AppointmentResponseDto.builder()
                 .appointmentId(appointment.getAppointmentId())
                 .ticketId(appointment.getTicket().getTicketId())
                 .ticketCode(appointment.getTicket().getTicketCode())
@@ -193,4 +278,3 @@ public class AppointmentService {
                 .build();
     }
 }
-

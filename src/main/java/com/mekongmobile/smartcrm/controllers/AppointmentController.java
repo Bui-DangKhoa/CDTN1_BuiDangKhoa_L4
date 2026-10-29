@@ -5,6 +5,7 @@ import com.mekongmobile.smartcrm.dto.AppointmentResponseDto;
 import com.mekongmobile.smartcrm.dto.CreateAppointmentRequest;
 import com.mekongmobile.smartcrm.dto.TechnicianResponseDto;
 import com.mekongmobile.smartcrm.dto.TicketResponseDto;
+import com.mekongmobile.smartcrm.dto.UpdateAppointmentRequest;
 import com.mekongmobile.smartcrm.entities.Appointment;
 import com.mekongmobile.smartcrm.exceptions.AppException;
 import com.mekongmobile.smartcrm.services.AppointmentService;
@@ -113,16 +114,7 @@ public class AppointmentController {
         Appointment appointment = appointmentService.scheduleAppointment(
                 request.getTicketId(), request.getTechnicianId(), request.getAppointmentTime());
 
-        AppointmentResponseDto responseDto = AppointmentResponseDto.builder()
-                .appointmentId(appointment.getAppointmentId())
-                .ticketId(appointment.getTicket().getTicketId())
-                .ticketCode(appointment.getTicket().getTicketCode())
-                .technicianId(appointment.getTechnician().getTechnicianId())
-                .technicianName(appointment.getTechnician().getFullName())
-                .appointmentTime(appointment.getAppointmentTime())
-                .status(appointment.getStatus())
-                .createdAt(appointment.getCreatedAt())
-                .build();
+        AppointmentResponseDto responseDto = appointmentService.mapToDto(appointment);
 
         return new ResponseEntity<>(
                 ApiResponse.of("Đặt lịch hẹn thành công (QT-L4-01)", responseDto),
@@ -131,14 +123,53 @@ public class AppointmentController {
     }
 
     /**
-     * REST API: Hủy lịch hẹn kỹ thuật viên.
+     * REST API: Lấy chi tiết lịch hẹn theo ID.
+     */
+    @GetMapping("/api/v1/appointments/{id}")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<AppointmentResponseDto>> getAppointmentByIdApi(@PathVariable("id") Long id) {
+        log.info("REST API GET /api/v1/appointments/{}", id);
+        AppointmentResponseDto dto = appointmentService.getAppointmentById(id);
+        return ResponseEntity.ok(ApiResponse.of(dto));
+    }
+
+    /**
+     * REST API: Lấy danh sách lịch hẹn (lọc theo ticketId hoặc technicianId nếu có).
+     */
+    @GetMapping("/api/v1/appointments")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<List<AppointmentResponseDto>>> getAllAppointmentsApi(
+            @RequestParam(value = "ticketId", required = false) Long ticketId,
+            @RequestParam(value = "technicianId", required = false) Long technicianId) {
+        log.info("REST API GET /api/v1/appointments - ticketId: {}, technicianId: {}", ticketId, technicianId);
+        List<AppointmentResponseDto> list = appointmentService.getAllAppointments(ticketId, technicianId);
+        return ResponseEntity.ok(ApiResponse.of(list));
+    }
+
+    /**
+     * REST API: Cập nhật lịch hẹn (Appointment PUT).
+     * Kiểm tra chống trùng lịch QT-L4-01, loại trừ chính appointmentId đang cập nhật.
+     */
+    @PutMapping("/api/v1/appointments/{id}")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<AppointmentResponseDto>> updateAppointmentApi(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody UpdateAppointmentRequest request) {
+        log.info("REST API PUT /api/v1/appointments/{} - {}", id, request);
+        AppointmentResponseDto updated = appointmentService.updateAppointment(id, request);
+        return ResponseEntity.ok(ApiResponse.of("Cập nhật lịch hẹn thành công (QT-L4-01)", updated));
+    }
+
+    /**
+     * REST API: Hủy lịch hẹn kỹ thuật viên (hủy mềm status = DA_HUY).
+     * Chỉ cho phép khi chưa DA_XAC_NHAN, nếu không trả về HTTP 422 APPOINTMENT_NOT_DELETABLE.
      */
     @DeleteMapping("/api/v1/appointments/{id}")
     @ResponseBody
     public ResponseEntity<ApiResponse<String>> cancelAppointmentApi(@PathVariable("id") Long id) {
         log.info("REST API DELETE /api/v1/appointments/{} - Hủy lịch hẹn", id);
         appointmentService.cancelAppointment(id);
-        return ResponseEntity.ok(ApiResponse.of("Hủy lịch hẹn thành công", "Lịch hẹn đã được hủy"));
+        return ResponseEntity.ok(ApiResponse.of("Hủy lịch hẹn thành công", "Lịch hẹn đã được hủy mềm (DA_HUY)"));
     }
 
     private void loadTicketAndTechnicians(Long ticketId, Model model) {
