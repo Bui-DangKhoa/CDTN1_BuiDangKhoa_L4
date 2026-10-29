@@ -1,5 +1,6 @@
 package com.mekongmobile.smartcrm.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mekongmobile.smartcrm.entities.Technician;
 import com.mekongmobile.smartcrm.entities.Ticket;
 import lombok.AllArgsConstructor;
@@ -33,6 +34,9 @@ public class AppointmentResponseDto {
     private String issueDesc;
 
     /** Giữ quan hệ với Ticket & Technician phục vụ view Thymeleaf */
+    @JsonIgnore
     private Ticket ticket;
+
+    @JsonIgnore
     private Technician technician;
 }
