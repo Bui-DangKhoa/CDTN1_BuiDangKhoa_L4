@@ -143,13 +143,13 @@ function updatePagination(visibleCount, totalRows) {
 
     if (visibleCount === 0) {
         if (paginationText) {
-            paginationText.textContent = 'Hiển thị 0 / 0';
+            paginationText.textContent = 'Hiển thị 0 / 0 phiếu';
         }
         if (prevBtn) prevBtn.disabled = true;
         if (nextBtn) nextBtn.disabled = true;
     } else {
         if (paginationText) {
-            paginationText.textContent = `Hiển thị 1-${visibleCount} / ${totalRows}`;
+            paginationText.textContent = `Hiển thị 1-${visibleCount} / ${totalRows} phiếu`;
         }
         if (prevBtn) prevBtn.disabled = false;
         if (nextBtn) nextBtn.disabled = false;

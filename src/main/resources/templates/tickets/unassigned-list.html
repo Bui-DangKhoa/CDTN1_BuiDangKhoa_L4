@@ -108,7 +108,7 @@
         </div>
 
         <!-- 1. LOADING STATE (Spinner / Khung xương Skeleton "Đang tải danh sách phiếu bảo hành... Vui lòng chờ trong giây lát.") -->
-        <div id="uiLoadingState" class="crm-loading-state text-center my-3 py-4" style="display: none;" th:style="${param.loading != null ? 'display: block;' : 'display: none;'}">
+        <div id="uiLoadingState" class="crm-loading-state text-center my-3 py-4" style="display: none;">
             <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
                 <span class="visually-hidden">Đang tải...</span>
             </div>
@@ -122,7 +122,7 @@
         </div>
 
         <!-- 2 Thẻ chỉ số KPI ở trên cùng theo Wireframe MH1 -->
-        <section class="d-flex flex-wrap gap-4 mb-4 pt-1" th:style="${param.loading != null ? 'display: none !important;' : null}">
+        <section class="d-flex flex-wrap gap-4 mb-4 pt-1">
             <!-- Thẻ 1: Phiếu chưa gán (Số lượng hiển thị màu đen: 24) -->
             <div class="crm-kpi-card" style="width: 210px;">
                 <div class="kpi-label">Phiếu chưa gán</div>
@@ -140,7 +140,7 @@
         </section>
 
         <!-- Thanh Bộ lọc (Filter Bar) theo Wireframe MH1 -->
-        <section class="crm-filter-bar mb-3" th:style="${param.loading != null ? 'display: none !important;' : null}">
+        <section class="crm-filter-bar mb-3">
             <!-- Dropdown Nhóm sự cố -->
             <div>
                 <select id="categoryFilter" class="crm-filter-select">
@@ -181,7 +181,7 @@
         </section>
 
         <!-- Bảng dữ liệu (Data Table) theo Wireframe MH1 -->
-        <div class="table-responsive border rounded" style="border-color: #BDBDBD !important;" th:style="${param.loading != null ? 'display: none !important;' : 'border-color: #BDBDBD !important;'}">
+        <div class="table-responsive border rounded" style="border-color: #BDBDBD !important;">
                 <table class="crm-table mb-0">
                     <thead>
                         <tr>
@@ -288,13 +288,8 @@
                                 <td colspan="8" class="text-center py-5">
                                     <div class="py-4">
                                         <i class="bi bi-inbox text-muted" style="font-size: 3.5rem;"></i>
-                                        <h5 class="fw-bold text-secondary mt-3 mb-2">Không có phiếu bảo hành nào cần phân công</h5>
-                                        <p class="text-muted small mb-3">Hiện tại tất cả phiếu bảo hành đã được điều
-                                            phối hoặc không có phiếu nào cần phân công.</p>
-                                        <button type="button" class="btn btn-outline-primary btn-sm px-4 fw-semibold"
-                                            onclick="resetTicketFilter(); window.location.reload();">
-                                            <i class="bi bi-arrow-counterclockwise me-1"></i> Xóa bộ lọc
-                                        </button>
+                                        <h5 class="fw-bold text-secondary mt-3 mb-2">Chưa có dữ liệu phiếu tồn đọng nào trong hệ thống</h5>
+                                        <p class="text-muted small mb-0">Không có phiếu bảo hành nào cần phân công. Hiện tại tất cả phiếu đã được điều phối hoặc chưa có phiếu mới phát sinh.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -305,9 +300,9 @@
 
             <!-- Phân trang theo Wireframe MH1 -->
             <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-3 pt-2 text-secondary"
-                style="font-size: 0.875rem;" th:style="${param.loading != null ? 'display: none !important;' : 'font-size: 0.875rem;'}">
+                style="font-size: 0.875rem;">
                 <div id="paginationInfo">
-                    <span id="paginationText" th:text="${tickets != null and not tickets.empty ? 'Hiển thị 1-' + tickets.size() + ' / ' + (totalUnassigned != null ? totalUnassigned : tickets.size()) : 'Hiển thị 0 / 0'}">Hiển thị 1-10 / 24</span>
+                    <span id="paginationText" th:text="${tickets != null and not tickets.empty ? 'Hiển thị 1-' + tickets.size() + ' / ' + (totalUnassigned != null ? totalUnassigned : tickets.size()) + ' phiếu' : 'Hiển thị 0 / 0 phiếu'}">Hiển thị 1-10 / 24 phiếu</span>
                 </div>
                 <div class="d-flex gap-2">
                     <button type="button" id="prevPageBtn" class="btn btn-crm-secondary btn-sm" style="min-width: 38px;"
@@ -365,8 +360,6 @@
                                         for="modalTechnicianSelect">
                                         Chọn Kỹ thuật viên (Lọc tay nghề &gt;= 3):
                                     </label>
-                                    <!-- Sticky note: Lọc KTV có tay nghề >= 3 (QT-08) -->
-                                    <!-- <span class="note-callout">Lọc KTV có tay nghề &gt;= 3 (QT-08)</span> -->
                                 </div>
                                 <select id="modalTechnicianSelect" name="technicianId"
                                     class="form-select form-select-sm" onchange="checkTechnicianScheduleConflict()">
@@ -379,8 +372,6 @@
                                     <label class="form-label mb-0" style="font-size: 0.85rem;" for="changeReason">
                                         Lý do thay đổi KTV (Bắt buộc nếu đổi KTV cũ - QT-07): *
                                     </label>
-                                    <!-- Sticky note: Chỉ bắt buộc khi đổi KTV cũ (QT-07) -->
-                                    <!-- <span class="note-callout">Chỉ bắt buộc khi đổi KTV cũ (QT-07)</span> -->
                                 </div>
                                 <textarea name="changeReason" id="changeReason" class="form-control" rows="3"
                                     minlength="10"

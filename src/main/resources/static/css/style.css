@@ -882,19 +882,6 @@ body {
     color: #000000 !important;
 }
 
-/* Ghi chú Note Callout & Post-it Sticky (Vàng nhạt theo Draw.io) */
-.note-callout {
-    background-color: #FFF9C4;
-    border: 1px solid #FBC02D;
-    color: #37474F;
-    padding: 0.4rem 0.65rem;
-    border-radius: 2px;
-    font-size: 0.775rem;
-    display: inline-block;
-    line-height: 1.3;
-    box-shadow: 1px 1px 4px rgba(0,0,0,0.08);
-}
-
 /* Alert Cảnh báo & Thông báo hệ thống rõ nét, tương phản cao (không bị mờ) */
 .alert {
     border-radius: 6px;

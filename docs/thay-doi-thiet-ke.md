@@ -46,8 +46,8 @@ Tài liệu ghi nhận toàn bộ các quyết định điều chỉnh kỹ thu�
 - **Ảnh hưởng tới thành phần nào**: `style.css`, `application.yml`, `application-docker.yml`, `docker-compose.yml`, các tệp HTML trong `src/main/resources/templates/`.
 
 ### TD-08: Tối ưu script SQL đảm bảo tính Idempotent khi nạp lại CSDL (C5)
-- **Thay đổi gì**: Sử dụng mệnh đề `CREATE TABLE IF NOT EXISTS`, `INSERT IGNORE INTO` và cấu trúc khóa duy nhất cho các bảng danh mục và dữ liệu kiểm thử trong `docs/schema.sql` và `seeds/*.sql`.
-- **Lý do**: Đảm bảo tiêu chí Idempotent C5 trong tiêu chuẩn chấm điểm, cho phép chạy lại lệnh nạp CSDL nhiều lần (ví dụ khi `docker compose down -v` rồi `docker compose up -d`) mà không xảy ra lỗi trùng lặp khóa chính hay dừng container MySQL.
+- **Thay đổi gì**: Sử dụng mệnh đề `CREATE TABLE IF NOT EXISTS`, `ON DUPLICATE KEY UPDATE` và `INSERT IGNORE INTO` cho các bảng danh mục và dữ liệu kiểm thử trong `docs/schema.sql` và `seeds/*.sql`.
+- **Lý do**: Đảm bảo tiêu chí Idempotent C5 trong tiêu chuẩn chấm điểm, cho phép chạy lại lệnh migration/seed hoặc khởi động lại hệ thống lần thứ 2 trên CSDL hiện hành (giữ nguyên volume dữ liệu, không xóa volume) mà không xảy ra lỗi trùng lặp khóa chính, không dừng container MySQL và bảo toàn nguyên vẹn số lượng bản ghi gốc.
 - **Ảnh hưởng tới thành phần nào**: `docs/schema.sql`, `seeds/data-demo.sql`, `seeds/auth_data.sql`, `docker-compose.yml`.
 
 ### TD-09: Bổ sung Logging SLF4J nghiệp vụ và làm sạch GlobalExceptionHandler

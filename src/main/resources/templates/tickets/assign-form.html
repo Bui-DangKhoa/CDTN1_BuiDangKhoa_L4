@@ -83,8 +83,6 @@
                                 <label class="form-label mb-0" style="font-size: 0.85rem;" for="technicianId">
                                     Chọn Kỹ thuật viên (Lọc tay nghề &gt;= 3):
                                 </label>
-                                <!-- Sticky note: Lọc KTV có tay nghề >= 3 (QT-08) -->
-                                <!-- <span class="note-callout">Lọc KTV có tay nghề &gt;= 3 (QT-08)</span> -->
                             </div>
 
                             <select id="technicianId" th:field="*{technicianId}" class="form-select form-select-sm" onchange="checkTechnicianScheduleConflict()">
@@ -110,8 +108,6 @@
                                 <label class="form-label mb-0" style="font-size: 0.85rem;" for="changeReason">
                                     Lý do thay đổi KTV (Bắt buộc nếu đổi KTV cũ - QT-07): *
                                 </label>
-                                <!-- Sticky note: Chỉ bắt buộc khi đổi KTV cũ (QT-07) -->
-                                <!-- <span class="note-callout">Chỉ bắt buộc khi đổi KTV cũ (QT-07)</span> -->
                             </div>
                             <textarea id="changeReason" th:field="*{changeReason}" rows="3" minlength="10" class="form-control"
                                       placeholder="Nhập lý do thay đổi KTV (tối thiểu 10 ký tự)..."></textarea>

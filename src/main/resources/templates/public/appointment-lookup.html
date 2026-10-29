@@ -138,7 +138,7 @@
         </div>
 
         <!-- 3 UI States: 1. Loading Spinner / Skeleton State -->
-        <div id="uiStateLoading" class="spinner-overlay text-center my-5 py-4 flex-column align-items-center justify-content-center" th:classappend="${param.loading != null ? 'active' : ''}">
+        <div id="uiStateLoading" class="spinner-overlay text-center my-5 py-4 flex-column align-items-center justify-content-center">
             <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
                 <span class="visually-hidden">Đang tải...</span>
             </div>
@@ -151,14 +151,14 @@
         </div>
 
         <!-- Results Section -->
-        <div id="resultsContainer" th:style="${param.loading != null ? 'display: none !important;' : null}">
+        <div id="resultsContainer">
             <!-- 3 UI States: 2. Empty State -->
             <div th:if="${(searched != null and searched and (appointments == null or #lists.isEmpty(appointments))) or param.empty != null}"
                  id="uiStateEmpty" class="text-center py-5 my-3 bg-white rounded-3 shadow-sm border p-4">
                 <i class="bi bi-calendar-x text-muted" style="font-size: 3.5rem;"></i>
-                <h5 class="fw-bold mt-3 text-secondary">Không có phiếu bảo hành nào cần phân công</h5>
+                <h5 class="fw-bold mt-3 text-secondary">Không tìm thấy phiếu bảo hành khớp với mã/SĐT vừa nhập</h5>
                 <p class="text-muted small mb-3">
-                    Không tìm thấy lịch hẹn hoặc phiếu bảo hành nào khớp với từ khóa "<strong th:text="${keyword}">keyword</strong>".<br>
+                    Không có phiếu bảo hành nào cần phân công hoặc không tìm thấy kết quả khớp với từ khóa "<strong th:text="${keyword}">keyword</strong>".<br>
                     Vui lòng kiểm tra lại Mã phiếu hoặc Số điện thoại đăng ký bảo hành.
                 </p>
                 <a th:href="@{/lookup}" class="btn btn-outline-primary btn-sm px-4 fw-semibold">
