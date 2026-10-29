@@ -87,6 +87,34 @@ class LoggingAndMaskingTest {
     }
 
     @Test
+    @DisplayName("GlobalExceptionHandler: Ánh xạ mã lỗi TICKET_NOT_FOUND và APPOINTMENT_NOT_FOUND sang HTTP 404")
+    void testResolveHttpStatus_notFoundErrors() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+        
+        ResponseEntity<ResponseErrorDto> resp1 = handler.handleAppException(new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu"));
+        assertEquals(HttpStatus.NOT_FOUND, resp1.getStatusCode());
+        assertEquals("TICKET_NOT_FOUND", resp1.getBody().getError());
+
+        ResponseEntity<ResponseErrorDto> resp2 = handler.handleAppException(new AppException("APPOINTMENT_NOT_FOUND", "Không tìm thấy lịch hẹn"));
+        assertEquals(HttpStatus.NOT_FOUND, resp2.getStatusCode());
+        assertEquals("APPOINTMENT_NOT_FOUND", resp2.getBody().getError());
+    }
+
+    @Test
+    @DisplayName("GlobalExceptionHandler: Ánh xạ mã lỗi TICKET_NOT_DELETABLE và APPOINTMENT_NOT_DELETABLE sang HTTP 422")
+    void testResolveHttpStatus_notDeletableErrors() {
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+
+        ResponseEntity<ResponseErrorDto> resp1 = handler.handleAppException(new AppException("TICKET_NOT_DELETABLE", "Không thể xóa phiếu"));
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, resp1.getStatusCode());
+        assertEquals("TICKET_NOT_DELETABLE", resp1.getBody().getError());
+
+        ResponseEntity<ResponseErrorDto> resp2 = handler.handleAppException(new AppException("APPOINTMENT_NOT_DELETABLE", "Không thể hủy lịch"));
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, resp2.getStatusCode());
+        assertEquals("APPOINTMENT_NOT_DELETABLE", resp2.getBody().getError());
+    }
+
+    @Test
     @DisplayName("GlobalExceptionHandler: Bắt Exception trả về HTTP 500 kèm mã tra cứu và không lộ chi tiết SQL")
     void testHandleGenericException() {
         GlobalExceptionHandler handler = new GlobalExceptionHandler();

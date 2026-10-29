@@ -132,9 +132,9 @@ public class GlobalExceptionHandler {
             return HttpStatus.BAD_REQUEST;
         }
         return switch (errorCode.toUpperCase()) {
-            case "NOT_FOUND", "RESOURCE_NOT_FOUND" -> HttpStatus.NOT_FOUND;
+            case "NOT_FOUND", "RESOURCE_NOT_FOUND", "TICKET_NOT_FOUND", "APPOINTMENT_NOT_FOUND" -> HttpStatus.NOT_FOUND;
             case "SCHEDULE_CONFLICT", "CONFLICT" -> HttpStatus.CONFLICT;
-            case "BUSINESS_RULE_VIOLATION" -> HttpStatus.UNPROCESSABLE_ENTITY;
+            case "BUSINESS_RULE_VIOLATION", "TICKET_NOT_DELETABLE", "APPOINTMENT_NOT_DELETABLE" -> HttpStatus.UNPROCESSABLE_ENTITY;
             case "UNAUTHORIZED", "INVALID_CREDENTIALS" -> HttpStatus.UNAUTHORIZED;
             case "FORBIDDEN", "ACCESS_DENIED" -> HttpStatus.FORBIDDEN;
             case "KTV_NOT_QUALIFIED", "INVALID_CHANGE_REASON", "INVALID_STATUS_TRANSITION",
