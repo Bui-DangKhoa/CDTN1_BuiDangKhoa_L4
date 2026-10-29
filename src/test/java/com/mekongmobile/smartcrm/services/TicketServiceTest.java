@@ -451,4 +451,13 @@ class TicketServiceTest {
         AppException ex = assertThrows(AppException.class, () -> ticketService.getTicketById(10L));
         assertEquals("TICKET_NOT_FOUND", ex.getErrorCode());
     }
+
+    @Test
+    @DisplayName("TC-18: deleteTicket - Ném lỗi UNAUTHORIZED khi changedBy là null và verify không lưu hay ghi log")
+    void deleteTicket_nullChangedBy_throwsUnauthorized() {
+        AppException ex = assertThrows(AppException.class, () -> ticketService.deleteTicket(10L, null));
+        assertEquals("UNAUTHORIZED", ex.getErrorCode());
+        verify(ticketRepository, never()).save(any(Ticket.class));
+        verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
+    }
 }

@@ -202,4 +202,33 @@ class AuthAndSecurityTest {
         );
         org.junit.jupiter.api.Assertions.assertEquals("UNAUTHORIZED", ex.getErrorCode());
     }
+
+    @Test
+    @DisplayName("TC-SEC-10: POST /tickets/{id}/assign - Không có người dùng trong session -> Ném AppException UNAUTHORIZED")
+    void testAssignTechnicianWithoutUserInSessionThrowsUnauthorized() throws Exception {
+        TicketController controller = new TicketController(ticketService);
+        org.springframework.test.web.servlet.MockMvc standaloneMockMvc = org.springframework.test.web.servlet.setup.MockMvcBuilders
+                .standaloneSetup(controller)
+                .setControllerAdvice(new com.mekongmobile.smartcrm.exceptions.GlobalExceptionHandler())
+                .build();
+
+        standaloneMockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/tickets/101/assign")
+                        .param("technicianId", "2")
+                        .param("changeReason", "Dieu phoi lai theo yeu cau"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+
+        org.springframework.mock.web.MockHttpSession emptySession = new org.springframework.mock.web.MockHttpSession();
+        com.mekongmobile.smartcrm.dto.AssignTechnicianRequest request = new com.mekongmobile.smartcrm.dto.AssignTechnicianRequest();
+        request.setTechnicianId(2L);
+        request.setChangeReason("Dieu phoi lai theo yeu cau");
+        org.springframework.validation.BeanPropertyBindingResult bindingResult =
+                new org.springframework.validation.BeanPropertyBindingResult(request, "assignRequest");
+
+        com.mekongmobile.smartcrm.exceptions.AppException ex = org.junit.jupiter.api.Assertions.assertThrows(
+                com.mekongmobile.smartcrm.exceptions.AppException.class,
+                () -> controller.assignTechnician(101L, request, bindingResult, new org.springframework.ui.ExtendedModelMap(), emptySession, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap())
+        );
+        org.junit.jupiter.api.Assertions.assertEquals("UNAUTHORIZED", ex.getErrorCode());
+    }
 }

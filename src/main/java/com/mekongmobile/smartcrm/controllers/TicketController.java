@@ -132,11 +132,14 @@ public class TicketController {
             return "tickets/assign-form";
         }
 
-        try {
-            com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
-                    (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
-            Long assignedBy = (currentUser != null && currentUser.getUserId() != null) ? currentUser.getUserId() : 1L;
+        com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
+                (session != null) ? (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser") : null;
+        if (currentUser == null || currentUser.getUserId() == null) {
+            throw new AppException("UNAUTHORIZED", "Vui lòng đăng nhập để thực hiện thao tác phân công");
+        }
+        Long assignedBy = currentUser.getUserId();
 
+        try {
             java.time.LocalDateTime appointmentTime = request.resolveAppointmentTime();
             Ticket assignedTicket = ticketService.assignTechnician(
                     id, request.getTechnicianId(), assignedBy, request.getChangeReason(), appointmentTime);

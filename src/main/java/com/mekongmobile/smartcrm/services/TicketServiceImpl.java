@@ -195,6 +195,9 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional
     public void deleteTicket(Long ticketId, Long changedBy) {
+        if (changedBy == null) {
+            throw new AppException("UNAUTHORIZED", "Thiếu người thao tác khi xóa mềm phiếu");
+        }
         log.info("Thực hiện xóa mềm ticket ID: {}, changedBy: {}", ticketId, changedBy);
         Ticket ticket = ticketRepository.findById(ticketId)
                 .filter(t -> t.getDeletedAt() == null)
@@ -217,7 +220,7 @@ public class TicketServiceImpl implements TicketService {
         ticketRepository.save(ticket);
 
         // Ghi 1 dòng ticket_status_log cho việc xóa
-        logStatusChange(ticket, fromStatus, "DA_XOA", changedBy != null ? changedBy : 1L, "Xóa mềm phiếu bảo hành (QT-13)");
+        logStatusChange(ticket, fromStatus, "DA_XOA", changedBy, "Xóa mềm phiếu bảo hành (QT-13)");
         log.info("Xóa mềm ticket #{} thành công (QT-13)", ticket.getTicketCode());
     }
 
