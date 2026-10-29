@@ -71,3 +71,8 @@ Tài liệu ghi nhận toàn bộ các quyết định điều chỉnh kỹ thu�
 - **Thay đổi gì**: Thêm cột `resolution VARCHAR(500) NULL` vào bảng `ticket` trong CSDL, đồng bộ Entity `Ticket.java`, tạo `DeviceRepairHistoryDto`, cập nhật truy vấn `findRepairHistory` và seed dữ liệu mẫu.
 - **Lý do**: Cung cấp dữ liệu thực tế cho Khung 3 "Lịch sử sửa chữa thiết bị" (US5/FR5) theo đúng Wireframe MH3, loại bỏ hoàn toàn dữ liệu ghi cứng mà không dùng sai ngữ nghĩa của `issue_desc`.
 - **Ảnh hưởng tới thành phần nào**: `docs/schema.sql`, `seeds/data-demo.sql`, `Ticket.java`, `DeviceRepairHistoryDto.java`, `TicketRepository.java`, `TicketServiceImpl.java`, `TechnicianWebController.java`.
+
+### TD-13: Bổ sung cột deleted_at cho bảng ticket hỗ trợ xóa mềm
+- **Thay đổi gì**: Thêm cột `deleted_at DATETIME NULL DEFAULT NULL` và chỉ mục `idx_ticket_deleted` vào bảng `ticket` trong CSDL, đồng bộ Entity `Ticket.java` và seed dữ liệu demo.
+- **Lý do**: Đáp ứng yêu cầu xóa mềm (Soft Delete) theo quy tắc QT-13 của SRS (nghiêm cấm xóa vật lý phiếu sửa chữa và lịch hẹn để bảo toàn dữ liệu nhật ký QT-06).
+- **Ảnh hưởng tới thành phần nào**: `docs/schema.sql`, `seeds/data-demo.sql`, `Ticket.java`, `TicketRepository.java`, `TicketServiceImpl.java`.

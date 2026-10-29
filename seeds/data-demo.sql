@@ -73,30 +73,30 @@ ON DUPLICATE KEY UPDATE
 -- -----------------------------------------------------
 -- 5. Seed Phiếu sửa chữa (ticket)
 -- -----------------------------------------------------
-INSERT INTO `ticket` (`ticket_id`, `ticket_code`, `customer_id`, `customer_phone`, `device_id`, `center_id`, `technician_id`, `category_id`, `issue_desc`, `resolution`, `priority`, `status`, `received_at`, `due_date`, `closed_at`)
+INSERT INTO `ticket` (`ticket_id`, `ticket_code`, `customer_id`, `customer_phone`, `device_id`, `center_id`, `technician_id`, `category_id`, `issue_desc`, `resolution`, `priority`, `status`, `received_at`, `due_date`, `closed_at`, `deleted_at`)
 VALUES
 -- Phiếu 1: Chưa phân công, ưu tiên CAO (Sắp hết hạn SLA, dùng cho Quản lý test phân công)
-(101, 'TK-202610-001', 201, '0987654321', 1, 1, NULL, 1, 'Màn hình bị sọc xanh và loạn cảm ứng sau va đập mạnh', NULL, 'CAO', 'MOI', '2026-10-20 08:30:00', '2026-10-22 17:00:00', NULL),
+(101, 'TK-202610-001', 201, '0987654321', 1, 1, NULL, 1, 'Màn hình bị sọc xanh và loạn cảm ứng sau va đập mạnh', NULL, 'CAO', 'MOI', '2026-10-20 08:30:00', '2026-10-22 17:00:00', NULL, NULL),
 -- Phiếu 2: Chưa phân công, ưu tiên CAO
-(102, 'TK-202610-002', 202, '0912345678', 2, 1, NULL, 2, 'Pin phù kênh nắp lưng, máy tự sập nguồn đột ngột khi dưới 30%', NULL, 'CAO', 'MOI', '2026-10-20 10:00:00', '2026-10-23 12:00:00', NULL),
+(102, 'TK-202610-002', 202, '0912345678', 2, 1, NULL, 2, 'Pin phù kênh nắp lưng, máy tự sập nguồn đột ngột khi dưới 30%', NULL, 'CAO', 'MOI', '2026-10-20 10:00:00', '2026-10-23 12:00:00', NULL, NULL),
 -- Phiếu 3: Đã gán cho KTV 1, đang xử lý (ktv1 xem tại /technician/my-tickets)
-(103, 'TK-202610-003', 203, '0909123456', 3, 1, 1, 3, 'Máy bị treo táo sau khi nâng cấp hệ điều hành macOS', NULL, 'TRUNG_BINH', 'DANG_XU_LY', '2026-10-19 14:00:00', '2026-10-24 18:00:00', NULL),
+(103, 'TK-202610-003', 203, '0909123456', 3, 1, 1, 3, 'Máy bị treo táo sau khi nâng cấp hệ điều hành macOS', NULL, 'TRUNG_BINH', 'DANG_XU_LY', '2026-10-19 14:00:00', '2026-10-24 18:00:00', NULL, NULL),
 -- Phiếu 4: Đã gán cho KTV 1, đang xử lý
-(104, 'TK-202610-004', 204, '0933221100', 4, 1, 1, 4, 'Bảo dưỡng định kỳ, kiểm tra chân sạc USB-C lỏng lẻo', NULL, 'THAP', 'DANG_XU_LY', '2026-10-19 15:00:00', '2026-10-25 10:00:00', NULL),
+(104, 'TK-202610-004', 204, '0933221100', 4, 1, 1, 4, 'Bảo dưỡng định kỳ, kiểm tra chân sạc USB-C lỏng lẻo', NULL, 'THAP', 'DANG_XU_LY', '2026-10-19 15:00:00', '2026-10-25 10:00:00', NULL, NULL),
 -- Phiếu 5: Đã gán cho KTV 2
-(105, 'TK-202610-005', 205, '0977889900', 5, 1, 2, 5, 'Camera sau bị rung và mờ, không lấy nét quang học được', NULL, 'TRUNG_BINH', 'DA_PHAN_CONG', '2026-10-20 11:00:00', '2026-10-23 17:00:00', NULL),
+(105, 'TK-202610-005', 205, '0977889900', 5, 1, 2, 5, 'Camera sau bị rung và mờ, không lấy nét quang học được', NULL, 'TRUNG_BINH', 'DA_PHAN_CONG', '2026-10-20 11:00:00', '2026-10-23 17:00:00', NULL, NULL),
 -- Phiếu 6: Đã gán cho KTV 1 - Thay màn hình cảm ứng, trạng thái ĐÃ PHÂN CÔNG (dùng để test KTV bấm nhận việc / chuyển ĐANG_XU_LY)
-(106, 'TK-202610-006', 201, '0987654321', 1, 1, 1, 1, 'Màn hình OLED bị ố vàng góc trên, cảm ứng đơ giật ngắt quãng', NULL, 'CAO', 'DA_PHAN_CONG', '2026-10-21 09:00:00', '2026-10-23 16:00:00', NULL),
+(106, 'TK-202610-006', 201, '0987654321', 1, 1, 1, 1, 'Màn hình OLED bị ố vàng góc trên, cảm ứng đơ giật ngắt quãng', NULL, 'CAO', 'DA_PHAN_CONG', '2026-10-21 09:00:00', '2026-10-23 16:00:00', NULL, NULL),
 -- Phiếu 7: Đã gán cho KTV 1 - Thay pin / Nguồn, trạng thái ĐANG XỬ LÝ (dùng để test KTV bấm hoàn tất sửa chữa HOAN_TAT)
-(107, 'TK-202610-007', 202, '0912345678', 2, 1, 1, 2, 'Pin chai còn 68%, máy thường xuyên báo pin ảo và tự khởi động lại', NULL, 'CAO', 'DANG_XU_LY', '2026-10-21 10:30:00', '2026-10-24 15:00:00', NULL),
+(107, 'TK-202610-007', 202, '0912345678', 2, 1, 1, 2, 'Pin chai còn 68%, máy thường xuyên báo pin ảo và tự khởi động lại', NULL, 'CAO', 'DANG_XU_LY', '2026-10-21 10:30:00', '2026-10-24 15:00:00', NULL, NULL),
 -- Phiếu 8: Đã gán cho KTV 1 - Sửa chữa Camera, trạng thái ĐÃ PHÂN CÔNG
-(108, 'TK-202610-008', 205, '0977889900', 5, 1, 1, 5, 'Cụm camera tele zoom 5x bị mờ sương và kẹt chống rung OIS', NULL, 'TRUNG_BINH', 'DA_PHAN_CONG', '2026-10-21 14:00:00', '2026-10-25 12:00:00', NULL),
+(108, 'TK-202610-008', 205, '0977889900', 5, 1, 1, 5, 'Cụm camera tele zoom 5x bị mờ sương và kẹt chống rung OIS', NULL, 'TRUNG_BINH', 'DA_PHAN_CONG', '2026-10-21 14:00:00', '2026-10-25 12:00:00', NULL, NULL),
 -- Phiếu cũ 1: Lịch sử sửa chữa thiết bị 1 (iPhone 15 Pro Max) - Đã đóng hoàn tất
-(71, 'TK-202606-071', 201, '0987654321', 1, 1, 2, 1, 'Màn hình OLED bị ố sọc và liệt cảm ứng một nửa', 'Thay màn hình OLED chính hãng và dán keo chống nước viền', 'CAO', 'DONG', '2026-06-10 09:00:00', '2026-06-12 17:00:00', '2026-06-12 16:30:00'),
+(71, 'TK-202606-071', 201, '0987654321', 1, 1, 2, 1, 'Màn hình OLED bị ố sọc và liệt cảm ứng một nửa', 'Thay màn hình OLED chính hãng và dán keo chống nước viền', 'CAO', 'DONG', '2026-06-10 09:00:00', '2026-06-12 17:00:00', '2026-06-12 16:30:00', NULL),
 -- Phiếu cũ 2: Lịch sử sửa chữa thiết bị 1 (iPhone 15 Pro Max) - Đã hoàn tất
-(98, 'TK-202609-098', 201, '0987654321', 1, 1, 3, 1, 'Màn hình chớp nháy khi mở độ sáng cao sau va đập nhẹ', 'Thay lại cáp nối màn hình, vệ sinh socket và kiểm tra cảm ứng', 'TRUNG_BINH', 'HOAN_TAT', '2026-09-01 10:00:00', '2026-09-03 16:00:00', '2026-09-03 14:15:00'),
+(98, 'TK-202609-098', 201, '0987654321', 1, 1, 3, 1, 'Màn hình chớp nháy khi mở độ sáng cao sau va đập nhẹ', 'Thay lại cáp nối màn hình, vệ sinh socket và kiểm tra cảm ứng', 'TRUNG_BINH', 'HOAN_TAT', '2026-09-01 10:00:00', '2026-09-03 16:00:00', '2026-09-03 14:15:00', NULL),
 -- Phiếu 9 (Mẫu tra cứu Cổng khách hàng /lookup): BH-00125 (SĐT: 0901234567)
-(125, 'BH-00125', 201, '0901234567', 1, 1, 1, 1, 'Màn hình cảm ứng bị loạn, hẹn tiếp nhận kiểm tra và thay màn hình', NULL, 'CAO', 'DANG_XU_LY', '2026-10-25 08:30:00', '2026-10-28 17:00:00', NULL)
+(125, 'BH-00125', 201, '0901234567', 1, 1, 1, 1, 'Màn hình cảm ứng bị loạn, hẹn tiếp nhận kiểm tra và thay màn hình', NULL, 'CAO', 'DANG_XU_LY', '2026-10-25 08:30:00', '2026-10-28 17:00:00', NULL, NULL)
 ON DUPLICATE KEY UPDATE
     `ticket_code` = VALUES(`ticket_code`),
     `customer_id` = VALUES(`customer_id`),
@@ -111,7 +111,8 @@ ON DUPLICATE KEY UPDATE
     `status` = VALUES(`status`),
     `received_at` = VALUES(`received_at`),
     `due_date` = VALUES(`due_date`),
-    `closed_at` = VALUES(`closed_at`);
+    `closed_at` = VALUES(`closed_at`),
+    `deleted_at` = VALUES(`deleted_at`);
 
 -- -----------------------------------------------------
 -- 6. Seed Lịch hẹn KTV (appointment - QT-L4-01 / NFR2 / US7 Cổng Tra Cứu Khách Hàng)

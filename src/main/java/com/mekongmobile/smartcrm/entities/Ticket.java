@@ -72,4 +72,8 @@ public class Ticket {
 
     @Column(name = "closed_at")
     private LocalDateTime closedAt;
+
+    /** QT-13: Dấu thời gian xóa mềm (soft delete), NULL nghĩa là phiếu còn hiệu lực. */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

@@ -82,12 +82,14 @@ CREATE TABLE IF NOT EXISTS `ticket` (
   `received_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `due_date` DATETIME NOT NULL,
   `closed_at` DATETIME NULL DEFAULT NULL,
+  `deleted_at` DATETIME NULL DEFAULT NULL,
   PRIMARY KEY (`ticket_id`),
   UNIQUE INDEX `ticket_code` (`ticket_code` ASC) VISIBLE,
   INDEX `fk_ticket_device` (`device_id` ASC) VISIBLE,
   INDEX `fk_ticket_cat` (`category_id` ASC) VISIBLE,
   INDEX `idx_ticket_status_due` (`status` ASC, `due_date` ASC) VISIBLE,
   INDEX `idx_ticket_tech_due` (`technician_id` ASC, `due_date` ASC) VISIBLE,
+  INDEX `idx_ticket_deleted` (`deleted_at` ASC) VISIBLE,
   CONSTRAINT `fk_ticket_cat`
     FOREIGN KEY (`category_id`)
     REFERENCES `issue_category` (`category_id`),
