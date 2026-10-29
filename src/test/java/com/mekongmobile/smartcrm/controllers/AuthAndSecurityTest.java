@@ -37,6 +37,9 @@ class AuthAndSecurityTest {
     @MockBean
     private AppointmentService appointmentService;
 
+    @MockBean
+    private com.mekongmobile.smartcrm.services.TicketService ticketService;
+
     @Test
     @DisplayName("TC-SEC-01: Truy cập public /lookup không cần đăng nhập -> Trả về 200 OK")
     void testPublicLookupAccessWithoutLogin() throws Exception {
@@ -137,6 +140,7 @@ class AuthAndSecurityTest {
                 .andExpect(redirectedUrl("/lookup?keyword=BH-00125"))
                 .andExpect(flash().attributeExists("successMessage"));
     }
+
     @Test
     @DisplayName("TC-SEC-07: QT-15 - Tra cứu tại /lookup hiển thị SĐT đã che (090****567) và không chứa SĐT gốc (0901234567)")
     void testLookupCustomerPhoneMasked_QT15() throws Exception {
@@ -158,5 +162,23 @@ class AuthAndSecurityTest {
                 .andExpect(view().name("public/appointment-lookup"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("090****567")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("0901234567"))));
+    }
+
+    @Test
+    @DisplayName("TC-SEC-08: DELETE /api/v1/tickets/{id} - Lấy người thao tác từ session đăng nhập")
+    void testDeleteTicketExtractsUserFromSession() throws Exception {
+        UserSessionDto managerSession = UserSessionDto.builder()
+                .userId(99L)
+                .username("quanly1")
+                .role("QUAN_LY")
+                .centerId(1L)
+                .build();
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/v1/tickets/101")
+                        .sessionAttr("currentUser", managerSession))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Xóa mềm phiếu bảo hành thành công (QT-13)"));
+
+        org.mockito.Mockito.verify(ticketService).deleteTicket(101L, 99L);
     }
 }

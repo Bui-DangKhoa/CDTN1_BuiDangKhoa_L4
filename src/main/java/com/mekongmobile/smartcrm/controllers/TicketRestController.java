@@ -104,11 +104,15 @@ public class TicketRestController {
 
     /**
      * QT-13: API xóa mềm phiếu bảo hành.
+     * Người thao tác được lấy từ người dùng đăng nhập (session).
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteTicket(
             @PathVariable("id") Long id,
-            @RequestParam(value = "changedBy", required = false, defaultValue = "1") Long changedBy) {
+            jakarta.servlet.http.HttpSession session) {
+        com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
+                (session != null) ? (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser") : null;
+        Long changedBy = (currentUser != null && currentUser.getUserId() != null) ? currentUser.getUserId() : 1L;
         ticketService.deleteTicket(id, changedBy);
         return ResponseEntity.ok(ApiResponse.of("Xóa mềm phiếu bảo hành thành công (QT-13)", null));
     }
