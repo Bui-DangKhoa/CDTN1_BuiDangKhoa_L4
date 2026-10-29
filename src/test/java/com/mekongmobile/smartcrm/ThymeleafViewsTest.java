@@ -299,4 +299,53 @@ public class ThymeleafViewsTest {
                                 .andExpect(model().attributeExists("repairHistory"))
                                 .andExpect(content().string(containsString("Không có lịch sử sửa chữa trước đó cho thiết bị này.")));
         }
+
+        @Test
+        @DisplayName("Lỗi hệ thống: Accept text/html -> Trả HTML view có requestId, không chứa jdbc hay Exception")
+        void testSystemError_HtmlRequestReturnsCustomErrorView() throws Exception {
+                when(ticketService.getUnassignedTicketsSortedByDueDate(any()))
+                                .thenThrow(new RuntimeException("org.springframework.jdbc.CannotGetJdbcConnectionException: Connection refused"));
+
+                com.mekongmobile.smartcrm.dto.UserSessionDto managerSession = com.mekongmobile.smartcrm.dto.UserSessionDto
+                                .builder()
+                                .userId(1L)
+                                .username("quanly1")
+                                .fullName("Nguyễn Quản Lý")
+                                .role("QUAN_LY")
+                                .centerId(1L)
+                                .build();
+
+                mockMvc.perform(get("/tickets/unassigned")
+                                .sessionAttr("currentUser", managerSession)
+                                .accept(org.springframework.http.MediaType.TEXT_HTML))
+                                .andExpect(status().isInternalServerError())
+                                .andExpect(view().name("error/500"))
+                                .andExpect(model().attributeExists("requestId"))
+                                .andExpect(content().string(containsString("Mã tra cứu sự cố:")))
+                                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("jdbc"))))
+                                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("Exception"))));
+        }
+
+        @Test
+        @DisplayName("Lỗi hệ thống: Accept application/json -> Trả JSON có code LOI_HE_THONG")
+        void testSystemError_JsonRequestReturnsErrorJson() throws Exception {
+                when(ticketService.getUnassignedTicketsSortedByDueDate(any()))
+                                .thenThrow(new RuntimeException("org.springframework.jdbc.CannotGetJdbcConnectionException: Connection refused"));
+
+                com.mekongmobile.smartcrm.dto.UserSessionDto managerSession = com.mekongmobile.smartcrm.dto.UserSessionDto
+                                .builder()
+                                .userId(1L)
+                                .username("quanly1")
+                                .fullName("Nguyễn Quản Lý")
+                                .role("QUAN_LY")
+                                .centerId(1L)
+                                .build();
+
+                mockMvc.perform(get("/tickets/unassigned")
+                                .sessionAttr("currentUser", managerSession)
+                                .accept(org.springframework.http.MediaType.APPLICATION_JSON))
+                                .andExpect(status().isInternalServerError())
+                                .andExpect(jsonPath("$.code").value("LOI_HE_THONG"))
+                                .andExpect(jsonPath("$.requestId").exists());
+        }
 }
