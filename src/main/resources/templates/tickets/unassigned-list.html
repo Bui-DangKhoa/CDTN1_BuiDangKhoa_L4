@@ -108,7 +108,7 @@
         </div>
 
         <!-- 1. LOADING STATE (Spinner / Khung xương Skeleton "Đang tải danh sách phiếu bảo hành... Vui lòng chờ trong giây lát.") -->
-        <div id="uiLoadingState" class="crm-loading-state text-center my-3 py-4" style="display: none;">
+        <div id="uiLoadingState" class="crm-loading-state text-center my-3 py-4" style="display: none;" th:style="${param.loading != null ? 'display: block;' : 'display: none;'}">
             <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
                 <span class="visually-hidden">Đang tải...</span>
             </div>
@@ -122,7 +122,7 @@
         </div>
 
         <!-- 2 Thẻ chỉ số KPI ở trên cùng theo Wireframe MH1 -->
-        <section class="d-flex flex-wrap gap-4 mb-4 pt-1">
+        <section class="d-flex flex-wrap gap-4 mb-4 pt-1" th:style="${param.loading != null ? 'display: none !important;' : null}">
             <!-- Thẻ 1: Phiếu chưa gán (Số lượng hiển thị màu đen: 24) -->
             <div class="crm-kpi-card" style="width: 210px;">
                 <div class="kpi-label">Phiếu chưa gán</div>
@@ -140,7 +140,7 @@
         </section>
 
         <!-- Thanh Bộ lọc (Filter Bar) theo Wireframe MH1 -->
-        <section class="crm-filter-bar mb-3">
+        <section class="crm-filter-bar mb-3" th:style="${param.loading != null ? 'display: none !important;' : null}">
             <!-- Dropdown Nhóm sự cố -->
             <div>
                 <select id="categoryFilter" class="crm-filter-select">
@@ -181,7 +181,7 @@
         </section>
 
         <!-- Bảng dữ liệu (Data Table) theo Wireframe MH1 -->
-        <div class="table-responsive border rounded" style="border-color: #BDBDBD !important;">
+        <div class="table-responsive border rounded" style="border-color: #BDBDBD !important;" th:style="${param.loading != null ? 'display: none !important;' : 'border-color: #BDBDBD !important;'}">
                 <table class="crm-table mb-0">
                     <thead>
                         <tr>
@@ -300,7 +300,7 @@
 
             <!-- Phân trang theo Wireframe MH1 -->
             <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-3 pt-2 text-secondary"
-                style="font-size: 0.875rem;">
+                style="font-size: 0.875rem;" th:style="${param.loading != null ? 'display: none !important;' : 'font-size: 0.875rem;'}">
                 <div id="paginationInfo">
                     <span id="paginationText" th:text="${tickets != null and not tickets.empty ? 'Hiển thị 1-' + tickets.size() + ' / ' + (totalUnassigned != null ? totalUnassigned : tickets.size()) + ' phiếu' : 'Hiển thị 0 / 0 phiếu'}">Hiển thị 1-10 / 24 phiếu</span>
                 </div>

@@ -60,7 +60,7 @@
         </div>
 
         <!-- 1. LOADING STATE (Spinner / Khung xương Skeleton) -->
-        <div id="uiLoadingState" class="crm-loading-state text-center my-3 py-4" style="display: none;">
+        <div id="uiLoadingState" class="crm-loading-state text-center my-3 py-4" style="display: none;" th:style="${param.loading != null ? 'display: block;' : 'display: none;'}">
             <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
                 <span class="visually-hidden">Đang tải...</span>
             </div>
@@ -72,7 +72,7 @@
             </div>
         </div>
 
-        <div class="row g-3">
+        <div class="row g-3" th:style="${param.loading != null ? 'display: none !important;' : null}">
 
             <!-- =========================================================================
                  CỘT TRÁI: Khung 1 — Phiếu của tôi (US4)
