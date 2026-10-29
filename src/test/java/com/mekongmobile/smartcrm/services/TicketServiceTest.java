@@ -249,5 +249,93 @@ class TicketServiceTest {
         assertEquals(1, result.size());
         assertEquals("090****567", result.get(0).getCustomerPhone());
     }
-}
+    @Test
+    @DisplayName("TC-07: getDeviceRepairHistory - Thiết bị có lịch sử, trả về DTO map đúng ngày (closed_at fallback received_at), KTV, nội dung xử lý")
+    void TC07_getDeviceRepairHistory_withHistory() {
+        LocalDateTime closedTime = LocalDateTime.of(2026, 6, 12, 16, 30);
+        LocalDateTime receivedTime = LocalDateTime.of(2026, 6, 10, 9, 0);
 
+        Ticket pastTicket1 = Ticket.builder()
+                .ticketId(71L)
+                .ticketCode("TK-202606-071")
+                .device(mockDevice)
+                .technician(mockTechnician)
+                .resolution("Thay màn hình OLED chính hãng")
+                .status("DONG")
+                .receivedAt(receivedTime)
+                .closedAt(closedTime)
+                .build();
+
+        // Phiếu 2 không có closed_at -> fallback sang received_at; resolution null -> fallback issueDesc
+        Ticket pastTicket2 = Ticket.builder()
+                .ticketId(98L)
+                .ticketCode("TK-202609-098")
+                .device(mockDevice)
+                .technician(null)
+                .issueDesc("Lỗi cáp kết nối")
+                .resolution(null)
+                .status("HOAN_TAT")
+                .receivedAt(LocalDateTime.of(2026, 9, 1, 10, 0))
+                .closedAt(null)
+                .build();
+
+        when(ticketRepository.findRepairHistory(eq(1L), eq(10L), any()))
+                .thenReturn(List.of(pastTicket1, pastTicket2));
+
+        List<com.mekongmobile.smartcrm.dto.DeviceRepairHistoryDto> history =
+                ticketService.getDeviceRepairHistory(1L, 10L);
+
+        assertEquals(2, history.size());
+        assertEquals("TK-202606-071", history.get(0).getTicketCode());
+        assertEquals("12/06/2026", history.get(0).getRepairedDate());
+        assertEquals("Nguyễn Văn Kỹ Thuật", history.get(0).getTechnicianName());
+        assertEquals("Thay màn hình OLED chính hãng", history.get(0).getSolutionDesc());
+
+        assertEquals("TK-202609-098", history.get(1).getTicketCode());
+        assertEquals("01/09/2026", history.get(1).getRepairedDate()); // Fallback receivedAt
+        assertEquals("—", history.get(1).getTechnicianName()); // Fallback null tech
+        assertEquals("Lỗi cáp kết nối", history.get(1).getSolutionDesc()); // Fallback issueDesc
+    }
+
+    @Test
+    @DisplayName("TC-08: getDeviceRepairHistory - Thiết bị chưa từng sửa chữa trước đó, trả về danh sách rỗng")
+    void TC08_getDeviceRepairHistory_emptyHistory() {
+        when(ticketRepository.findRepairHistory(eq(2L), eq(10L), any()))
+                .thenReturn(List.of());
+
+        List<com.mekongmobile.smartcrm.dto.DeviceRepairHistoryDto> history =
+                ticketService.getDeviceRepairHistory(2L, 10L);
+
+        assertNotNull(history);
+        assertTrue(history.isEmpty());
+    }
+
+    @Test
+    @DisplayName("TC-09: getDeviceRepairHistory - Thiết bị khác không lẫn dữ liệu và deviceId null an toàn")
+    void TC09_getDeviceRepairHistory_isolationAndNullDevice() {
+        when(ticketRepository.findRepairHistory(eq(1L), isNull(), any()))
+                .thenReturn(List.of(Ticket.builder().ticketCode("TK-DEV-1").status("DONG").build()));
+
+        List<com.mekongmobile.smartcrm.dto.DeviceRepairHistoryDto> historyDev1 =
+                ticketService.getDeviceRepairHistory(1L, null);
+        assertEquals(1, historyDev1.size());
+        assertEquals("TK-DEV-1", historyDev1.get(0).getTicketCode());
+
+        // deviceId = null -> trả về rỗng ngay mà không gọi repository
+        List<com.mekongmobile.smartcrm.dto.DeviceRepairHistoryDto> nullResult =
+                ticketService.getDeviceRepairHistory(null, 10L);
+        assertTrue(nullResult.isEmpty());
+        verify(ticketRepository, never()).findRepairHistory(isNull(), any(), any());
+    }
+
+    @Test
+    @DisplayName("TC-10: getDeviceRepairHistory - Phiếu đang chọn được truyền vào excludeTicketId để bị loại trừ")
+    void TC10_getDeviceRepairHistory_excludeCurrentTicket() {
+        when(ticketRepository.findRepairHistory(eq(1L), eq(99L), any()))
+                .thenReturn(List.of());
+
+        ticketService.getDeviceRepairHistory(1L, 99L);
+
+        verify(ticketRepository).findRepairHistory(eq(1L), eq(99L), any());
+    }
+}

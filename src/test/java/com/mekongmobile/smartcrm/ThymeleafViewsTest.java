@@ -24,6 +24,7 @@ import com.mekongmobile.smartcrm.services.AppointmentService;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -208,5 +209,94 @@ public class ThymeleafViewsTest {
                                 .andExpect(content().string(containsString("Không có phiếu bảo hành nào cần phân công")))
                                 .andExpect(content().string(containsString("Xóa bộ lọc")))
                                 .andExpect(content().string(containsString("Đang tải danh sách phiếu bảo hành... Vui lòng chờ trong giây lát.")));
+        }
+        @Test
+        @DisplayName("MH3 Khung 3: Hiển thị bảng lịch sử sửa chữa khi thiết bị có phiếu cũ đã đóng")
+        void testRenderMyTickets_WithRepairHistory() throws Exception {
+                Technician tech = Technician.builder()
+                                .technicianId(2L)
+                                .employeeId(1002L)
+                                .fullName("Trần Kỹ Thuật")
+                                .centerId(1L)
+                                .level("4")
+                                .build();
+
+                TicketResponseDto ticketDto = TicketResponseDto.builder()
+                                .ticketId(125L)
+                                .ticketCode("BH-00125")
+                                .deviceId(1L)
+                                .deviceName("iPhone 15 Pro Max")
+                                .categoryName("Màn hình")
+                                .status("DANG_XU_LY")
+                                .priority("CAO")
+                                .dueDate(LocalDateTime.now().plusHours(12))
+                                .build();
+
+                com.mekongmobile.smartcrm.dto.DeviceRepairHistoryDto historyItem =
+                                com.mekongmobile.smartcrm.dto.DeviceRepairHistoryDto.builder()
+                                                .ticketCode("TK-202606-071")
+                                                .repairedDate("12/06/2026")
+                                                .technicianName("Trần Văn C")
+                                                .solutionDesc("Thay màn hình OLED chính hãng")
+                                                .build();
+
+                when(technicianService.resolveTechnicianForUser(any())).thenReturn(Optional.of(tech));
+                when(ticketService.getActiveTicketsForTechnician(anyLong())).thenReturn(List.of(ticketDto));
+                when(ticketService.getDeviceRepairHistory(eq(1L), eq(125L))).thenReturn(List.of(historyItem));
+
+                com.mekongmobile.smartcrm.dto.UserSessionDto techSession = com.mekongmobile.smartcrm.dto.UserSessionDto
+                                .builder()
+                                .userId(2L)
+                                .username("ktv1")
+                                .role("KY_THUAT_VIEN")
+                                .centerId(1L)
+                                .build();
+
+                mockMvc.perform(get("/technician/my-tickets").sessionAttr("currentUser", techSession))
+                                .andExpect(status().isOk())
+                                .andExpect(view().name("technician/my-tickets"))
+                                .andExpect(model().attributeExists("repairHistory"))
+                                .andExpect(content().string(containsString("TK-202606-071")))
+                                .andExpect(content().string(containsString("12/06/2026")))
+                                .andExpect(content().string(containsString("Trần Văn C")))
+                                .andExpect(content().string(containsString("Thay màn hình OLED chính hãng")));
+        }
+
+        @Test
+        @DisplayName("MH3 Khung 3: Hiển thị thông báo trạng thái rỗng khi thiết bị chưa từng sửa chữa trước đó")
+        void testRenderMyTickets_EmptyRepairHistory() throws Exception {
+                Technician tech = Technician.builder()
+                                .technicianId(2L)
+                                .employeeId(1002L)
+                                .fullName("Trần Kỹ Thuật")
+                                .centerId(1L)
+                                .level("4")
+                                .build();
+
+                TicketResponseDto ticketDto = TicketResponseDto.builder()
+                                .ticketId(103L)
+                                .ticketCode("TK-202610-003")
+                                .deviceId(3L)
+                                .deviceName("MacBook Pro M3")
+                                .status("DANG_XU_LY")
+                                .build();
+
+                when(technicianService.resolveTechnicianForUser(any())).thenReturn(Optional.of(tech));
+                when(ticketService.getActiveTicketsForTechnician(anyLong())).thenReturn(List.of(ticketDto));
+                when(ticketService.getDeviceRepairHistory(eq(3L), eq(103L))).thenReturn(List.of());
+
+                com.mekongmobile.smartcrm.dto.UserSessionDto techSession = com.mekongmobile.smartcrm.dto.UserSessionDto
+                                .builder()
+                                .userId(2L)
+                                .username("ktv1")
+                                .role("KY_THUAT_VIEN")
+                                .centerId(1L)
+                                .build();
+
+                mockMvc.perform(get("/technician/my-tickets").sessionAttr("currentUser", techSession))
+                                .andExpect(status().isOk())
+                                .andExpect(view().name("technician/my-tickets"))
+                                .andExpect(model().attributeExists("repairHistory"))
+                                .andExpect(content().string(containsString("Không có lịch sử sửa chữa trước đó cho thiết bị này.")));
         }
 }
