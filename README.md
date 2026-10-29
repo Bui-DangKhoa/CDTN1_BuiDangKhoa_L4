@@ -121,7 +121,7 @@ cp .env.example .env
 > **Kết quả kỳ vọng**: `Tests run: 25, Failures: 0, Errors: 0, Skipped: 0` – `BUILD SUCCESS`.
 
 ### Bước 4: Khởi chạy toàn bộ hệ thống bằng Docker Compose
-> **Lưu ý quan trọng**: Nếu trên máy đã có volume CSDL từ các phiên bản trước đó, vui lòng chạy `docker compose down -v` một lần để dọn sạch volume cũ, đảm bảo cấu trúc bảng `technician` được cập nhật cột `user_id` và nạp dữ liệu liên kết tài khoản mẫu chính xác nhất:
+> **Lưu ý quan trọng**: Nếu trên máy đã có volume CSDL từ các phiên bản trước đó, vui lòng chạy `docker compose down -v` một lần để dọn sạch volume cũ, đảm bảo cấu trúc bảng `technician` được cập nhật cột `user_id`, bảng `ticket` được cập nhật cột `resolution` (lịch sử xử lý) và nạp dữ liệu liên kết tài khoản mẫu chính xác nhất:
 ```bash
 # Dọn sạch volume CSDL cũ (nếu đã từng khởi chạy trước đó):
 docker compose down -v

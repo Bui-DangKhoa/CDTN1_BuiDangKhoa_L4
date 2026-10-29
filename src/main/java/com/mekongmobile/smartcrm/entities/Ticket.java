@@ -53,6 +53,9 @@ public class Ticket {
     @Column(name = "issue_desc", nullable = false, columnDefinition = "TEXT")
     private String issueDesc;
 
+    @Column(name = "resolution", length = 500)
+    private String resolution;
+
     @Column(name = "priority", nullable = false, length = 10)
     private String priority;
 

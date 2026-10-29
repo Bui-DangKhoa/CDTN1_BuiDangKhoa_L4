@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS `ticket` (
   `technician_id` BIGINT NULL DEFAULT NULL,
   `category_id` INT NOT NULL,
   `issue_desc` TEXT NOT NULL,
+  `resolution` VARCHAR(500) NULL DEFAULT NULL,
   `priority` VARCHAR(10) NOT NULL,
   `status` VARCHAR(20) NOT NULL DEFAULT 'MOI',
   `received_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
