@@ -107,8 +107,8 @@
                                             style="cursor: pointer;"
                                             th:onclick="'window.location.href=\'/technician/my-tickets?ticketId=' + ${t.ticketId} + '\''">
                                             <td><strong th:text="${'#' + t.ticketCode}">…</strong></td>
-                                            <td th:text="${t.deviceName}">iPhone 13</td>
-                                            <td th:text="${t.categoryName}">Màn hình</td>
+                                            <td th:text="${t.deviceName}">…</td>
+                                            <td th:text="${t.categoryName}">…</td>
                                             <td class="text-nowrap" th:text="${t.dueDate != null ? #temporals.format(t.dueDate, 'dd/MM/yyyy HH:mm') : 'N/A'}">30/10/2026 08:00</td>
                                             <td class="text-nowrap">
                                                 <span th:text="${t.status == 'DANG_XU_LY' ? 'ĐANG XỬ LÝ' : (t.status == 'DA_PHAN_CONG' ? 'ĐÃ PHÂN CÔNG' : (t.status == 'HOAN_TAT' or t.status == 'HOAN_THANH' ? 'HOÀN TẤT' : t.status))}">ĐANG XỬ LÝ</span>
@@ -210,10 +210,10 @@
 
                         <!-- Tiêu đề phụ cam đậm theo Wireframe MH3 -->
                         <div class="fw-bold mb-3" style="color: #E65100; font-size: 0.875rem;" id="deviceRepairSubtitle">
-                            Thiết bị: <span id="historyDeviceName" th:text="${selectedTicket != null and selectedTicket.deviceName != null ? selectedTicket.deviceName : 'iPhone 13'}">iPhone 13</span> 
+                            Thiết bị: <span id="historyDeviceName" th:text="${selectedTicket != null and selectedTicket.deviceName != null ? selectedTicket.deviceName : '—'}">…</span> 
                             (IMEI <span id="historySerialNo" th:text="${selectedTicket != null and selectedTicket.serialNo != null ? selectedTicket.serialNo : '—'}">…</span>)  |  
-                            Lặp lại sự cố <span id="historyCategoryName" th:text="${selectedTicket != null and selectedTicket.categoryName != null ? selectedTicket.categoryName : 'Màn hình'}">Màn hình</span>: 
-                            <span id="historyRepeatCount" th:text="${selectedTicket != null and selectedTicket.repeatCount != null ? selectedTicket.repeatCount : 2}">2</span> lần
+                            Lặp lại sự cố <span id="historyCategoryName" th:text="${selectedTicket != null and selectedTicket.categoryName != null ? selectedTicket.categoryName : '—'}">…</span>: 
+                            <span id="historyRepeatCount" th:text="${selectedTicket != null and selectedTicket.repeatCount != null ? selectedTicket.repeatCount : 0}">…</span> lần
                         </div>
 
                         <!-- Bảng lịch sử sửa chữa -->
@@ -232,9 +232,9 @@
                                     <th:block th:if="${repairHistory != null and not repairHistory.empty}">
                                         <tr th:each="h : ${repairHistory}">
                                             <td><strong th:text="${h.ticketCode}">…</strong></td>
-                                            <td th:text="${h.repairedDate}">12/06/2026</td>
-                                            <td th:text="${h.technicianName}">Trần Văn C</td>
-                                            <td th:text="${h.solutionDesc}">Thay màn hình OLED</td>
+                                            <td th:text="${h.repairedDate}">…</td>
+                                            <td th:text="${h.technicianName}">…</td>
+                                            <td th:text="${h.solutionDesc}">…</td>
                                         </tr>
                                     </th:block>
 

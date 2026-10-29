@@ -229,9 +229,9 @@
                                     <strong th:text="${'#' + t.ticketCode}">…</strong>
                                 </td>
                                 <td>
-                                    <span th:text="${t.deviceName != null ? t.deviceName : 'Thiết bị'}">iPhone 13</span>
+                                    <span th:text="${t.deviceName != null ? t.deviceName : 'Thiết bị'}">…</span>
                                 </td>
-                                <td th:text="${t.categoryName != null ? t.categoryName : 'Khác'}">Màn hình</td>
+                                <td th:text="${t.categoryName != null ? t.categoryName : 'Khác'}">…</td>
 
                                 <!-- Cột Mức ưu tiên -->
                                 <td>
@@ -348,14 +348,13 @@
                     <!-- Khung tóm tắt thông tin phiếu -->
                     <div id="modalSummaryBox" class="p-2 mb-3 bg-white border rounded text-secondary"
                         style="font-size: 0.85rem; border: 1px solid #e5e7eb !important;">
-                        <span id="modalSummaryText">Thiết bị: iPhone 13 | Nhóm sự cố: Màn hình | Hạn SLA: 30/10/2026
-                            08:00</span>
+                        <span id="modalSummaryText">Thiết bị: — | Nhóm sự cố: — | Hạn SLA: —</span>
                     </div>
 
                     <!-- Khung cảnh báo lỗi lặp (US6/FR6 & US5/FR5) -->
-                    <div id="modalRepeatAlert" class="alert-wireframe-warning mb-3" style="display: block;">
-                        ⚠️ Cảnh báo: Thiết bị đã lặp lại sự cố <strong id="modalRepeatCategory">Màn hình</strong> <span
-                            id="modalRepeatCount">2</span> lần trước đó.
+                    <div id="modalRepeatAlert" class="alert-wireframe-warning mb-3" style="display: none;">
+                        ⚠️ Cảnh báo: Thiết bị đã lặp lại sự cố <strong id="modalRepeatCategory">…</strong> <span
+                            id="modalRepeatCount">…</span> lần trước đó.
                     </div>
 
                     <form id="modalAssignForm" method="post" th:action="@{/tickets/1/assign}">
