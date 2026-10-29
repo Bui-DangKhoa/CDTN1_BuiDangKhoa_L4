@@ -151,7 +151,7 @@
         </div>
 
         <!-- Results Section -->
-        <div id="resultsContainer" th:style="${param.loading != null ? 'opacity: 0.2;' : ''}">
+        <div id="resultsContainer" th:style="${param.loading != null ? 'display: none !important;' : null}">
             <!-- 3 UI States: 2. Empty State -->
             <div th:if="${(searched != null and searched and (appointments == null or #lists.isEmpty(appointments))) or param.empty != null}"
                  id="uiStateEmpty" class="text-center py-5 my-3 bg-white rounded-3 shadow-sm border p-4">
