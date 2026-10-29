@@ -304,15 +304,16 @@
             </div>
 
             <!-- Phân trang theo Wireframe MH1 -->
-            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 text-secondary"
+            <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-3 pt-2 text-secondary"
                 style="font-size: 0.875rem;">
-                <div>
-                    Hiển thị 1-<span th:text="${tickets != null and not tickets.empty ? tickets.size() : 10}">10</span>
-                    / <span th:text="${totalUnassigned != null ? totalUnassigned : 24}">24</span>
+                <div id="paginationInfo">
+                    <span id="paginationText" th:text="${tickets != null and not tickets.empty ? 'Hiển thị 1-' + tickets.size() + ' / ' + (totalUnassigned != null ? totalUnassigned : tickets.size()) : 'Hiển thị 0 / 0'}">Hiển thị 1-10 / 24</span>
                 </div>
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-crm-secondary btn-sm" style="min-width: 38px;">&lt;</button>
-                    <button type="button" class="btn btn-crm-secondary btn-sm" style="min-width: 38px;">&gt;</button>
+                    <button type="button" id="prevPageBtn" class="btn btn-crm-secondary btn-sm" style="min-width: 38px;"
+                        th:disabled="${tickets == null or tickets.empty}">&lt;</button>
+                    <button type="button" id="nextPageBtn" class="btn btn-crm-secondary btn-sm" style="min-width: 38px;"
+                        th:disabled="${tickets == null or tickets.empty}">&gt;</button>
                 </div>
             </div>
 

@@ -132,6 +132,28 @@ function applyTicketFilter() {
     if (emptyFilterRow) {
         emptyFilterRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
     }
+
+    updatePagination(visibleCount, rows.length);
+}
+
+function updatePagination(visibleCount, totalRows) {
+    const paginationText = document.getElementById('paginationText') || document.getElementById('paginationInfo');
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+
+    if (visibleCount === 0) {
+        if (paginationText) {
+            paginationText.textContent = 'Hiển thị 0 / 0';
+        }
+        if (prevBtn) prevBtn.disabled = true;
+        if (nextBtn) nextBtn.disabled = true;
+    } else {
+        if (paginationText) {
+            paginationText.textContent = `Hiển thị 1-${visibleCount} / ${totalRows}`;
+        }
+        if (prevBtn) prevBtn.disabled = false;
+        if (nextBtn) nextBtn.disabled = false;
+    }
 }
 
 // Xóa bộ lọc trên Màn hình 1 (Empty State action)
