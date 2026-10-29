@@ -74,6 +74,9 @@ public class AuthInterceptor implements HandlerInterceptor {
                 path.startsWith("/images/") ||
                 path.startsWith("/webjars/") ||
                 path.equals("/favicon.ico") ||
-                path.startsWith("/error");
+                path.startsWith("/error") ||
+                path.startsWith("/swagger-ui") ||
+                path.equals("/swagger-ui.html") ||
+                path.startsWith("/v3/api-docs");
     }
 }

@@ -130,7 +130,15 @@ docker compose down -v
 docker compose up -d --build
 ```
 > Ứng dụng Spring Boot và CSDL MySQL 8.0 sẽ tự động khởi động và sẵn sàng hoạt động tại: **[http://localhost:8080](http://localhost:8080)**.
-> Xem tài liệu Swagger API tại: **[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)**.
+> Xem tài liệu Swagger API tại: **[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)** (hoặc **[http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)**).
+> OpenAPI v3 JSON schema: **[http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)**.
+
+### 3.1. Tài liệu API Tương tác Swagger UI (SpringDoc OpenAPI v3)
+Hệ thống tích hợp thư viện `springdoc-openapi-starter-webmvc-ui` phiên bản `2.6.0` (tương thích Spring Boot 3.3.4), hỗ trợ giao diện thử nghiệm API trực quan không yêu cầu đăng nhập:
+- **Swagger UI Dashboard**: `http://localhost:8080/swagger-ui/index.html`
+- **OpenAPI Specification**: `http://localhost:8080/v3/api-docs`
+- **Bộ API CRUD Ticket**: `POST /api/v1/tickets`, `GET /api/v1/tickets/{id}`, `GET /api/v1/tickets`, `PUT /api/v1/tickets/{id}`, `DELETE /api/v1/tickets/{id}` (xóa mềm `deleted_at`).
+- **Bộ API CRUD Appointment**: `POST /api/v1/appointments`, `GET /api/v1/appointments/{id}`, `GET /api/v1/appointments`, `PUT /api/v1/appointments/{id}`, `DELETE /api/v1/appointments/{id}` (hủy mềm `DA_HUY`).
 
 ---
 
