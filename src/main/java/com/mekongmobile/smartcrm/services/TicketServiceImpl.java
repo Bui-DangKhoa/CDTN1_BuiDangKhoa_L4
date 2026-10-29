@@ -146,14 +146,86 @@ public class TicketServiceImpl implements TicketService {
     @Transactional(readOnly = true)
     public TicketResponseDto getTicketById(Long ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new ResourceNotFoundException("Phiếu yêu cầu (Ticket)", ticketId));
+                .filter(t -> t.getDeletedAt() == null)
+                .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
         return mapToDto(ticket);
+    }
+    @Override
+    @Transactional
+    public TicketResponseDto updateTicket(Long ticketId, com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto requestDto) {
+        log.info("Cập nhật thông tin phiếu ticket ID: {}", ticketId);
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .filter(t -> t.getDeletedAt() == null)
+                .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
+
+        if (requestDto.getIssueDesc() != null && !requestDto.getIssueDesc().isBlank()) {
+            ticket.setIssueDesc(requestDto.getIssueDesc().trim());
+        }
+
+        if (requestDto.getCustomerPhone() != null && !requestDto.getCustomerPhone().isBlank()) {
+            ticket.setCustomerPhone(requestDto.getCustomerPhone().trim());
+        }
+
+        if (requestDto.getCategoryId() != null && (ticket.getCategory() == null || !requestDto.getCategoryId().equals(ticket.getCategory().getCategoryId()))) {
+            IssueCategory category = categoryRepository.findById(requestDto.getCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Danh mục sự cố", requestDto.getCategoryId()));
+            ticket.setCategory(category);
+        }
+
+        // Đổi priority phải tính lại due_date theo QT-04
+        if (requestDto.getPriority() != null && !requestDto.getPriority().isBlank()) {
+            String newPriority = requestDto.getPriority().trim();
+            if (!newPriority.equalsIgnoreCase(ticket.getPriority())) {
+                ticket.setPriority(newPriority);
+                ticket.setDueDate(calculateDueDate(ticket.getReceivedAt(), newPriority));
+            }
+        }
+
+        Ticket savedTicket = ticketRepository.save(ticket);
+        log.info("Cập nhật thông tin phiếu #{} thành công", savedTicket.getTicketCode());
+        return mapToDto(savedTicket);
+    }
+
+    @Override
+    @Transactional
+    public void deleteTicket(Long ticketId) {
+        deleteTicket(ticketId, 1L);
+    }
+
+    @Override
+    @Transactional
+    public void deleteTicket(Long ticketId, Long changedBy) {
+        log.info("Thực hiện xóa mềm ticket ID: {}, changedBy: {}", ticketId, changedBy);
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .filter(t -> t.getDeletedAt() == null)
+                .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
+
+        // QT-13: Chỉ được xóa khi status = MOI
+        if (!"MOI".equalsIgnoreCase(ticket.getStatus())) {
+            log.warn("Không thể xóa ticket #{} vì trạng thái hiện tại là {} (khác MOI)", ticket.getTicketCode(), ticket.getStatus());
+            throw new AppException("TICKET_NOT_DELETABLE", "Chỉ có thể xóa phiếu khi trạng thái là MỚI (MOI)");
+        }
+
+        // QT-13: Chưa có Appointment còn hiệu lực (khác DA_HUY)
+        if (appointmentService.hasActiveAppointment(ticketId)) {
+            log.warn("Không thể xóa ticket #{} vì đang có lịch hẹn hiệu lực", ticket.getTicketCode());
+            throw new AppException("TICKET_NOT_DELETABLE", "Không thể xóa phiếu bảo hành đang có lịch hẹn còn hiệu lực");
+        }
+
+        String fromStatus = ticket.getStatus();
+        ticket.setStatus("DA_XOA");
+        ticket.setDeletedAt(LocalDateTime.now());
+        ticketRepository.save(ticket);
+
+        // Ghi 1 dòng ticket_status_log cho việc xóa
+        logStatusChange(ticket, fromStatus, "DA_XOA", changedBy != null ? changedBy : 1L, "Xóa mềm phiếu bảo hành (QT-13)");
+        log.info("Xóa mềm ticket #{} thành công (QT-13)", ticket.getTicketCode());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDto> getAllTickets() {
-        return ticketRepository.findAllByOrderByReceivedAtDesc()
+        return ticketRepository.findAllByDeletedAtIsNullOrderByReceivedAtDesc()
                 .stream()
                 .map(this::mapToDto)
                 .toList();
@@ -162,7 +234,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDto> getTicketsByStatus(String status) {
-        return ticketRepository.findByStatus(status)
+        return ticketRepository.findByStatusAndDeletedAtIsNull(status)
                 .stream()
                 .map(this::mapToDto)
                 .toList();
@@ -171,7 +243,8 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public TicketResponseDto updateTicketStatus(Long ticketId, UpdateTicketStatusDto updateDto) {
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new ResourceNotFoundException("Phiếu yêu cầu (Ticket)", ticketId));
+                .filter(t -> t.getDeletedAt() == null)
+                .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
 
         String fromStatus = ticket.getStatus();
         String toStatus = updateDto.getNewStatus();
@@ -216,7 +289,8 @@ public class TicketServiceImpl implements TicketService {
                 ticketId, technicianId, assignedBy, appointmentTime);
 
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
+                .filter(t -> t.getDeletedAt() == null)
+                .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
 
         Technician technician = technicianRepository.findById(technicianId)
                 .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy kỹ thuật viên với ID: " + technicianId));
@@ -299,8 +373,8 @@ public class TicketServiceImpl implements TicketService {
     @Transactional(readOnly = true)
     public List<TicketResponseDto> getTicketsForManager(Long centerId) {
         List<Ticket> tickets = (centerId != null)
-                ? ticketRepository.findByCenterId(centerId)
-                : ticketRepository.findAllByOrderByReceivedAtDesc();
+                ? ticketRepository.findByCenterIdAndDeletedAtIsNull(centerId)
+                : ticketRepository.findAllByDeletedAtIsNullOrderByReceivedAtDesc();
         return tickets.stream().map(t -> mapToDto(t, false)).toList();
     }
 
@@ -311,7 +385,7 @@ public class TicketServiceImpl implements TicketService {
         if (technicianId == null) {
             return List.of();
         }
-        List<Ticket> tickets = ticketRepository.findByTechnician_TechnicianId(technicianId);
+        List<Ticket> tickets = ticketRepository.findByTechnician_TechnicianIdAndDeletedAtIsNull(technicianId);
         return tickets.stream().map(t -> mapToDto(t, true)).toList();
     }
 
@@ -323,7 +397,7 @@ public class TicketServiceImpl implements TicketService {
             return List.of();
         }
         return ticketRepository
-                .findByTechnician_TechnicianIdAndStatusInOrderByDueDateAsc(technicianId, TECHNICIAN_ACTIVE_STATUSES)
+                .findByTechnician_TechnicianIdAndStatusInAndDeletedAtIsNullOrderByDueDateAsc(technicianId, TECHNICIAN_ACTIVE_STATUSES)
                 .stream()
                 .map(t -> mapToDto(t, true))
                 .toList();
@@ -379,7 +453,8 @@ public class TicketServiceImpl implements TicketService {
     @Transactional(readOnly = true)
     public List<com.mekongmobile.smartcrm.dto.TechnicianResponseDto> getEligibleTechniciansForTicket(Long ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
+                .filter(t -> t.getDeletedAt() == null)
+                .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
 
         if (ticket.getCategory() == null) {
             return List.of();
@@ -390,7 +465,7 @@ public class TicketServiceImpl implements TicketService {
 
         return eligibleTechs.stream()
                 .map(tech -> {
-                    int activeCount = (int) ticketRepository.findByTechnician_TechnicianId(tech.getTechnicianId())
+                    int activeCount = (int) ticketRepository.findByTechnician_TechnicianIdAndDeletedAtIsNull(tech.getTechnicianId())
                             .stream()
                             .filter(t -> !"HOAN_THANH".equalsIgnoreCase(t.getStatus())
                                     && !"DONG".equalsIgnoreCase(t.getStatus())

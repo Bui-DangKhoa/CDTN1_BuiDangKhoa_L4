@@ -13,7 +13,21 @@ import java.util.Optional;
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
+    Optional<Ticket> findByTicketIdAndDeletedAtIsNull(Long ticketId);
+
     Optional<Ticket> findByTicketCode(String ticketCode);
+
+    Optional<Ticket> findByTicketCodeAndDeletedAtIsNull(String ticketCode);
+
+    List<Ticket> findByStatusAndDeletedAtIsNull(String status);
+
+    List<Ticket> findByCenterIdAndDeletedAtIsNull(Long centerId);
+
+    List<Ticket> findByTechnician_TechnicianIdAndDeletedAtIsNull(Long technicianId);
+
+    List<Ticket> findByTechnician_TechnicianIdAndStatusInAndDeletedAtIsNullOrderByDueDateAsc(Long technicianId, java.util.Collection<String> statuses);
+
+    List<Ticket> findAllByDeletedAtIsNullOrderByReceivedAtDesc();
 
     List<Ticket> findByStatus(String status);
 
@@ -35,15 +49,15 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findAllByOrderByReceivedAtDesc();
 
-    @org.springframework.data.jpa.repository.Query("SELECT t FROM Ticket t WHERE t.technician IS NULL OR t.status = 'MOI' ORDER BY t.dueDate ASC")
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM Ticket t WHERE (t.technician IS NULL OR t.status = 'MOI') AND t.deletedAt IS NULL ORDER BY t.dueDate ASC")
     List<Ticket> findUnassignedTicketsOrderByDueDateAsc();
 
-    @org.springframework.data.jpa.repository.Query("SELECT COUNT(t) FROM Ticket t WHERE t.device.deviceId = :deviceId AND t.category.categoryId = :categoryId AND t.ticketId <> :ticketId AND t.status IN :statuses")
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(t) FROM Ticket t WHERE t.device.deviceId = :deviceId AND t.category.categoryId = :categoryId AND t.ticketId <> :ticketId AND t.status IN :statuses AND t.deletedAt IS NULL")
     long countPreviousSameIssues(@org.springframework.data.repository.query.Param("deviceId") Long deviceId,
                                  @org.springframework.data.repository.query.Param("categoryId") Integer categoryId,
                                  @org.springframework.data.repository.query.Param("ticketId") Long ticketId,
                                  @org.springframework.data.repository.query.Param("statuses") java.util.Collection<String> statuses);
-    @org.springframework.data.jpa.repository.Query("SELECT t FROM Ticket t LEFT JOIN FETCH t.technician WHERE t.device.deviceId = :deviceId AND (:excludeTicketId IS NULL OR t.ticketId != :excludeTicketId) AND t.status IN :statuses ORDER BY COALESCE(t.closedAt, t.receivedAt) DESC")
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM Ticket t LEFT JOIN FETCH t.technician WHERE t.device.deviceId = :deviceId AND (:excludeTicketId IS NULL OR t.ticketId != :excludeTicketId) AND t.status IN :statuses AND t.deletedAt IS NULL ORDER BY COALESCE(t.closedAt, t.receivedAt) DESC")
     List<Ticket> findRepairHistory(@org.springframework.data.repository.query.Param("deviceId") Long deviceId,
                                   @org.springframework.data.repository.query.Param("excludeTicketId") Long excludeTicketId,
                                   @org.springframework.data.repository.query.Param("statuses") java.util.Collection<String> statuses);

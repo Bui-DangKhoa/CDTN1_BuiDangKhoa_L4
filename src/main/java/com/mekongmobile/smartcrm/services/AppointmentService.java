@@ -36,6 +36,7 @@ public class AppointmentService {
                 ticketId, technicianId, appointmentTime);
 
         Ticket ticket = ticketRepository.findById(ticketId)
+                .filter(t -> t.getDeletedAt() == null)
                 .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
 
         Technician technician = technicianRepository.findById(technicianId)
@@ -95,6 +96,14 @@ public class AppointmentService {
     /**
      * Hủy lịch hẹn và giải phóng khung giờ cho KTV.
      */
+    @Transactional(readOnly = true)
+    public boolean hasActiveAppointment(Long ticketId) {
+        if (ticketId == null) {
+            return false;
+        }
+        return appointmentRepository.existsByTicket_TicketIdAndStatusNot(ticketId, "DA_HUY");
+    }
+
     public Appointment cancelAppointment(Long appointmentId) {
         log.info("Tiếp nhận yêu cầu hủy lịch hẹn ID: {}", appointmentId);
         Appointment appointment = appointmentRepository.findById(appointmentId)

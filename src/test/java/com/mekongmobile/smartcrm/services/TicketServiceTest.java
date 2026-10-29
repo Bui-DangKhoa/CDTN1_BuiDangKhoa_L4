@@ -239,7 +239,7 @@ class TicketServiceTest {
         mockTicket.setCustomerPhone("0901234567");
         mockTicket.setTechnician(mockTechnician);
 
-        when(ticketRepository.findByTechnician_TechnicianId(5L))
+        when(ticketRepository.findByTechnician_TechnicianIdAndDeletedAtIsNull(5L))
                 .thenReturn(List.of(mockTicket));
 
         // When: KTV có ID = 5 tra cứu phiếu của mình

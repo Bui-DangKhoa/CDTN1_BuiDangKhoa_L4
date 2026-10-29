@@ -17,6 +17,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     List<Appointment> findByTicket_TicketId(Long ticketId);
 
+    boolean existsByTicket_TicketIdAndStatusNot(Long ticketId, String status);
+
     List<Appointment> findByTechnician_TechnicianId(Long technicianId);
 
     /**
@@ -27,8 +29,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             Long technicianId, LocalDateTime appointmentTime, String status);
 
     /**
-     * QT-L4-01 / NFR2: Kiểm tra KTV đã có lịch hẹn còn hiệu lực (status &lt;&gt; 'DA_HUY')
-     * tại đúng thời điểm {@code appointmentTime} hay chưa.
+     * QT-L4-01: Kiểm tra KTV đã có lịch hẹn còn hiệu lực tại thời điểm appointmentTime,
+     * loại trừ chính lịch hẹn appointmentId đang được cập nhật (phục vụ Appointment PUT).
+     */
+    boolean existsByTechnician_TechnicianIdAndAppointmentTimeAndStatusNotAndAppointmentIdNot(
+            Long technicianId, LocalDateTime appointmentTime, String status, Long appointmentId);
+
+    /**
+     * QT-L4-01 / NFR2: Kiểm tra KTV đã có lịch hẹn còn hiệu lực (status <> 'DA_HUY')
+     * tại đúng thời điểm appointmentTime hay chưa.
      * Tương ứng UNIQUE INDEX (technician_id, active_tech_time) ở CSDL.
      */
     @Query("""
@@ -55,20 +64,39 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                                             @Param("windowStart") LocalDateTime windowStart,
                                             @Param("windowEnd") LocalDateTime windowEnd);
 
+    /**
+     * QT-L4-01: Kiểm tra xung đột khung giờ [windowStart, windowEnd),
+     * loại trừ chính appointmentId đang cập nhật.
+     */
+    @Query("""
+        SELECT COUNT(a) > 0 FROM Appointment a
+        WHERE a.technician.technicianId = :technicianId
+          AND a.appointmentTime >= :windowStart
+          AND a.appointmentTime < :windowEnd
+          AND a.status <> 'DA_HUY'
+          AND a.appointmentId <> :appointmentId
+    """)
+    boolean existsActiveAppointmentInWindowExcludingSelf(@Param("technicianId") Long technicianId,
+                                                         @Param("windowStart") LocalDateTime windowStart,
+                                                         @Param("windowEnd") LocalDateTime windowEnd,
+                                                         @Param("appointmentId") Long appointmentId);
+
     List<Appointment> findByTechnician_TechnicianIdAndAppointmentTimeBetween(
             Long technicianId, LocalDateTime start, LocalDateTime end);
 
     /**
      * US7 / FR7: Tìm kiếm lịch hẹn công khai theo mã phiếu (ticketCode) hoặc SĐT khách hàng.
      * Sử dụng LEFT JOIN FETCH nạp sẵn ticket, device và technician để tránh LazyInitializationException khi render view.
+     * QT-13: Chỉ tìm kiếm các phiếu chưa bị xóa mềm (deletedAt IS NULL).
      */
     @Query("""
         SELECT a FROM Appointment a
         LEFT JOIN FETCH a.ticket t
         LEFT JOIN FETCH t.device d
         LEFT JOIN FETCH a.technician tech
-        WHERE t.ticketCode = :keyword
-           OR t.customerPhone = :keyword
+        WHERE (t.ticketCode = :keyword
+           OR t.customerPhone = :keyword)
+          AND t.deletedAt IS NULL
         ORDER BY a.appointmentTime DESC
     """)
     List<Appointment> findByTicketCodeOrPhone(@Param("keyword") String keyword);

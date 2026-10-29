@@ -3,6 +3,7 @@ package com.mekongmobile.smartcrm.controllers;
 import com.mekongmobile.smartcrm.dto.ApiResponse;
 import com.mekongmobile.smartcrm.dto.TicketRequestDto;
 import com.mekongmobile.smartcrm.dto.TicketResponseDto;
+import com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto;
 import com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto;
 import com.mekongmobile.smartcrm.services.TicketService;
 import jakarta.validation.Valid;
@@ -88,5 +89,27 @@ public class TicketRestController {
             @Valid @RequestBody UpdateTicketStatusDto updateDto) {
         TicketResponseDto updatedTicket = ticketService.updateTicketStatus(id, updateDto);
         return ResponseEntity.ok(ApiResponse.of("Cập nhật trạng thái ticket thành công (QT-08)", updatedTicket));
+    }
+
+    /**
+     * API cập nhật thông tin phiếu bảo hành (issueDesc, priority, categoryId, customerPhone).
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<TicketResponseDto>> updateTicket(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody UpdateTicketRequestDto requestDto) {
+        TicketResponseDto updated = ticketService.updateTicket(id, requestDto);
+        return ResponseEntity.ok(ApiResponse.of("Cập nhật thông tin phiếu thành công", updated));
+    }
+
+    /**
+     * QT-13: API xóa mềm phiếu bảo hành.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteTicket(
+            @PathVariable("id") Long id,
+            @RequestParam(value = "changedBy", required = false, defaultValue = "1") Long changedBy) {
+        ticketService.deleteTicket(id, changedBy);
+        return ResponseEntity.ok(ApiResponse.of("Xóa mềm phiếu bảo hành thành công (QT-13)", null));
     }
 }

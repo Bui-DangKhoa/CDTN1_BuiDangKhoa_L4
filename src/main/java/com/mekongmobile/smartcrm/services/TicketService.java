@@ -45,6 +45,21 @@ public interface TicketService {
     TicketResponseDto getTicketById(Long ticketId);
 
     /**
+     * Cập nhật thông tin phiếu bảo hành (issueDesc, priority, categoryId, customerPhone).
+     * Thay đổi priority sẽ tự động tính lại hạn xử lý (due_date) theo SLA (QT-04).
+     */
+    TicketResponseDto updateTicket(Long ticketId, com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto requestDto);
+
+    /**
+     * QT-13: Xóa mềm phiếu bảo hành (deleted_at).
+     * Chỉ được xóa khi status = 'MOI' và chưa có lịch hẹn còn hiệu lực (khác 'DA_HUY').
+     * Ghi 1 dòng nhật ký TicketStatusLog cho thao tác xóa.
+     */
+    void deleteTicket(Long ticketId, Long changedBy);
+
+    void deleteTicket(Long ticketId);
+
+    /**
      * Lấy danh sách tất cả các ticket mới nhất.
      */
     List<TicketResponseDto> getAllTickets();

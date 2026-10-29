@@ -38,6 +38,7 @@ public class SchedulingServiceImpl implements SchedulingService {
     @Transactional(readOnly = true)
     public List<TechnicianDto> findEligibleTechnicians(Long ticketId, LocalDateTime appointmentTime) {
         Ticket ticket = ticketRepository.findById(ticketId)
+                .filter(t -> t.getDeletedAt() == null)
                 .orElseThrow(() -> new ResourceNotFoundException("Phiếu yêu cầu (Ticket)", ticketId));
 
         Long centerId = ticket.getCenterId();
@@ -56,6 +57,7 @@ public class SchedulingServiceImpl implements SchedulingService {
     @Override
     public TicketResponseDto scheduleAppointment(ScheduleAppointmentDto scheduleDto) {
         Ticket ticket = ticketRepository.findById(scheduleDto.getTicketId())
+                .filter(t -> t.getDeletedAt() == null)
                 .orElseThrow(() -> new ResourceNotFoundException("Phiếu yêu cầu (Ticket)", scheduleDto.getTicketId()));
 
         Technician technician = technicianRepository.findById(scheduleDto.getTechnicianId())
