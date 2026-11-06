@@ -1,5 +1,11 @@
 package com.mekongmobile.smartcrm;
 
+import org.mockito.ArgumentCaptor;
+import com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto;
+
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+
 import com.mekongmobile.smartcrm.controllers.TechnicianWebController;
 import com.mekongmobile.smartcrm.controllers.TicketController;
 import com.mekongmobile.smartcrm.dto.TechnicianResponseDto;
@@ -347,5 +353,38 @@ public class ThymeleafViewsTest {
                                 .andExpect(status().isInternalServerError())
                                 .andExpect(jsonPath("$.code").value("LOI_HE_THONG"))
                                 .andExpect(jsonPath("$.requestId").exists());
+        }
+
+        @Test
+        @DisplayName("BUG-01: KTV đổi trạng thái -> changed_by phải là user_id (2), không phải technician_id (1)")
+        void testUpdateStatus_ChangedByUsesUserIdNotTechnicianId() throws Exception {
+                // user_id = 2 nhưng technician_id = 1: hai giá trị KHÁC nhau
+                Technician tech = Technician.builder()
+                                .technicianId(1L)
+                                .employeeId(1001L)
+                                .fullName("Trần Kỹ Thuật")
+                                .centerId(1L)
+                                .level("4")
+                                .build();
+
+                when(technicianService.resolveTechnicianForUser(any())).thenReturn(Optional.of(tech));
+
+                com.mekongmobile.smartcrm.dto.UserSessionDto techSession = com.mekongmobile.smartcrm.dto.UserSessionDto
+                                .builder()
+                                .userId(2L)
+                                .username("ktv1")
+                                .role("KY_THUAT_VIEN")
+                                .centerId(1L)
+                                .build();
+
+                mockMvc.perform(post("/technician/tickets/106/status")
+                                .param("nextStatus", "DANG_XU_LY")
+                                .sessionAttr("currentUser", techSession))
+                                .andExpect(status().is3xxRedirection());
+
+                ArgumentCaptor<UpdateTicketStatusDto> captor = ArgumentCaptor.forClass(UpdateTicketStatusDto.class);
+                verify(ticketService).updateTicketStatus(eq(106L), captor.capture());
+
+                org.junit.jupiter.api.Assertions.assertEquals(2L, captor.getValue().getChangedBy());
         }
 }

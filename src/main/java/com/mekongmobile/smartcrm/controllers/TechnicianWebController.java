@@ -104,7 +104,7 @@ public class TechnicianWebController {
                 return "redirect:/technician/my-tickets";
             }
 
-            Long changedById = techOpt.get().getTechnicianId();
+            Long changedById = currentUser.getUserId();
 
             UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder()
                     .newStatus(nextStatus)
