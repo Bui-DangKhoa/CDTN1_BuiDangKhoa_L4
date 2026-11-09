@@ -22,8 +22,11 @@ RUN ./mvnw clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Cài đặt curl để hỗ trợ HEALTHCHECK qua endpoint /actuator/health
-RUN apk --no-cache add curl
+# Cài đặt curl và tzdata để cấu hình múi giờ UTC+7 (Asia/Ho_Chi_Minh)
+RUN apk --no-cache add curl tzdata && \
+    cp /usr/share/zoneinfo/Asia/Ho_Chi_Minh /etc/localtime && \
+    echo "Asia/Ho_Chi_Minh" > /etc/timezone
+ENV TZ=Asia/Ho_Chi_Minh
 
 # Tạo user phi đặc quyền (non-root) để chạy ứng dụng an toàn
 RUN addgroup -S app && adduser -S app -G app
@@ -38,4 +41,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=5s --retries=5 --start-period=30s \
   CMD curl -f http://localhost:8080/actuator/health || exit 1
 
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=Asia/Ho_Chi_Minh", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
