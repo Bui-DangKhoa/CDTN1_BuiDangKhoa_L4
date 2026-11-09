@@ -141,6 +141,13 @@ public class TicketController {
 
         try {
             java.time.LocalDateTime appointmentTime = request.resolveAppointmentTime();
+            if (appointmentTime != null) {
+                java.time.LocalDateTime nowVietnam = java.time.LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+                if (appointmentTime.isBefore(nowVietnam)) {
+                    throw new AppException("INVALID_APPOINTMENT_TIME",
+                            "Thời gian hẹn giao – nhận máy phải ở trong tương lai (QT-L4-01)");
+                }
+            }
             Ticket assignedTicket = ticketService.assignTechnician(
                     id, request.getTechnicianId(), assignedBy, request.getChangeReason(), appointmentTime);
 

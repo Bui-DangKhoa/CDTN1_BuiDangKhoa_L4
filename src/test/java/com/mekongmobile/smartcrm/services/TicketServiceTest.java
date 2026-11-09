@@ -13,6 +13,7 @@ import com.mekongmobile.smartcrm.repositories.TicketRepository;
 import com.mekongmobile.smartcrm.repositories.TicketStatusLogRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -459,5 +460,45 @@ class TicketServiceTest {
         assertEquals("UNAUTHORIZED", ex.getErrorCode());
         verify(ticketRepository, never()).save(any(Ticket.class));
         verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
+    }
+
+    @Nested
+    @DisplayName("QT-L4-01: Kiểm thử ràng buộc thời gian hẹn không được ở trong quá khứ")
+    class AppointmentTimeValidationTests {
+
+        @Test
+        @DisplayName("QT-L4-01: Từ chối phân công khi thời gian hẹn ở trong quá khứ")
+        void assignTechnician_pastAppointmentTime_throwsInvalidAppointmentTime() {
+            when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+            when(technicianRepository.findById(5L)).thenReturn(Optional.of(mockTechnician));
+            when(technicianRepository.findEligibleTechnicians(1L, 1)).thenReturn(List.of(mockTechnician));
+
+            LocalDateTime pastTime = LocalDateTime.now().minusDays(1);
+
+            AppException ex = assertThrows(AppException.class, () ->
+                    ticketService.assignTechnician(10L, 5L, 101L, "Phân công kiểm tra", pastTime)
+            );
+
+            assertEquals("INVALID_APPOINTMENT_TIME", ex.getErrorCode());
+            assertTrue(ex.getMessage().contains("phải ở trong tương lai"));
+            verify(appointmentService, never()).scheduleAppointment(any(Ticket.class), any(Technician.class), any(LocalDateTime.class));
+        }
+
+        @Test
+        @DisplayName("QT-L4-01: Chấp nhận phân công khi thời gian hẹn ở trong tương lai")
+        void assignTechnician_futureAppointmentTime_succeeds() {
+            when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+            when(technicianRepository.findById(5L)).thenReturn(Optional.of(mockTechnician));
+            when(technicianRepository.findEligibleTechnicians(1L, 1)).thenReturn(List.of(mockTechnician));
+            when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            LocalDateTime futureTime = LocalDateTime.now().plusDays(2).withHour(14).withMinute(0);
+
+            Ticket result = ticketService.assignTechnician(10L, 5L, 101L, "Phân công kiểm tra", futureTime);
+
+            assertNotNull(result);
+            assertEquals("DA_PHAN_CONG", result.getStatus());
+            verify(appointmentService, times(1)).scheduleAppointment(any(Ticket.class), eq(mockTechnician), eq(futureTime));
+        }
     }
 }

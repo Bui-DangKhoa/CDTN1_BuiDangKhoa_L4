@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 /**
@@ -32,6 +33,8 @@ import java.util.List;
 @Transactional
 @lombok.extern.slf4j.Slf4j
 public class TicketServiceImpl implements TicketService {
+
+    public static final ZoneId VIETNAM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final TicketRepository ticketRepository;
     private final DeviceRepository deviceRepository;
@@ -338,6 +341,13 @@ public class TicketServiceImpl implements TicketService {
 
         // (d) Tạo Appointment CHO_XAC_NHAN, kiểm tra chống trùng lịch QT-L4-01
         if (appointmentTime != null) {
+            LocalDateTime nowVietnam = LocalDateTime.now(VIETNAM_ZONE);
+            if (appointmentTime.isBefore(nowVietnam)) {
+                log.warn("Vi phạm quy tắc QT-L4-01: Thời gian hẹn {} ở trong quá khứ so với thời điểm hiện tại {}",
+                        appointmentTime, nowVietnam);
+                throw new AppException("INVALID_APPOINTMENT_TIME",
+                        "Thời gian hẹn giao – nhận máy phải ở trong tương lai (QT-L4-01)");
+            }
             if (isReassign) {
                 // Giải phóng khung giờ của lịch hẹn cũ trước khi đặt lịch mới
                 appointmentService.cancelActiveAppointmentsForTicket(savedTicket.getTicketId());

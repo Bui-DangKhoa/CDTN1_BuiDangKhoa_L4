@@ -28,6 +28,7 @@ public class AssignTechnicianRequest {
 
     /** Ngày hẹn giao – nhận máy (Phần 2 của Modal MH2 – FR3 / QT-L4-01). */
     @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+    @jakarta.validation.constraints.FutureOrPresent(message = "Ngày hẹn giao – nhận máy không được ở trong quá khứ (QT-L4-01)")
     private java.time.LocalDate appointmentDate;
 
     /** Khung giờ hẹn dạng "HH:mm - HH:mm" (vd: "14:00 - 15:00"); giờ bắt đầu được dùng làm appointment_time. */

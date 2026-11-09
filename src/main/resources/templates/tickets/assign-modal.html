@@ -118,7 +118,11 @@
                                 </label>
                             </div>
                             <div class="col-sm-7">
-                                <input type="date" id="appointmentDate" name="appointmentDate" class="form-control form-control-sm" value="2026-10-30">
+                                <input type="date" id="appointmentDate" name="appointmentDate" class="form-control form-control-sm"
+                                    th:min="${#temporals.format(T(java.time.LocalDate).now(), 'yyyy-MM-dd')}">
+                                <div id="modalAppointmentDateError" class="text-danger small mt-1" style="display: none;">
+                                    Ngày hẹn giao – nhận máy không được ở trong quá khứ (QT-L4-01).
+                                </div>
                             </div>
                         </div>
 

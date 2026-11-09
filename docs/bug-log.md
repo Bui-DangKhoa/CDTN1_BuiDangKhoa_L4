@@ -1,5 +1,5 @@
 # Nhật ký gỡ lỗi (Bug Log)
-> **Dự án**: CDTN1_BuiDangKhoa_L4 (Hệ thống điều phối kỹ thuật viên Smart CRM - Mekong Mobile)  
+> **Dự án**: CDTN1_BuiDangKhoa_L4 (Hệ thống điều phối kỹ thuật viên Smart CRM - Mekong Mobile)
 > **Quy trình gỡ lỗi chuẩn 4 bước**: Tái lập (Reproduce) ➔ Khoanh vùng (Isolate) ➔ Sửa nguyên nhân (Fix Root Cause) ➔ Xác nhận bằng test (Verify via Regression Test).
 
 ---
@@ -111,3 +111,60 @@
      .\mvnw.cmd test -Dtest=AppointmentServiceTest#testCreateAppointment_ScheduleConflict_QTL401
      ```
    - Ngoại lệ trả về đúng mã lỗi `SCHEDULE_CONFLICT` với HTTP Status `409 CONFLICT`, không lộ stack trace hay câu lệnh SQL nội bộ ra client.
+
+---
+
+## BUG-02 · MAJOR — Lệch múi giờ UTC vs UTC+7, hiển thị sai nhãn SLA và cho chọn ngày hẹn quá khứ (QT-L4-01)
+1. Mã và mức độ: BUG-02 · MAJOR — Lỗi lệch múi giờ UTC/UTC+7, tính sai SLA và thiếu ràng buộc thời gian hẹn trong quá khứ.
+2. Phát hiện bởi: TC-08 (Phân loại SLA) và Kiểm thử giao diện Màn hình 2 (Phần 2 — Đặt lịch hẹn).
+3. Triệu chứng:
+   - Phiếu bảo hành có `due_date` trong quá khứ hiển thị "Sắp quá hạn" thay vì "Quá hạn".
+   - Form phân công Phần 2 cho phép chọn ngày hẹn giao – nhận trong quá khứ (`modalAppointmentDate` mặc định `2026-10-30` không chặn min).
+   - Thời gian hệ thống ghi nhật ký / log hiển thị giờ UTC (ví dụ `12:38:02`) thay vì giờ địa phương UTC+7 `Asia/Ho_Chi_Minh` (`18:38:02` / `19:38:02`).
+4. Cách tái lập:
+   - Mở `/tickets/unassigned`, phiếu quá hạn hiển thị "Sắp quá hạn".
+   - Bấm "Phân công", ô ngày hẹn hiển thị ngày cũ `2026-10-30` và cho phép chọn ngày trong quá khứ rồi bấm "Lưu phân công & Đặt lịch" thành công.
+   - Kiểm tra `ticket_status_log` hoặc `appointment` thấy `changed_at` / `created_at` lệch 7 tiếng (UTC).
+5. Nguyên nhân:
+   - JVM / Container và MySQL chưa được ép múi giờ `Asia/Ho_Chi_Minh` (`+07:00`), dẫn đến `LocalDateTime.now()` và `CURRENT_TIMESTAMP` lấy giờ UTC.
+   - Hàm `getSlaStatus` không kiểm tra `now > dueDate` trước khi tính khoảng cảnh báo.
+   - Các trường input `appointmentDate` ghi cứng giá trị quá khứ `2026-10-30`, thiếu thuộc tính `min` và thiếu validation kiểm tra `appointmentTime.isBefore(now)`.
+6. Cách sửa:
+   - Đặt múi giờ `Asia/Ho_Chi_Minh` cho JVM (`SmartCrmApplication`, `Dockerfile`, `docker-compose.yml`), MySQL (`--default-time-zone=+07:00`), Hibernate JDBC (`hibernate.jdbc.time_zone: Asia/Ho_Chi_Minh`) và Jackson serializer ISO 8601 kèm offset `+07:00`.
+   - Cập nhật `getSlaStatus()` kiểm tra `now.isAfter(dueDate)` trả về `QUA_HAN` đầu tiên.
+   - Loại bỏ giá trị quá khứ, thêm `min` động cho ô chọn ngày; bổ sung kiểm tra Javascript ở frontend và validation `@FutureOrPresent` / `appointmentTime.isBefore(now)` ở backend (ném `AppException("INVALID_APPOINTMENT_TIME")`).
+7. Commit & xác nhận: Chạy lại toàn bộ bộ test `.\mvnw.cmd test` (81/81 test PASS 100%).
+
+### Chi tiết các bước gỡ lỗi theo chuẩn 4 bước (BUG-02):
+
+1. **Bước 1: Tái lập (Reproduce)**
+   - Kiểm tra phiếu `#TK-202610-001` có `due_date: 2026-10-22` khi `now` là tháng 11/2026 vẫn bị dán nhãn "Sắp quá hạn".
+   - Mở modal phân công tại `/tickets/unassigned`: Trường ngày hẹn mặc định là `2026-10-30` (ngày trong quá khứ) và không có thuộc tính `min`, người dùng có thể chọn bất kỳ ngày nào trong quá khứ và gửi form thành công.
+   - Timestamp trong CSDL và phản hồi API trả về `12:38:02` thay vì `18:38:02` / `19:38:02` (+07:00).
+
+2. **Bước 2: Khoanh vùng (Isolate)**
+   - Vị trí 1: `TicketServiceImpl.getSlaStatus()` tính toán khoảng cách giờ mà không xét `now > dueDate` trước.
+   - Vị trí 2: Form giao diện `unassigned-list.html`, `assign-form.html`, `assign-modal.html` ghi cứng `value="2026-10-30"`, thiếu `min`.
+   - Vị trí 3: `TicketController.assignTechnician()` và `TicketServiceImpl.assignTechnician()` chưa kiểm tra `appointmentTime` có ở trong quá khứ hay không.
+   - Vị trí 4: Cấu hình múi giờ ở `SmartCrmApplication`, `application.yml`, `docker-compose.yml`, `Dockerfile` chưa đồng bộ `Asia/Ho_Chi_Minh` và `--default-time-zone=+07:00`.
+
+3. **Bước 3: Sửa nguyên nhân gốc (Fix Root Cause)**
+   - **SLA & Timezone**:
+     - Cấu hình static block + `@PostConstruct` trong `SmartCrmApplication`: `TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"))`.
+     - Thêm `hibernate.jdbc.time_zone: Asia/Ho_Chi_Minh`, `serverTimezone=Asia/Ho_Chi_Minh`, `TZ=Asia/Ho_Chi_Minh` và `--default-time-zone=+07:00` trong Docker.
+     - Cập nhật `TicketServiceImpl.getSlaStatus()`: Ưu tiên số 1 `if (now.isAfter(dueDate)) return "QUA_HAN";`.
+   - **Chống chọn ngày trong quá khứ (QT-L4-01)**:
+     - Gỡ bỏ giá trị cố định `2026-10-30` trên các template HTML, bổ sung `th:min="${#temporals.format(T(java.time.LocalDate).now(), 'yyyy-MM-dd')}"`.
+     - Trong `app.js`, hàm `initializeAppointmentDateInputs()` tự động gán `min` là ngày hiện tại và chặn submit nếu ngày hẹn `< todayStr`.
+     - Ở Backend: Thêm `@FutureOrPresent` vào `AssignTechnicianRequest.java` và kiểm tra trong `TicketController` / `TicketServiceImpl`: nếu `appointmentTime.isBefore(nowVietnam)` thì ném `AppException("INVALID_APPOINTMENT_TIME", "Thời gian hẹn giao – nhận máy phải ở trong tương lai (QT-L4-01)")`.
+
+4. **Bước 4: Xác nhận bằng test (Verify via Regression Test)**
+   - Chạy toàn bộ kiểm thử tự động của dự án:
+     ```powershell
+     .\mvnw.cmd test
+     ```
+   - Kết quả: `Tests run: 81, Failures: 0, Errors: 0, Skipped: 0` -> **BUILD SUCCESS**.
+   - Bổ sung các ca kiểm thử:
+     - `TC08_SlaStatusClassificationTests`: Kiểm tra phân loại `QUA_HAN`, `SAP_QUA_HAN`, `CON_HAN`.
+     - `AppointmentTimeValidationTests`: Kiểm tra chặn ngày hẹn trong quá khứ (`assignTechnician_pastAppointmentTime_throwsInvalidAppointmentTime`) và chấp nhận ngày hẹn tương lai (`assignTechnician_futureAppointmentTime_succeeds`).
+     - `LoggingAndMaskingTest`: Kiểm tra serializer Jackson định dạng ISO 8601 kèm múi giờ `+07:00`.

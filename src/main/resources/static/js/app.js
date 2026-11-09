@@ -277,6 +277,8 @@ function openAssignModalFromRow(btn) {
     // Reset cảnh báo trùng lịch
     const conflictAlert = document.getElementById('modalConflictAlert');
     if (conflictAlert) conflictAlert.style.display = 'none';
+    // Đảm bảo min và default date cho ngày hẹn giao - nhận (QT-L4-01)
+    initializeAppointmentDateInputs();
     // Đảm bảo nạp danh sách khung giờ nếu chưa có từ template
     const timeSlotSelect = document.getElementById('modalTimeSlot');
     if (timeSlotSelect && timeSlotSelect.options.length <= 1) {
@@ -307,8 +309,27 @@ function checkTechnicianScheduleConflict() {
     }
 }
 
-// Bổ sung kiểm tra validation QT-07 khi submit form phân công KTV
+// Khởi tạo min và default date cho các ô input ngày hẹn (QT-L4-01: Chống chọn ngày quá khứ)
+function initializeAppointmentDateInputs() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    const dateInputs = document.querySelectorAll('input[type="date"][name="appointmentDate"], #modalAppointmentDate, #appointmentDate');
+    dateInputs.forEach(input => {
+        input.min = todayStr;
+        if (!input.value || input.value < todayStr) {
+            input.value = todayStr;
+        }
+    });
+}
+
+// Bổ sung kiểm tra validation QT-07 và QT-L4-01 khi submit form phân công KTV
 document.addEventListener('DOMContentLoaded', () => {
+    initializeAppointmentDateInputs();
+
     const formsToValidate = [
         document.getElementById('modalAssignForm'),
         document.getElementById('assignModalForm'),
@@ -345,6 +366,33 @@ document.addEventListener('DOMContentLoaded', () => {
                         submitBtn.innerHTML = submitBtn.dataset.originalText || 'Lưu phân công & Đặt lịch';
                     }
                     return false;
+                }
+            }
+
+            // QT-L4-01: Chặn chọn ngày phân công / hẹn trong quá khứ
+            const apptDateInput = form.querySelector('input[name="appointmentDate"]') || document.getElementById('modalAppointmentDate') || document.getElementById('appointmentDate');
+            const apptDateErr = form.querySelector('#modalAppointmentDateError') || form.querySelector('#appointmentDateError') || document.getElementById('modalAppointmentDateError') || document.getElementById('appointmentDateError');
+            if (apptDateInput && apptDateInput.value) {
+                const now = new Date();
+                const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                if (apptDateInput.value < todayStr) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (apptDateErr) {
+                        apptDateErr.style.display = 'block';
+                        apptDateErr.textContent = 'Quy tắc QT-L4-01: Ngày hẹn giao – nhận máy không được ở trong quá khứ!';
+                    }
+                    apptDateInput.classList.add('is-invalid');
+                    apptDateInput.focus();
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.classList.remove('btn-loading');
+                        submitBtn.innerHTML = submitBtn.dataset.originalText || 'Lưu phân công & Đặt lịch';
+                    }
+                    return false;
+                } else {
+                    if (apptDateErr) apptDateErr.style.display = 'none';
+                    apptDateInput.classList.remove('is-invalid');
                 }
             }
 
