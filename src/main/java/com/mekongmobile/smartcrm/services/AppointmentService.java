@@ -74,7 +74,7 @@ public class AppointmentService {
                 .technician(technician)
                 .appointmentTime(appointmentTime)
                 .status("CHO_XAC_NHAN")
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")))
                 .build();
 
         Appointment savedAppointment = appointmentRepository.save(appointment);

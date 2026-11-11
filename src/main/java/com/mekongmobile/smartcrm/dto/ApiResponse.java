@@ -24,14 +24,14 @@ public class ApiResponse<T> {
     private T data;
 
     @Builder.Default
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private LocalDateTime timestamp = LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
 
     public static <T> ApiResponse<T> of(T data) {
         return ApiResponse.<T>builder()
                 .success(true)
                 .message("Thao tác thành công")
                 .data(data)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")))
                 .build();
     }
 
@@ -40,7 +40,7 @@ public class ApiResponse<T> {
                 .success(true)
                 .message(message)
                 .data(data)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")))
                 .build();
     }
 }

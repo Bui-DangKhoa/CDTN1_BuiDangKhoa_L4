@@ -29,9 +29,8 @@ public class ResponseErrorDto {
     @JsonProperty("requestId")
     private String requestId;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     @Builder.Default
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private LocalDateTime timestamp = LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
 
     // Khả năng tương thích ngược cho các đoạn mã cũ sử dụng code
     public String getCode() {

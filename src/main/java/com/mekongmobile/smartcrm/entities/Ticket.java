@@ -65,7 +65,7 @@ public class Ticket {
 
     @Column(name = "received_at", nullable = false, updatable = false)
     @Builder.Default
-    private LocalDateTime receivedAt = LocalDateTime.now();
+    private LocalDateTime receivedAt = LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
 
     @Column(name = "due_date", nullable = false)
     private LocalDateTime dueDate;

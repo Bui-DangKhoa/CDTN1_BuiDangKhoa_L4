@@ -42,5 +42,5 @@ public class TicketStatusLog {
 
     @Column(name = "changed_at", nullable = false, updatable = false)
     @Builder.Default
-    private LocalDateTime changedAt = LocalDateTime.now();
+    private LocalDateTime changedAt = LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
 }

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 /**
  * Xử lý ngoại lệ tập trung toàn cục (Global Exception Handler).
@@ -25,6 +26,8 @@ import java.time.LocalDateTime;
 @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    private static final ZoneId VIETNAM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     /**
      * Bắt lỗi nghiệp vụ AppException: Ghi log INFO kèm requestId, trả về HTTP 4xx
@@ -41,7 +44,7 @@ public class GlobalExceptionHandler {
                 .error(errorCode)
                 .message(ex.getMessage())
                 .requestId(requestId)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(VIETNAM_ZONE))
                 .build();
 
         return new ResponseEntity<>(errorDto, status);
@@ -59,7 +62,7 @@ public class GlobalExceptionHandler {
                 .error("BUSINESS_RULE_VIOLATION")
                 .message(ex.getMessage())
                 .requestId(requestId)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(VIETNAM_ZONE))
                 .build();
 
         return new ResponseEntity<>(errorDto, HttpStatus.UNPROCESSABLE_ENTITY);
@@ -77,7 +80,7 @@ public class GlobalExceptionHandler {
                 .error("NOT_FOUND")
                 .message(ex.getMessage())
                 .requestId(requestId)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(VIETNAM_ZONE))
                 .build();
 
         return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
@@ -104,7 +107,7 @@ public class GlobalExceptionHandler {
                 .error("VALIDATION_ERROR")
                 .message(validationMsg)
                 .requestId(requestId)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(VIETNAM_ZONE))
                 .build();
 
         return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
@@ -143,7 +146,7 @@ public class GlobalExceptionHandler {
                 .error("LOI_HE_THONG")
                 .message("Hệ thống đang gặp sự cố. Mã tra cứu: " + requestId)
                 .requestId(requestId)
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(VIETNAM_ZONE))
                 .build();
 
         return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);

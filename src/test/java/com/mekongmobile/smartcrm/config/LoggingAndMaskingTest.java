@@ -13,6 +13,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import jakarta.servlet.ServletException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -127,5 +128,49 @@ class LoggingAndMaskingTest {
         assertEquals("LOI_HE_THONG", response.getBody().getError());
         assertTrue(response.getBody().getMessage().contains("Mã tra cứu:"));
         assertFalse(response.getBody().getMessage().contains("SELECT * FROM"));
+    }
+
+    @Test
+    @DisplayName("JacksonConfig: Serialize LocalDateTime sang định dạng ISO 8601 kèm múi giờ +07:00")
+    void testJacksonLocalDateTimeSerialization() throws Exception {
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer customizer =
+                new JacksonConfig().jacksonTimeZoneCustomizer();
+        org.springframework.http.converter.json.Jackson2ObjectMapperBuilder builder =
+                new org.springframework.http.converter.json.Jackson2ObjectMapperBuilder();
+        customizer.customize(builder);
+        builder.configure(mapper);
+
+        LocalDateTime sampleTime = LocalDateTime.of(2026, 11, 8, 12, 14, 21);
+        String json = mapper.writeValueAsString(sampleTime);
+
+        assertEquals("\"2026-11-08T12:14:21+07:00\"", json);
+
+        // Kiểm tra Deserialization đọc lại được chính xác
+        LocalDateTime deserialized = mapper.readValue(json, LocalDateTime.class);
+        assertEquals(sampleTime, deserialized);
+    }
+
+    @Test
+    @DisplayName("ResponseErrorDto: Serialize timestamp theo múi giờ UTC+7")
+    void testResponseErrorDtoTimestampTimezone() throws Exception {
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer customizer =
+                new JacksonConfig().jacksonTimeZoneCustomizer();
+        org.springframework.http.converter.json.Jackson2ObjectMapperBuilder builder =
+                new org.springframework.http.converter.json.Jackson2ObjectMapperBuilder();
+        customizer.customize(builder);
+        builder.configure(mapper);
+
+        ResponseErrorDto dto = ResponseErrorDto.builder()
+                .error("TEST_ERROR")
+                .message("Lỗi thử nghiệm")
+                .requestId("REQ-12345")
+                .timestamp(LocalDateTime.of(2026, 11, 8, 18, 38, 2))
+                .build();
+
+        String json = mapper.writeValueAsString(dto);
+        assertTrue(json.contains("+07:00") && json.contains("2026-11-08T18:38:02+07:00"),
+                "Timestamp phải có định dạng ISO 8601 kèm múi giờ +07:00: " + json);
     }
 }
