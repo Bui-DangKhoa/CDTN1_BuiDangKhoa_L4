@@ -472,7 +472,7 @@ class TicketServiceTest {
             when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
             when(technicianRepository.findById(5L)).thenReturn(Optional.of(mockTechnician));
             when(technicianRepository.findEligibleTechnicians(1L, 1)).thenReturn(List.of(mockTechnician));
-
+            when(ticketRepository.save(any(Ticket.class))).thenAnswer(inv -> inv.getArgument(0));
             LocalDateTime pastTime = LocalDateTime.now().minusDays(1);
 
             AppException ex = assertThrows(AppException.class, () ->
