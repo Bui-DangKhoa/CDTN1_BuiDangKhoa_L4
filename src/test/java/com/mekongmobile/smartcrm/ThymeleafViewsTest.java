@@ -82,6 +82,65 @@ public class ThymeleafViewsTest {
         }
 
         @Test
+        @DisplayName("MH1: Render SLA status correctly (Quá hạn, Sắp quá hạn, Còn hạn)")
+        void testRenderUnassignedList_SlaStatusBadges() throws Exception {
+                TicketResponseDto overdueTicket = TicketResponseDto.builder()
+                                .ticketId(101L)
+                                .ticketCode("TK-OVERDUE")
+                                .deviceName("iPhone 15")
+                                .categoryName("Màn hình")
+                                .priority("CAO")
+                                .dueDate(LocalDateTime.now().minusDays(5))
+                                .status("MOI")
+                                .slaStatus("QUA_HAN")
+                                .build();
+
+                TicketResponseDto nearExpireTicket = TicketResponseDto.builder()
+                                .ticketId(102L)
+                                .ticketCode("TK-NEAREXPIRE")
+                                .deviceName("iPad Pro")
+                                .categoryName("Pin")
+                                .priority("TRUNG_BINH")
+                                .dueDate(LocalDateTime.now().plusHours(10))
+                                .status("MOI")
+                                .slaStatus("SAP_QUA_HAN")
+                                .build();
+
+                TicketResponseDto normalTicket = TicketResponseDto.builder()
+                                .ticketId(103L)
+                                .ticketCode("TK-NORMAL")
+                                .deviceName("MacBook Air")
+                                .categoryName("Khác")
+                                .priority("THAP")
+                                .dueDate(LocalDateTime.now().plusDays(4))
+                                .status("MOI")
+                                .slaStatus("CON_HAN")
+                                .build();
+
+                when(ticketService.getUnassignedTicketsSortedByDueDate(any()))
+                                .thenReturn(List.of(overdueTicket, nearExpireTicket, normalTicket));
+
+                com.mekongmobile.smartcrm.dto.UserSessionDto managerSession = com.mekongmobile.smartcrm.dto.UserSessionDto
+                                .builder()
+                                .userId(1L)
+                                .username("quanly1")
+                                .fullName("Nguyễn Quản Lý")
+                                .role("QUAN_LY")
+                                .centerId(1L)
+                                .build();
+
+                mockMvc.perform(get("/tickets/unassigned").sessionAttr("currentUser", managerSession))
+                                .andExpect(status().isOk())
+                                .andExpect(view().name("tickets/unassigned-list"))
+                                .andExpect(content().string(containsString("Quá hạn")))
+                                .andExpect(content().string(containsString("Sắp quá hạn")))
+                                .andExpect(content().string(containsString("Còn hạn")))
+                                .andExpect(content().string(containsString("data-sla=\"QUA_HAN\"")))
+                                .andExpect(content().string(containsString("data-sla=\"SAP_QUA_HAN\"")))
+                                .andExpect(content().string(containsString("data-sla=\"CON_HAN\"")));
+        }
+
+        @Test
         @DisplayName("MH2: Render /tickets/{id}/assign thành công, trả về view tickets/assign-form")
         void testRenderAssignForm() throws Exception {
                 TicketResponseDto ticket = TicketResponseDto.builder()

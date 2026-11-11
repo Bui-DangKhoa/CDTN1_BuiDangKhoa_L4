@@ -98,6 +98,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// Xác định trạng thái SLA cho phiếu bảo hành (QT-SLA)
+// 1. if (now > dueDate) -> 'QUA_HAN'
+// 2. if (dueDate - now <= 24h) -> 'SAP_QUA_HAN'
+// 3. else -> 'CON_HAN'
+function getSlaStatus(dueDate, now = new Date()) {
+    if (!dueDate) return 'CON_HAN';
+    const dueTime = new Date(dueDate).getTime();
+    const nowTime = new Date(now).getTime();
+    const WARNING_THRESHOLD_MS = 24 * 60 * 60 * 1000;
+
+    // 1. Quá hạn: now > dueDate
+    if (nowTime > dueTime) {
+        return 'QUA_HAN';
+    }
+
+    // 2. Sắp quá hạn: dueDate - now <= 24h
+    if (dueTime - nowTime <= WARNING_THRESHOLD_MS) {
+        return 'SAP_QUA_HAN';
+    }
+
+    // 3. Còn hạn
+    return 'CON_HAN';
+}
+
 // Bộ lọc danh sách phiếu chưa gán (Màn hình 1)
 function applyTicketFilter() {
     const categorySelect = document.getElementById('categoryFilter');

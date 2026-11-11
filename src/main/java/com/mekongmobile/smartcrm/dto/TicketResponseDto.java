@@ -34,5 +34,23 @@ public class TicketResponseDto {
     private LocalDateTime receivedAt;
     private LocalDateTime dueDate;
     private LocalDateTime closedAt;
+    private String slaStatus;
     private Integer repeatCount;
+
+    public String getSlaStatus() {
+        if (slaStatus != null) {
+            return slaStatus;
+        }
+        if (dueDate == null) {
+            return "CON_HAN";
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isAfter(dueDate)) {
+            return "QUA_HAN";
+        }
+        if (!dueDate.isAfter(now.plusHours(24))) {
+            return "SAP_QUA_HAN";
+        }
+        return "CON_HAN";
+    }
 }

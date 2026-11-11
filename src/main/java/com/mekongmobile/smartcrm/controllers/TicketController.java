@@ -52,7 +52,7 @@ public class TicketController {
         // Thống kê nhanh cho thẻ KPI
         long totalUnassigned = unassignedTickets.size();
         long overdueCount = unassignedTickets.stream()
-                .filter(t -> t.getDueDate() != null && t.getDueDate().isBefore(java.time.LocalDateTime.now()))
+                .filter(t -> "QUA_HAN".equals(t.getSlaStatus()))
                 .count();
 
         model.addAttribute("tickets", unassignedTickets);

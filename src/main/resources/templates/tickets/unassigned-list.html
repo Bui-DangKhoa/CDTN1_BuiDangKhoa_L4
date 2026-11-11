@@ -218,9 +218,9 @@
                         <!-- Hiển thị dữ liệu động nếu Controller truyền tickets -->
                         <th:block th:if="${tickets != null and not tickets.empty and param.empty == null}">
                             <tr th:each="t : ${tickets}" class="ticket-row"
-                                th:classappend="${t.priority == 'CAO' ? 'row-urgent' : ''}"
+                                th:classappend="${t.slaStatus == 'QUA_HAN' ? 'row-urgent' : (t.priority == 'CAO' ? 'row-urgent' : '')}"
                                 th:data-category="${t.categoryName}" th:data-priority="${t.priority}"
-                                th:data-sla="${t.priority == 'CAO' ? 'SAP_QUA_HAN' : 'CON_HAN'}">
+                                th:data-sla="${t.slaStatus}">
 
                                 <td class="text-center">
                                     <input type="checkbox" class="ticket-checkbox">
@@ -254,13 +254,18 @@
 
                                 <!-- Cột Trạng thái SLA với chấm màu -->
                                 <td>
-                                    <!-- Mức độ CAO: Sắp quá hạn / Quá hạn -->
-                                    <span th:if="${t.priority == 'CAO'}" class="sla-badge text-danger">
+                                    <!-- Quá hạn: Chấm đỏ -->
+                                    <span th:if="${t.slaStatus == 'QUA_HAN'}" class="sla-badge text-danger">
                                         <span class="sla-dot red"></span>
+                                        <span>Quá hạn</span>
+                                    </span>
+                                    <!-- Sắp quá hạn: Chấm vàng -->
+                                    <span th:if="${t.slaStatus == 'SAP_QUA_HAN'}" class="sla-badge text-warning-emphasis">
+                                        <span class="sla-dot yellow"></span>
                                         <span>Sắp quá hạn</span>
                                     </span>
-                                    <!-- Còn hạn -->
-                                    <span th:if="${t.priority != 'CAO'}" class="sla-badge text-success">
+                                    <!-- Còn hạn: Chấm xanh -->
+                                    <span th:if="${t.slaStatus == 'CON_HAN' or t.slaStatus == null}" class="sla-badge text-success">
                                         <span class="sla-dot green"></span>
                                         <span>Còn hạn</span>
                                     </span>

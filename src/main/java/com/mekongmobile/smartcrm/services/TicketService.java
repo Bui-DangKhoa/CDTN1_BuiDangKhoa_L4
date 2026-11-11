@@ -93,6 +93,28 @@ public interface TicketService {
     TicketResponseDto updateTicketStatus(Long ticketId, UpdateTicketStatusDto updateDto);
 
     /**
+     * Ngưỡng cảnh báo sắp quá hạn SLA (24 giờ).
+     */
+    long SLA_WARNING_THRESHOLD_HOURS = 24L;
+
+    /**
+     * QT-SLA: Xác định trạng thái hạn SLA dựa trên thời điểm hiện tại và hạn chót (dueDate).
+     * Thứ tự đánh giá:
+     * 1. if (now > dueDate) -> "QUA_HAN"
+     * 2. if (dueDate - now <= 24 giờ) -> "SAP_QUA_HAN"
+     * 3. else -> "CON_HAN"
+     *
+     * @param dueDate thời hạn xử lý SLA của phiếu
+     * @param now thời điểm đối chiếu
+     * @return "QUA_HAN" | "SAP_QUA_HAN" | "CON_HAN"
+     */
+    String getSlaStatus(LocalDateTime dueDate, LocalDateTime now);
+
+    default String getSlaStatus(LocalDateTime dueDate) {
+        return getSlaStatus(dueDate, LocalDateTime.now());
+    }
+
+    /**
      * Lấy danh sách phiếu bảo hành chưa phân công, sắp xếp theo hạn SLA (due_date) tăng dần.
      */
     List<TicketResponseDto> getUnassignedTicketsSortedByDueDate();

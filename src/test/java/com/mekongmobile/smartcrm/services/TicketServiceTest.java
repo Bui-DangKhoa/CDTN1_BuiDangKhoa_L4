@@ -26,6 +26,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 /**
@@ -460,6 +462,56 @@ class TicketServiceTest {
         assertEquals("UNAUTHORIZED", ex.getErrorCode());
         verify(ticketRepository, never()).save(any(Ticket.class));
         verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
+    }
+
+    @Nested
+    @DisplayName("TC-08: Kiểm thử phân loại trạng thái SLA (getSlaStatus)")
+    class TC08_SlaStatusClassificationTests {
+
+        @Test
+        @DisplayName("TC-08: Ticket with due_date < NOW() returns status 'QUA_HAN'")
+        void TC08_getSlaStatus_dueDatePast_returnsQuaHan() {
+            LocalDateTime now = LocalDateTime.of(2026, 11, 8, 12, 0, 0);
+            LocalDateTime pastDueDate = LocalDateTime.of(2026, 10, 22, 17, 0, 0);
+
+            String status = ticketService.getSlaStatus(pastDueDate, now);
+
+            assertEquals("QUA_HAN", status);
+        }
+
+        @Test
+        @DisplayName("TC-08: Ticket within 24h of due_date returns status 'SAP_QUA_HAN'")
+        void TC08_getSlaStatus_dueDateWithin24h_returnsSapQuaHan() {
+            LocalDateTime now = LocalDateTime.of(2026, 11, 8, 12, 0, 0);
+            LocalDateTime nearDueDate = now.plusHours(12);
+
+            String status = ticketService.getSlaStatus(nearDueDate, now);
+
+            assertEquals("SAP_QUA_HAN", status);
+
+            // Biên chính xác 24 giờ
+            assertEquals("SAP_QUA_HAN", ticketService.getSlaStatus(now.plusHours(24), now));
+        }
+
+        @Test
+        @DisplayName("TC-08: Ticket far from due_date returns status 'CON_HAN'")
+        void TC08_getSlaStatus_dueDateFar_returnsConHan() {
+            LocalDateTime now = LocalDateTime.of(2026, 11, 8, 12, 0, 0);
+            LocalDateTime farDueDate = now.plusDays(5);
+
+            String status = ticketService.getSlaStatus(farDueDate, now);
+
+            assertEquals("CON_HAN", status);
+
+            // Biên vượt quá 24 giờ 1 phút
+            assertEquals("CON_HAN", ticketService.getSlaStatus(now.plusHours(24).plusMinutes(1), now));
+        }
+
+        @Test
+        @DisplayName("TC-08: Ticket with null due_date returns status 'CON_HAN'")
+        void TC08_getSlaStatus_nullDueDate_returnsConHan() {
+            assertEquals("CON_HAN", ticketService.getSlaStatus(null, LocalDateTime.now()));
+        }
     }
 
     @Nested

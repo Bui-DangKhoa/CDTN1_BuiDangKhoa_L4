@@ -60,7 +60,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public LocalDateTime calculateDueDate(LocalDateTime receivedAt, Priority priority) {
         if (receivedAt == null) {
-            receivedAt = LocalDateTime.now();
+            receivedAt = LocalDateTime.now(VIETNAM_ZONE);
         }
         if (priority == null) {
             priority = Priority.TRUNG_BINH;
@@ -84,6 +84,29 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    public String getSlaStatus(LocalDateTime dueDate, LocalDateTime now) {
+        if (dueDate == null) {
+            return "CON_HAN";
+        }
+        if (now == null) {
+            now = LocalDateTime.now(VIETNAM_ZONE);
+        }
+
+        // 1. Quá hạn: now > dueDate (now.isAfter(dueDate))
+        if (now.isAfter(dueDate)) {
+            return "QUA_HAN";
+        }
+
+        // 2. Sắp quá hạn: dueDate - now <= WARNING_THRESHOLD_HOURS (24 giờ)
+        if (!dueDate.isAfter(now.plusHours(SLA_WARNING_THRESHOLD_HOURS))) {
+            return "SAP_QUA_HAN";
+        }
+
+        // 3. Còn hạn
+        return "CON_HAN";
+    }
+
+    @Override
     public TicketStatusLog logStatusChange(Ticket ticket, String fromStatus, String toStatus, Long changedBy, String reason) {
         TicketStatusLog statusLog = TicketStatusLog.builder()
                 .ticket(ticket)
@@ -91,7 +114,7 @@ public class TicketServiceImpl implements TicketService {
                 .toStatus(toStatus)
                 .changedBy(changedBy)
                 .changeReason(reason)
-                .changedAt(LocalDateTime.now())
+                .changedAt(LocalDateTime.now(VIETNAM_ZONE))
                 .build();
         return statusLogRepository.save(statusLog);
     }
@@ -117,7 +140,7 @@ public class TicketServiceImpl implements TicketService {
                 : category.getDefaultPriority();
 
         // QT-04: Tự động tính hạn xử lý (due_date) theo mức độ ưu tiên nếu chưa có
-        LocalDateTime receivedAt = LocalDateTime.now();
+        LocalDateTime receivedAt = LocalDateTime.now(VIETNAM_ZONE);
         LocalDateTime dueDate = requestDto.getDueDate();
         if (dueDate == null) {
             dueDate = calculateDueDate(receivedAt, priority);
@@ -219,7 +242,7 @@ public class TicketServiceImpl implements TicketService {
         }
 
         String fromStatus = ticket.getStatus();
-        ticket.setDeletedAt(LocalDateTime.now());
+        ticket.setDeletedAt(LocalDateTime.now(VIETNAM_ZONE));
         ticketRepository.save(ticket);
 
         // Ghi 1 dòng ticket_status_log cho việc xóa
@@ -264,7 +287,7 @@ public class TicketServiceImpl implements TicketService {
         ticket.setStatus(toStatus);
         if ("HOAN_TAT".equalsIgnoreCase(toStatus) || "HOAN_THANH".equalsIgnoreCase(toStatus)
                 || "DONG".equalsIgnoreCase(toStatus)) {
-            ticket.setClosedAt(LocalDateTime.now());
+            ticket.setClosedAt(LocalDateTime.now(VIETNAM_ZONE));
         }
 
         Ticket updatedTicket = ticketRepository.save(ticket);
@@ -559,6 +582,7 @@ public class TicketServiceImpl implements TicketService {
                 .receivedAt(ticket.getReceivedAt())
                 .dueDate(ticket.getDueDate())
                 .closedAt(ticket.getClosedAt())
+                .slaStatus(getSlaStatus(ticket.getDueDate(), LocalDateTime.now(VIETNAM_ZONE)))
                 .repeatCount(repeatCount)
                 .build();
     }
