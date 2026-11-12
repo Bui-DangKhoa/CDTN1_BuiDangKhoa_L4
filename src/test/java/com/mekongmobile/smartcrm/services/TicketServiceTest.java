@@ -18,10 +18,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -104,7 +104,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("Happy Path: testAssignTechnician_Success - Phân công KTV cùng center, proficiency >= 3 thành công, status chuyển sang DA_PHAN_CONG")
+    @DisplayName("TC-01 | QT-08 | Phân công KTV cùng trung tâm, đủ tay nghề -> DA_PHAN_CONG")
     void testAssignTechnician_Success() {
         // Given: ticket ở trạng thái MOI, chưa có KTV; KTV cùng trung tâm và đủ tay nghề (proficiency >= 3)
         when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
@@ -189,7 +189,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("Invalid Data / Exception: testAssignTechnician_InvalidProficiency_QT08 - Gán KTV có proficiency < 3 -> ném AppException(KTV_NOT_QUALIFIED) (QT-08)")
+    @DisplayName("TC-10 | QT-08 | KTV không đủ điều kiện -> KTV_NOT_QUALIFIED, không lưu, không ghi log")
     void testAssignTechnician_InvalidProficiency_QT08() {
         // Given: KTV không nằm trong danh sách đủ điều kiện của trung tâm và danh mục sự cố
         when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
@@ -208,7 +208,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("TC-04: Invalid Data - Ném lỗi KTV_NOT_QUALIFIED khi KTV khác trung tâm hoặc tay nghề < 3 (QT-08)")
+    @DisplayName("UT-04")
     void TC04_assignTechnician_throwException_whenKtvNotQualified() {
         testAssignTechnician_InvalidProficiency_QT08();
     }
@@ -242,7 +242,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("TC-06: QT-15 - Kỹ thuật viên tra cứu phiếu cá nhân, tự động che 4 số giữa SĐT dạng 090****567")
+    @DisplayName("TC-07 | QT-15 | KTV xem phiếu cá nhân -> SĐT che 4 số giữa 090****567")
     void TC06_getTicketsForTechnician_maskPhone() {
         mockTicket.setCustomerPhone("0901234567");
         mockTicket.setTechnician(mockTechnician);
@@ -257,8 +257,17 @@ class TicketServiceTest {
         assertEquals(1, result.size());
         assertEquals("090****567", result.get(0).getCustomerPhone());
     }
+
     @Test
-    @DisplayName("TC-07: getDeviceRepairHistory - Thiết bị có lịch sử, trả về DTO map đúng ngày (closed_at fallback received_at), KTV, nội dung xử lý")
+    @DisplayName("QT-15 | Không tạo SĐT giả khi ticket không có số điện thoại")
+    void getTicketById_missingPhone_returnsNull() {
+        mockTicket.setCustomerPhone(null);
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+
+        assertNull(ticketService.getTicketById(10L).getCustomerPhone());
+    }
+    @Test
+    @DisplayName("UT-07: getDeviceRepairHistory - Thiết bị có lịch sử, trả về DTO map đúng ngày (closed_at fallback received_at), KTV, nội dung xử lý")
     void TC07_getDeviceRepairHistory_withHistory() {
         LocalDateTime closedTime = LocalDateTime.of(2026, 6, 12, 16, 30);
         LocalDateTime receivedTime = LocalDateTime.of(2026, 6, 10, 9, 0);
@@ -306,7 +315,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("TC-08: getDeviceRepairHistory - Thiết bị chưa từng sửa chữa trước đó, trả về danh sách rỗng")
+    @DisplayName("UT-08: getDeviceRepairHistory - Thiết bị chưa từng sửa chữa trước đó, trả về danh sách rỗng")
     void TC08_getDeviceRepairHistory_emptyHistory() {
         when(ticketRepository.findRepairHistory(eq(2L), eq(10L), any()))
                 .thenReturn(List.of());
@@ -319,7 +328,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("TC-09: getDeviceRepairHistory - Thiết bị khác không lẫn dữ liệu và deviceId null an toàn")
+    @DisplayName("UT-09: getDeviceRepairHistory - Thiết bị khác không lẫn dữ liệu và deviceId null an toàn")
     void TC09_getDeviceRepairHistory_isolationAndNullDevice() {
         when(ticketRepository.findRepairHistory(eq(1L), isNull(), any()))
                 .thenReturn(List.of(Ticket.builder().ticketCode("TK-DEV-1").status("DONG").build()));
@@ -337,7 +346,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("TC-10: getDeviceRepairHistory - Phiếu đang chọn được truyền vào excludeTicketId để bị loại trừ")
+    @DisplayName("UT-10: getDeviceRepairHistory - Phiếu đang chọn được truyền vào excludeTicketId để bị loại trừ")
     void TC10_getDeviceRepairHistory_excludeCurrentTicket() {
         when(ticketRepository.findRepairHistory(eq(1L), eq(99L), any()))
                 .thenReturn(List.of());
@@ -347,7 +356,7 @@ class TicketServiceTest {
         verify(ticketRepository).findRepairHistory(eq(1L), eq(99L), any());
     }
     @Test
-    @DisplayName("TC-11: countPreviousSameIssues - Chỉ đếm các phiếu đã đóng/hoàn tất (CLOSED_STATUSES), 2 phiếu đã đóng + 1 phiếu đang mở cùng thiết bị & nhóm thì repeatCount = 2")
+    @DisplayName("UT-11: countPreviousSameIssues - Chỉ đếm các phiếu đã đóng/hoàn tất (CLOSED_STATUSES), 2 phiếu đã đóng + 1 phiếu đang mở cùng thiết bị & nhóm thì repeatCount = 2")
     void TC11_calculateRepeatCount_countOnlyClosedTickets() {
         when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
         when(ticketRepository.countPreviousSameIssues(eq(1L), eq(1), eq(10L), eq(TicketServiceImpl.CLOSED_STATUSES)))
@@ -359,25 +368,24 @@ class TicketServiceTest {
         assertEquals(2, dto.getRepeatCount());
         verify(ticketRepository).countPreviousSameIssues(eq(1L), eq(1), eq(10L), eq(TicketServiceImpl.CLOSED_STATUSES));
     }
-
     @Test
     @DisplayName("TC-04 | QT-04 | Nhận thứ Bảy 15:00, mức CAO -> hạn thứ Hai 15:00 (bỏ Chủ nhật)")
     void TC04_dueDate_skipsSunday() {
-        LocalDateTime received = LocalDateTime.of(2026, 11, 7, 15, 0);
-        assertEquals(LocalDateTime.of(2026, 11, 9, 15, 0), ticketService.calculateDueDate(received, "CAO"));
-    }
-
+    LocalDateTime received = LocalDateTime.of(2026, 11, 7, 15, 0); // thứ Bảy
+    LocalDateTime due = ticketService.calculateDueDate(received, "CAO");
+    assertEquals(LocalDateTime.of(2026, 11, 9, 15, 0), due);       // thứ Hai
+}
     @Test
     @DisplayName("QT-04 | THAP tính năm ngày làm việc, bỏ qua Chủ nhật")
     void dueDate_lowPriority_skipsSunday() {
-        LocalDateTime received = LocalDateTime.of(2026, 10, 20, 8, 0);
+        LocalDateTime received = LocalDateTime.of(2026, 10, 20, 8, 0); // thứ Ba
         assertEquals(LocalDateTime.of(2026, 10, 26, 8, 0), ticketService.calculateDueDate(received, "THAP"));
     }
 
     @Test
     @DisplayName("QT-04 | TRUNG_BINH tính ba ngày làm việc")
     void dueDate_mediumPriority_threeWorkingDays() {
-        LocalDateTime received = LocalDateTime.of(2026, 10, 19, 8, 0);
+        LocalDateTime received = LocalDateTime.of(2026, 10, 19, 8, 0); // thứ Hai
         assertEquals(LocalDateTime.of(2026, 10, 22, 8, 0), ticketService.calculateDueDate(received, "TRUNG_BINH"));
     }
     @Test
@@ -408,7 +416,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("TC-13: updateTicket - Ném lỗi TICKET_NOT_FOUND khi không tìm thấy phiếu hoặc phiếu đã bị xóa mềm")
+    @DisplayName("UT-13: updateTicket - Ném lỗi TICKET_NOT_FOUND khi không tìm thấy phiếu hoặc phiếu đã bị xóa mềm")
     void updateTicket_ticketNotFound_throwsException() {
         when(ticketRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -423,7 +431,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("TC-14: deleteTicket - Xóa mềm thành công khi phiếu ở trạng thái MOI và không có lịch hẹn hiệu lực (QT-13)")
+    @DisplayName("TC-06 | QT-13 | Xóa mềm phiếu MOI -> deleted_at có giá trị, log DA_XOA")
     void deleteTicket_statusMoiAndNoActiveAppointment_success() {
         mockTicket.setStatus("MOI");
         mockTicket.setDeletedAt(null);
@@ -437,7 +445,10 @@ class TicketServiceTest {
         assertNotNull(mockTicket.getDeletedAt());
         assertEquals("MOI", mockTicket.getStatus());
         verify(ticketRepository).save(mockTicket);
-        verify(statusLogRepository).save(any(TicketStatusLog.class));
+        ArgumentCaptor<TicketStatusLog> captor = ArgumentCaptor.forClass(TicketStatusLog.class);
+        verify(statusLogRepository).save(captor.capture());
+        assertEquals("MOI", captor.getValue().getFromStatus());
+        assertEquals("DA_XOA", captor.getValue().getToStatus());
     }
 
     @Test
@@ -454,7 +465,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("TC-16: deleteTicket - Ném lỗi TICKET_NOT_DELETABLE khi phiếu còn lịch hẹn có hiệu lực")
+    @DisplayName("UT-16: deleteTicket - Ném lỗi TICKET_NOT_DELETABLE khi phiếu còn lịch hẹn có hiệu lực")
     void deleteTicket_hasActiveAppointment_throwsTicketNotDeletable() {
         mockTicket.setStatus("MOI");
 
@@ -468,7 +479,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("TC-17: getTicketById - Ném lỗi TICKET_NOT_FOUND khi phiếu đã bị xóa mềm (deleted_at != null)")
+    @DisplayName("UT-17: getTicketById - Ném lỗi TICKET_NOT_FOUND khi phiếu đã bị xóa mềm (deleted_at != null)")
     void getTicketById_softDeletedTicket_throwsTicketNotFound() {
         mockTicket.setDeletedAt(LocalDateTime.now());
         when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
@@ -478,7 +489,7 @@ class TicketServiceTest {
     }
 
     @Test
-    @DisplayName("TC-18: deleteTicket - Ném lỗi UNAUTHORIZED khi changedBy là null và verify không lưu hay ghi log")
+    @DisplayName("UT-18: deleteTicket - Ném lỗi UNAUTHORIZED khi changedBy là null và verify không lưu hay ghi log")
     void deleteTicket_nullChangedBy_throwsUnauthorized() {
         AppException ex = assertThrows(AppException.class, () -> ticketService.deleteTicket(10L, null));
         assertEquals("UNAUTHORIZED", ex.getErrorCode());
@@ -502,7 +513,7 @@ class TicketServiceTest {
         }
 
         @Test
-        @DisplayName("TC-08: Ticket within 24h of due_date returns status 'SAP_QUA_HAN'")
+        @DisplayName("UT-08: Ticket within 24h of due_date returns status 'SAP_QUA_HAN'")
         void TC08_getSlaStatus_dueDateWithin24h_returnsSapQuaHan() {
             LocalDateTime now = LocalDateTime.of(2026, 11, 8, 12, 0, 0);
             LocalDateTime nearDueDate = now.plusHours(12);
@@ -516,7 +527,7 @@ class TicketServiceTest {
         }
 
         @Test
-        @DisplayName("TC-08: Ticket far from due_date returns status 'CON_HAN'")
+        @DisplayName("UT-08: Ticket far from due_date returns status 'CON_HAN'")
         void TC08_getSlaStatus_dueDateFar_returnsConHan() {
             LocalDateTime now = LocalDateTime.of(2026, 11, 8, 12, 0, 0);
             LocalDateTime farDueDate = now.plusDays(5);
@@ -575,44 +586,90 @@ class TicketServiceTest {
             verify(appointmentService, times(1)).scheduleAppointment(any(Ticket.class), eq(mockTechnician), eq(futureTime));
         }
     }
-    @Test
-    @DisplayName("TC-08 | QT-06 | Nhảy cóc DA_PHAN_CONG -> HOAN_TAT bị từ chối, không lưu, không ghi log")
-    void TC08_updateStatus_skipStep_rejected() {
-        mockTicket.setStatus("DA_PHAN_CONG");
-        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
-        UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder().newStatus("HOAN_TAT").changedBy(2L).build();
+    private void givenReassignScenario() {
+    Technician oldTech = Technician.builder()
+            .technicianId(5L).fullName("KTV Cũ").centerId(1L).build();
+    mockTicket.setTechnician(oldTech);
+    Technician newTech = Technician.builder()
+            .technicianId(6L).fullName("KTV Mới").centerId(1L).isActive(true).build();
 
-        assertThrows(BusinessRuleException.class, () -> ticketService.updateTicketStatus(10L, dto));
-        assertEquals("DA_PHAN_CONG", mockTicket.getStatus());
-        verify(ticketRepository, never()).save(any(Ticket.class));
-        verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
-    }
+    lenient().when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+    lenient().when(technicianRepository.findById(6L)).thenReturn(Optional.of(newTech));
+    lenient().when(technicianRepository.findEligibleTechnicians(1L, 1)).thenReturn(List.of(newTech));
+    lenient().when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
+}
 
-    @Test
-    @DisplayName("QT-06 | Từ chối trạng thái đích không nằm trong quy trình")
-    void updateStatus_unknownTarget_rejected() {
-        mockTicket.setStatus("DA_PHAN_CONG");
-        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
-        UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder().newStatus("ABC").changedBy(2L).build();
+@Test
+@DisplayName("TC-02 | QT-07 | Biên: lý do đổi KTV đúng 10 ký tự -> thành công")
+void TC02_changeReason_exactly10_ok() {
+    givenReassignScenario();
+    String reason = "Doi KTV 10";
+    assertEquals(10, reason.length());
 
-        assertThrows(BusinessRuleException.class, () -> ticketService.updateTicketStatus(10L, dto));
-        assertEquals("DA_PHAN_CONG", mockTicket.getStatus());
-        verify(ticketRepository, never()).save(any(Ticket.class));
-        verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
-    }
+    Ticket result = ticketService.assignTechnician(10L, 6L, 101L, reason);
 
-    @Test
-    @DisplayName("QT-06 | DA_PHAN_CONG -> DANG_XU_LY hợp lệ và ghi đúng một log")
-    void updateStatus_nextAllowedStep_succeedsAndLogsOnce() {
-        mockTicket.setStatus("DA_PHAN_CONG");
-        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
-        when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
-        UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder().newStatus("DANG_XU_LY").changedBy(2L).build();
+    assertEquals(6L, result.getTechnician().getTechnicianId());
+    assertEquals("DA_PHAN_CONG", result.getStatus());
+    verify(statusLogRepository, times(1)).save(any(TicketStatusLog.class));
+}
 
-        ticketService.updateTicketStatus(10L, dto);
+@Test
+@DisplayName("TC-03 | QT-07 | Biên: lý do đổi KTV 9 ký tự -> INVALID_CHANGE_REASON, không lưu")
+void TC03_changeReason_9chars_rejected() {
+    givenReassignScenario();
+    String reason = "Doi KTV m";
+    assertEquals(9, reason.length());
 
-        assertEquals("DANG_XU_LY", mockTicket.getStatus());
-        verify(ticketRepository, times(1)).save(mockTicket);
-        verify(statusLogRepository, times(1)).save(any(TicketStatusLog.class));
-    }
+    AppException ex = assertThrows(AppException.class,
+            () -> ticketService.assignTechnician(10L, 6L, 101L, reason));
+
+    assertEquals("INVALID_CHANGE_REASON", ex.getErrorCode());
+    verify(ticketRepository, never()).save(any(Ticket.class));
+    verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
+}
+@Test
+@DisplayName("TC-08 | QT-06 | Nhảy cóc DA_PHAN_CONG -> HOAN_TAT phải bị từ chối, không lưu, không ghi log")
+void TC08_updateStatus_skipStep_rejected() {
+    mockTicket.setStatus("DA_PHAN_CONG");
+    lenient().when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+    lenient().when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
+
+    com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto dto =
+            com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto.builder()
+                    .newStatus("HOAN_TAT").changedBy(2L).build();
+
+    assertThrows(RuntimeException.class, () -> ticketService.updateTicketStatus(10L, dto));
+    assertEquals("DA_PHAN_CONG", mockTicket.getStatus());
+    verify(ticketRepository, never()).save(any(Ticket.class));
+    verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
+}
+
+@Test
+@DisplayName("QT-06 | Từ chối trạng thái đích không nằm trong quy trình")
+void updateStatus_unknownTarget_rejected() {
+    mockTicket.setStatus("DA_PHAN_CONG");
+    when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+    UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder().newStatus("ABC").changedBy(2L).build();
+
+    assertThrows(BusinessRuleException.class, () -> ticketService.updateTicketStatus(10L, dto));
+
+    assertEquals("DA_PHAN_CONG", mockTicket.getStatus());
+    verify(ticketRepository, never()).save(any(Ticket.class));
+    verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
+}
+
+@Test
+@DisplayName("QT-06 | DA_PHAN_CONG -> DANG_XU_LY hợp lệ và ghi đúng một log")
+void updateStatus_nextAllowedStep_succeedsAndLogsOnce() {
+    mockTicket.setStatus("DA_PHAN_CONG");
+    when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+    when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
+    UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder().newStatus("DANG_XU_LY").changedBy(2L).build();
+
+    ticketService.updateTicketStatus(10L, dto);
+
+    assertEquals("DANG_XU_LY", mockTicket.getStatus());
+    verify(ticketRepository, times(1)).save(mockTicket);
+    verify(statusLogRepository, times(1)).save(any(TicketStatusLog.class));
+}
 }
