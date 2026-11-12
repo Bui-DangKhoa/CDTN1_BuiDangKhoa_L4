@@ -315,4 +315,13 @@ class AuthAndSecurityTest {
                 .andExpect(jsonPath("$.data.customerPhone").value("0901234567"));
     }
 
+    @Test
+    @DisplayName("BUG-05: API route không tồn tại trả 404 và không lộ chi tiết nội bộ")
+    void unknownApiPathReturnsNotFoundWithoutStackTrace() throws Exception {
+        UserSessionDto user = UserSessionDto.builder().userId(1L).role("QUAN_LY").centerId(1L).build();
+        mockMvc.perform(get("/api/v1/khong-ton-tai").sessionAttr("currentUser", user))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Exception"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("jdbc"))));
+    }
 }

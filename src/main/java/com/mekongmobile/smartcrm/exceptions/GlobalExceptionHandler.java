@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -83,6 +84,29 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now(VIETNAM_ZONE))
                 .build();
 
+        return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public Object handleNoResourceFoundException(NoResourceFoundException ex, HttpServletRequest request) {
+        String requestId = RequestIdFilter.getCurrentRequestId();
+        log.info("[requestId: {}] Không tìm thấy đường dẫn: {}", requestId, request.getRequestURI());
+        boolean isHtmlRequest = request != null
+                && !request.getRequestURI().startsWith("/api/")
+                && request.getHeader("Accept") != null
+                && request.getHeader("Accept").contains(MediaType.TEXT_HTML_VALUE);
+        if (isHtmlRequest) {
+            ModelAndView mav = new ModelAndView("error/404");
+            mav.setStatus(HttpStatus.NOT_FOUND);
+            mav.addObject("requestId", requestId);
+            return mav;
+        }
+        ResponseErrorDto errorDto = ResponseErrorDto.builder()
+                .error("NOT_FOUND")
+                .message("Không tìm thấy tài nguyên")
+                .requestId(requestId)
+                .timestamp(LocalDateTime.now(VIETNAM_ZONE))
+                .build();
         return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
     }
 

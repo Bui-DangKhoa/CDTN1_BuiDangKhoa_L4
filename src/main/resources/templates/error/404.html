@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Không tìm thấy trang | Smart CRM</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<main class="container py-5 text-center">
+    <h1>404 - Không tìm thấy trang</h1>
+    <p>Đường dẫn bạn yêu cầu không tồn tại.</p>
+    <p>Mã yêu cầu: <span th:text="${requestId}">request-id</span></p>
+    <a th:href="@{/}">Về trang chủ</a>
+</main>
+</body>
+</html>
