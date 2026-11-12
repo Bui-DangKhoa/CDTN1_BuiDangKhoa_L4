@@ -1,0 +1,40 @@
+{
+    "request":  {
+                    "method":  "PUT",
+                    "path":  "/api/v1/tickets/127",
+                    "body":  {
+                                 "priority":  "TRUNG_BINH",
+                                 "customerPhone":  "[REDACTED SAMPLE PII]",
+                                 "categoryId":  1,
+                                 "issueDesc":  "Updated isolated BT3 API fixture"
+                             }
+                },
+    "status":  200,
+    "response":  {
+                     "success":  true,
+                     "message":  "Cập nhật thông tin phiếu thành công",
+                     "data":  {
+                                  "ticketId":  127,
+                                  "ticketCode":  "B3195029C",
+                                  "customerId":  201,
+                                  "customerPhone":  "[REDACTED SAMPLE PII]",
+                                  "deviceId":  1,
+                                  "deviceName":  "iPhone 15 Pro Max 256GB",
+                                  "serialNo":  "[REDACTED SAMPLE PII]",
+                                  "centerId":  1,
+                                  "technicianId":  1,
+                                  "technicianName":  "[REDACTED SAMPLE PII]",
+                                  "categoryId":  1,
+                                  "categoryName":  "Thay màn hình cảm ứng",
+                                  "issueDesc":  "Updated isolated BT3 API fixture",
+                                  "priority":  "TRUNG_BINH",
+                                  "status":  "DANG_XU_LY",
+                                  "receivedAt":  "2026-11-12T19:50:30+07:00",
+                                  "dueDate":  "2026-11-16T19:50:30+07:00",
+                                  "closedAt":  null,
+                                  "slaStatus":  "CON_HAN",
+                                  "repeatCount":  2
+                              },
+                     "timestamp":  "2026-11-12T19:50:30+07:00"
+                 }
+}

@@ -1,0 +1,13 @@
+{
+    "request":  {
+                    "method":  "DELETE",
+                    "path":  "/api/v1/appointments/8"
+                },
+    "status":  200,
+    "response":  {
+                     "success":  true,
+                     "message":  "Hủy lịch hẹn thành công",
+                     "data":  "Lịch hẹn đã được hủy mềm (DA_HUY)",
+                     "timestamp":  "2026-11-12T19:50:30+07:00"
+                 }
+}

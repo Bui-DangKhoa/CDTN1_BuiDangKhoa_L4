@@ -1,0 +1,39 @@
+{
+    "request":  {
+                    "method":  "PATCH",
+                    "path":  "/api/v1/tickets/127/status",
+                    "body":  {
+                                 "changedBy":  2,
+                                 "changeReason":  "BT3 isolated API example",
+                                 "newStatus":  "DANG_XU_LY"
+                             }
+                },
+    "status":  200,
+    "response":  {
+                     "success":  true,
+                     "message":  "Cập nhật trạng thái ticket thành công (QT-06)",
+                     "data":  {
+                                  "ticketId":  127,
+                                  "ticketCode":  "B3195029C",
+                                  "customerId":  201,
+                                  "customerPhone":  "[REDACTED SAMPLE PII]",
+                                  "deviceId":  1,
+                                  "deviceName":  "iPhone 15 Pro Max 256GB",
+                                  "serialNo":  "[REDACTED SAMPLE PII]",
+                                  "centerId":  1,
+                                  "technicianId":  1,
+                                  "technicianName":  "[REDACTED SAMPLE PII]",
+                                  "categoryId":  1,
+                                  "categoryName":  "Thay màn hình cảm ứng",
+                                  "issueDesc":  "Isolated BT3 API documentation fixture",
+                                  "priority":  "THAP",
+                                  "status":  "DANG_XU_LY",
+                                  "receivedAt":  "2026-11-12T19:50:30+07:00",
+                                  "dueDate":  "2026-11-18T19:50:30+07:00",
+                                  "closedAt":  null,
+                                  "slaStatus":  "CON_HAN",
+                                  "repeatCount":  2
+                              },
+                     "timestamp":  "2026-11-12T19:50:30+07:00"
+                 }
+}

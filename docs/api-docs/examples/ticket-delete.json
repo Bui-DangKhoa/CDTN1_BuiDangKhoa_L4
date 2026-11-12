@@ -1,0 +1,13 @@
+{
+    "request":  {
+                    "method":  "DELETE",
+                    "path":  "/api/v1/tickets/128"
+                },
+    "status":  200,
+    "response":  {
+                     "success":  true,
+                     "message":  "Xóa mềm phiếu bảo hành thành công (QT-13)",
+                     "data":  null,
+                     "timestamp":  "2026-11-12T19:50:30+07:00"
+                 }
+}

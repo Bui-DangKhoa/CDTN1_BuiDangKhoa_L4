@@ -1,0 +1,32 @@
+{
+    "request":  {
+                    "method":  "GET",
+                    "path":  "/tickets/126/eligible-technicians"
+                },
+    "status":  200,
+    "response":  {
+                     "value":  [
+                                   {
+                                       "technicianId":  1,
+                                       "employeeId":  1001,
+                                       "fullName":  "[REDACTED SAMPLE PII]",
+                                       "centerId":  1,
+                                       "level":  "BAC_3",
+                                       "isActive":  true,
+                                       "proficiency":  null,
+                                       "activeTicketsCount":  8
+                                   },
+                                   {
+                                       "technicianId":  2,
+                                       "employeeId":  1002,
+                                       "fullName":  "[REDACTED SAMPLE PII]",
+                                       "centerId":  1,
+                                       "level":  "BAC_2",
+                                       "isActive":  true,
+                                       "proficiency":  null,
+                                       "activeTicketsCount":  1
+                                   }
+                               ],
+                     "Count":  2
+                 }
+}

@@ -1,0 +1,40 @@
+{
+    "request":  {
+                    "method":  "POST",
+                    "path":  "/api/v1/scheduling/appointments",
+                    "body":  {
+                                 "appointmentTime":  "2026-11-18T11:00:00",
+                                 "technicianId":  1,
+                                 "ticketId":  129,
+                                 "scheduledBy":  2
+                             }
+                },
+    "status":  200,
+    "response":  {
+                     "success":  true,
+                     "message":  "Điều phối lịch hẹn kỹ thuật viên thành công (QT-07)",
+                     "data":  {
+                                  "ticketId":  129,
+                                  "ticketCode":  "B3195029S",
+                                  "customerId":  201,
+                                  "customerPhone":  "[REDACTED SAMPLE PII]",
+                                  "deviceId":  1,
+                                  "deviceName":  "iPhone 15 Pro Max 256GB",
+                                  "serialNo":  "[REDACTED SAMPLE PII]",
+                                  "centerId":  1,
+                                  "technicianId":  1,
+                                  "technicianName":  "[REDACTED SAMPLE PII]",
+                                  "categoryId":  1,
+                                  "categoryName":  "Thay màn hình cảm ứng",
+                                  "issueDesc":  "Isolated BT3 API documentation fixture",
+                                  "priority":  "THAP",
+                                  "status":  "DA_PHAN_CONG",
+                                  "receivedAt":  "2026-11-12T19:50:30+07:00",
+                                  "dueDate":  "2026-11-18T19:50:30+07:00",
+                                  "closedAt":  null,
+                                  "slaStatus":  "CON_HAN",
+                                  "repeatCount":  null
+                              },
+                     "timestamp":  "2026-11-12T19:50:30+07:00"
+                 }
+}

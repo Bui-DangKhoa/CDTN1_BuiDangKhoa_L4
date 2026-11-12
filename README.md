@@ -96,21 +96,21 @@ graph TD
 
 ---
 
-## 3. Hướng dẫn Khởi chạy Zero-Setup (Tối đa 4 bước)
+## 3. Khởi chạy cục bộ bằng Docker Compose
 
 Hệ thống được thiết kế theo tiêu chí **Zero-Setup (Clone-and-Run)**, hỗ trợ triển khai tức thì trên máy chấm mà không cần cài đặt trước Maven, CSDL MySQL cục bộ hay công cụ build phức tạp:
 
 ### Bước 1: Sao chép mã nguồn từ GitHub
 ```bash
-git clone --branch v0.2 https://github.com/Bui-DangKhoa/CDTN1_BuiDangKhoa_L4.git .
+git clone https://github.com/Bui-DangKhoa/CDTN1_BuiDangKhoa_L4.git
+cd CDTN1_BuiDangKhoa_L4
 ```
 
 ### Bước 2: Thiết lập biến môi trường
 ```bash
-cp .env.example .env
-# Trên hệ điều hành Windows PowerShell, có thể dùng:
-# copy .env.example .env
+Copy-Item .env.example .env
 ```
+Nếu `.env` đã có, giữ lại và kiểm tra các biến thay vì ghi đè.
 
 ### Bước 3: Xác nhận kiểm thử tự động (Unit Test PASS 100%)
 ```bash
@@ -118,14 +118,11 @@ cp .env.example .env
 # Trên Windows PowerShell / Command Prompt:
 # .\mvnw.cmd test
 ```
-> **Kết quả kỳ vọng**: `Tests run: 25, Failures: 0, Errors: 0, Skipped: 0` – `BUILD SUCCESS`.
+> Kết quả bộ kiểm thử BT3 được ghi trong [Test Report](docs/test-report.md); chạy lại lệnh để xác nhận trên máy của bạn.
 
 ### Bước 4: Khởi chạy toàn bộ hệ thống bằng Docker Compose
-> **Lưu ý quan trọng**: Nếu trên máy đã có volume CSDL từ các phiên bản trước đó, vui lòng chạy `docker compose down -v` một lần để dọn sạch volume cũ, đảm bảo cấu trúc bảng `technician` được cập nhật cột `user_id`, bảng `ticket` được cập nhật cột `resolution` (lịch sử xử lý) và nạp dữ liệu liên kết tài khoản mẫu chính xác nhất:
+> Giữ dữ liệu volume hiện có. Nếu cần cơ sở dữ liệu mới để đánh giá, dùng compose project cô lập và volume riêng.
 ```bash
-# Dọn sạch volume CSDL cũ (nếu đã từng khởi chạy trước đó):
-docker compose down -v
-
 # Khởi chạy toàn bộ hệ thống Spring Boot & MySQL 8.0 container:
 docker compose up -d --build
 ```
@@ -137,6 +134,10 @@ docker compose up -d --build
 Hệ thống tích hợp thư viện `springdoc-openapi-starter-webmvc-ui` phiên bản `2.6.0` (tương thích Spring Boot 3.3.4), hỗ trợ giao diện thử nghiệm API trực quan không yêu cầu đăng nhập:
 - **Swagger UI Dashboard**: `http://localhost:8080/swagger-ui/index.html`
 - **OpenAPI Specification**: `http://localhost:8080/v3/api-docs`
+- **OpenAPI export**: [docs/api-docs/openapi.json](docs/api-docs/openapi.json)
+- **API route details and captured examples**: [docs/api-docs/README.md](docs/api-docs/README.md)
+- **Test plan and report**: [docs/test-plan.md](docs/test-plan.md), [docs/test-report.md](docs/test-report.md)
+- **Bug log and deployment/security guidance**: [docs/bug-log.md](docs/bug-log.md), [docs/deployment-guide.md](docs/deployment-guide.md), [docs/checklist-bao-mat.md](docs/checklist-bao-mat.md)
 - **Bộ API CRUD Ticket**: `POST /api/v1/tickets`, `GET /api/v1/tickets/{id}`, `GET /api/v1/tickets`, `PUT /api/v1/tickets/{id}`, `DELETE /api/v1/tickets/{id}` (xóa mềm `deleted_at`).
 - **Bộ API CRUD Appointment**: `POST /api/v1/appointments`, `GET /api/v1/appointments/{id}`, `GET /api/v1/appointments`, `PUT /api/v1/appointments/{id}`, `DELETE /api/v1/appointments/{id}` (hủy mềm `DA_HUY`).
 
@@ -177,5 +178,5 @@ Hệ thống đã nạp sẵn dữ liệu kiểm thử (Seed Data) đại diện
 - [x] Chuyển ô `changeReason` thành input form động cho Quản lý kèm JS validation $\ge$ 10 ký tự (QT-07).
 - [x] Bổ sung đầy đủ logging SLF4J trong các Service và cấu hình bảo mật `GlobalExceptionHandler`.
 - [x] Hoàn thiện tài liệu kỹ thuật: `README.md`, `docs/thay-doi-thiet-ke.md`, `docs/ai-disclosure.md`.
-- [x] Thử nghiệm kịch bản "Phép thử thư mục trống" (Clone-and-Run) đạt 100% Unit Test PASS.
-- [x] Đóng gói và phát hành chính thức **Tag Release `v0.2`** hoàn tất Bài tập 2.
+- [x] Bộ test BT3 gần nhất được ghi nhận: 108 tests, 0 failures/errors/skipped; xem [Test Report](docs/test-report.md).
+- [ ] Release BT3 v1.0: chưa phát hành; xem tài liệu test, API và các giới hạn đóng gói trước khi dùng để nộp bài.

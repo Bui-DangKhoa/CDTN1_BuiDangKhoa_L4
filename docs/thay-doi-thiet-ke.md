@@ -45,9 +45,9 @@ Tài liệu ghi nhận toàn bộ các quyết định điều chỉnh kỹ thu�
 - **Lý do**: Khắc phục triệt để lỗi hiển thị tiếng Việt có dấu trên môi trường triển khai Docker/Linux và đồng bộ 100% nhận diện thiết kế với bản vẽ `docs/wireframe.drawio`.
 - **Ảnh hưởng tới thành phần nào**: `style.css`, `application.yml`, `application-docker.yml`, `docker-compose.yml`, các tệp HTML trong `src/main/resources/templates/`.
 
-### TD-08: Tối ưu script SQL đảm bảo tính Idempotent khi nạp lại CSDL (C5)
+### TD-08: Script schema và seed hỗ trợ nạp lại trong môi trường thử cô lập
 - **Thay đổi gì**: Sử dụng mệnh đề `CREATE TABLE IF NOT EXISTS`, `ON DUPLICATE KEY UPDATE` và `INSERT IGNORE INTO` cho các bảng danh mục và dữ liệu kiểm thử trong `docs/schema.sql` và `seeds/*.sql`.
-- **Lý do**: Đảm bảo tiêu chí Idempotent C5 trong tiêu chuẩn chấm điểm, cho phép chạy lại lệnh migration/seed hoặc khởi động lại hệ thống lần thứ 2 trên CSDL hiện hành (giữ nguyên volume dữ liệu, không xóa volume) mà không xảy ra lỗi trùng lặp khóa chính, không dừng container MySQL và bảo toàn nguyên vẹn số lượng bản ghi gốc.
+- **Kiểm chứng BT3**: Trong database cô lập, chạy lại `docs/schema.sql` hai lần và mỗi seed SQL một lần hoàn tất thành công; counts tickets/technicians/users trước và sau là 11/4/2. Đây là thao tác import có chủ đích; chỉ restart app không chạy lại script init MySQL.
 - **Ảnh hưởng tới thành phần nào**: `docs/schema.sql`, `seeds/data-demo.sql`, `seeds/auth_data.sql`, `docker-compose.yml`.
 
 ### TD-09: Bổ sung Logging SLF4J nghiệp vụ và làm sạch GlobalExceptionHandler

@@ -1,0 +1,30 @@
+{
+    "request":  {
+                    "method":  "GET",
+                    "path":  "/api/v1/scheduling/eligible-technicians?ticketId=127\u0026appointmentTime=2026-11-17T10%3A00%3A00"
+                },
+    "status":  200,
+    "response":  {
+                     "success":  true,
+                     "message":  "Tìm thấy 2 kỹ thuật viên phù hợp",
+                     "data":  [
+                                  {
+                                      "technicianId":  1,
+                                      "employeeId":  1001,
+                                      "fullName":  "[REDACTED SAMPLE PII]",
+                                      "centerId":  1,
+                                      "level":  "BAC_3",
+                                      "isActive":  true
+                                  },
+                                  {
+                                      "technicianId":  2,
+                                      "employeeId":  1002,
+                                      "fullName":  "[REDACTED SAMPLE PII]",
+                                      "centerId":  1,
+                                      "level":  "BAC_2",
+                                      "isActive":  true
+                                  }
+                              ],
+                     "timestamp":  "2026-11-12T19:50:29+07:00"
+                 }
+}

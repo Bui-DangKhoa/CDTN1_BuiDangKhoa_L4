@@ -1,0 +1,43 @@
+{
+    "request":  {
+                    "method":  "POST",
+                    "path":  "/api/v1/tickets",
+                    "body":  {
+                                 "categoryId":  1,
+                                 "issueDesc":  "Isolated BT3 API documentation fixture",
+                                 "ticketCode":  "B3195029D",
+                                 "centerId":  1,
+                                 "priority":  "THAP",
+                                 "customerId":  201,
+                                 "deviceId":  1
+                             }
+                },
+    "status":  201,
+    "response":  {
+                     "success":  true,
+                     "message":  "Tiếp nhận phiếu yêu cầu thành công (QT-04)",
+                     "data":  {
+                                  "ticketId":  128,
+                                  "ticketCode":  "B3195029D",
+                                  "customerId":  201,
+                                  "customerPhone":  "[REDACTED SAMPLE PII]",
+                                  "deviceId":  1,
+                                  "deviceName":  "iPhone 15 Pro Max 256GB",
+                                  "serialNo":  "[REDACTED SAMPLE PII]",
+                                  "centerId":  1,
+                                  "technicianId":  null,
+                                  "technicianName":  "[REDACTED SAMPLE PII]",
+                                  "categoryId":  1,
+                                  "categoryName":  "Thay màn hình cảm ứng",
+                                  "issueDesc":  "Isolated BT3 API documentation fixture",
+                                  "priority":  "THAP",
+                                  "status":  "MOI",
+                                  "receivedAt":  "2026-11-12T19:50:30+07:00",
+                                  "dueDate":  "2026-11-18T19:50:30+07:00",
+                                  "closedAt":  null,
+                                  "slaStatus":  "CON_HAN",
+                                  "repeatCount":  2
+                              },
+                     "timestamp":  "2026-11-12T19:50:30+07:00"
+                 }
+}

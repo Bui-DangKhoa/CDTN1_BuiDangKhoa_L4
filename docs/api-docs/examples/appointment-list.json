@@ -1,0 +1,27 @@
+{
+    "request":  {
+                    "method":  "GET",
+                    "path":  "/api/v1/appointments?ticketId=130"
+                },
+    "status":  200,
+    "response":  {
+                     "success":  true,
+                     "message":  "Thao tác thành công",
+                     "data":  [
+                                  {
+                                      "appointmentId":  8,
+                                      "ticketId":  130,
+                                      "ticketCode":  "B3195029A",
+                                      "technicianId":  1,
+                                      "technicianName":  "[REDACTED SAMPLE PII]",
+                                      "appointmentTime":  "2026-11-19T14:00:00+07:00",
+                                      "status":  "CHO_XAC_NHAN",
+                                      "createdAt":  "2026-11-12T19:50:30+07:00",
+                                      "customerPhone":  "[REDACTED SAMPLE PII]",
+                                      "deviceName":  "iPhone 15 Pro Max 256GB",
+                                      "issueDesc":  "Isolated BT3 API documentation fixture"
+                                  }
+                              ],
+                     "timestamp":  "2026-11-12T19:50:30+07:00"
+                 }
+}
