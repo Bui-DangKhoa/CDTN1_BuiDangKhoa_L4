@@ -65,11 +65,19 @@ public class TicketServiceImpl implements TicketService {
         if (priority == null) {
             priority = Priority.TRUNG_BINH;
         }
-        return switch (priority) {
-            case CAO -> receivedAt.plusHours(24);
-            case TRUNG_BINH -> receivedAt.plusHours(72);
-            case THAP -> receivedAt.plusHours(120);
+        int workingDays = switch (priority) {
+            case CAO -> 1;
+            case TRUNG_BINH -> 3;
+            case THAP -> 5;
         };
+        LocalDateTime dueDate = receivedAt;
+        for (int day = 0; day < workingDays; day++) {
+            dueDate = dueDate.plusDays(1);
+            if (dueDate.getDayOfWeek() == java.time.DayOfWeek.SUNDAY) {
+                dueDate = dueDate.plusDays(1);
+            }
+        }
+        return dueDate;
     }
 
     @Override

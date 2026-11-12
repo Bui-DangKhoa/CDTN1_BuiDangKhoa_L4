@@ -359,6 +359,26 @@ class TicketServiceTest {
     }
 
     @Test
+    @DisplayName("TC-04 | QT-04 | Nhận thứ Bảy 15:00, mức CAO -> hạn thứ Hai 15:00 (bỏ Chủ nhật)")
+    void TC04_dueDate_skipsSunday() {
+        LocalDateTime received = LocalDateTime.of(2026, 11, 7, 15, 0);
+        assertEquals(LocalDateTime.of(2026, 11, 9, 15, 0), ticketService.calculateDueDate(received, "CAO"));
+    }
+
+    @Test
+    @DisplayName("QT-04 | THAP tính năm ngày làm việc, bỏ qua Chủ nhật")
+    void dueDate_lowPriority_skipsSunday() {
+        LocalDateTime received = LocalDateTime.of(2026, 10, 20, 8, 0);
+        assertEquals(LocalDateTime.of(2026, 10, 26, 8, 0), ticketService.calculateDueDate(received, "THAP"));
+    }
+
+    @Test
+    @DisplayName("QT-04 | TRUNG_BINH tính ba ngày làm việc")
+    void dueDate_mediumPriority_threeWorkingDays() {
+        LocalDateTime received = LocalDateTime.of(2026, 10, 19, 8, 0);
+        assertEquals(LocalDateTime.of(2026, 10, 22, 8, 0), ticketService.calculateDueDate(received, "TRUNG_BINH"));
+    }
+    @Test
     @DisplayName("TC-12: updateTicket - Cập nhật thông tin phiếu và tính lại hạn SLA due_date khi thay đổi mức ưu tiên (QT-04)")
     void updateTicket_validPriorityChange_recalculatesDueDate() {
         LocalDateTime receivedAt = LocalDateTime.of(2026, 10, 20, 8, 0);
@@ -380,7 +400,7 @@ class TicketServiceTest {
 
         assertNotNull(updated);
         assertEquals("THAP", updated.getPriority());
-        assertEquals(receivedAt.plusHours(120), updated.getDueDate());
+        assertEquals(LocalDateTime.of(2026, 10, 26, 8, 0), updated.getDueDate());
         assertEquals("Mô tả sự cố mới đã kiểm tra lại", updated.getIssueDesc());
         verify(ticketRepository).save(mockTicket);
     }
