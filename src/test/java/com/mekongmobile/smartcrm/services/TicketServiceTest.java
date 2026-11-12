@@ -127,6 +127,47 @@ class TicketServiceTest {
     }
 
     @Test
+    @DisplayName("BUG-06: Quản lý trung tâm khác không sửa, gán hoặc xóa phiếu; không lưu hay ghi log")
+    void managerFromOtherCenterCannotMutateTicket() {
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+        var update = new com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto();
+        update.setIssueDesc("Nội dung bị sửa trái phép");
+        var statusUpdate = UpdateTicketStatusDto.builder().newStatus("DA_PHAN_CONG").changedBy(99L).build();
+
+        for (Runnable operation : List.<Runnable>of(
+                () -> ticketService.updateTicket(10L, update, 2L),
+                () -> ticketService.updateTicketStatus(10L, statusUpdate, 99L, null, 2L),
+                () -> ticketService.assignTechnician(10L, 5L, 99L, "Điều phối", null, 2L),
+                () -> ticketService.deleteTicket(10L, 99L, 2L))) {
+            AppException ex = assertThrows(AppException.class, operation::run);
+            assertEquals("FORBIDDEN_OTHER_CENTER", ex.getErrorCode());
+        }
+
+        assertEquals("MOI", mockTicket.getStatus());
+        assertNull(mockTicket.getTechnician());
+        assertEquals("Máy không sạc được pin", mockTicket.getIssueDesc());
+        verify(ticketRepository, never()).save(any());
+        verify(statusLogRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("BUG-06: Quản lý cùng trung tâm vẫn xem và phân công được phiếu")
+    void managerFromOwnCenterCanReadAndAssignTicket() {
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(technicianRepository.findById(5L)).thenReturn(Optional.of(mockTechnician));
+        when(technicianRepository.findEligibleTechnicians(1L, 1)).thenReturn(List.of(mockTechnician));
+        when(statusLogRepository.save(any(TicketStatusLog.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertEquals(1L, ticketService.getTicketForManager(10L, 1L).getCenterId());
+        Ticket assigned = ticketService.assignTechnician(10L, 5L, 7L, "Phân công KTV", null, 1L);
+
+        assertEquals("DA_PHAN_CONG", assigned.getStatus());
+        assertEquals(5L, assigned.getTechnician().getTechnicianId());
+        verify(statusLogRepository).save(any(TicketStatusLog.class));
+    }
+
+    @Test
     @DisplayName("TC-01: Happy Path - Phân công KTV đủ tay nghề thành công lần đầu cho phiếu ở trạng thái MOI")
     void TC01_assignTechnician_success_whenValidData() {
         testAssignTechnician_Success();

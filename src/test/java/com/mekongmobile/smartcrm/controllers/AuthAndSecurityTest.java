@@ -184,7 +184,7 @@ class AuthAndSecurityTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Xóa mềm phiếu bảo hành thành công (QT-13)"));
 
-        org.mockito.Mockito.verify(ticketService).deleteTicket(101L, 99L);
+        org.mockito.Mockito.verify(ticketService).deleteTicket(101L, 99L, 1L);
     }
 
     @Test
@@ -276,7 +276,7 @@ class AuthAndSecurityTest {
 
         org.mockito.ArgumentCaptor<com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto> dtoCaptor =
                 org.mockito.ArgumentCaptor.forClass(com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto.class);
-        org.mockito.Mockito.verify(ticketService).updateTicketStatus(eq(102L), dtoCaptor.capture(), eq(2L), eq(1L));
+        org.mockito.Mockito.verify(ticketService).updateTicketStatus(eq(102L), dtoCaptor.capture(), eq(2L), eq(1L), org.mockito.ArgumentMatchers.isNull());
         org.junit.jupiter.api.Assertions.assertEquals(2L, dtoCaptor.getValue().getChangedBy());
     }
 
@@ -307,12 +307,79 @@ class AuthAndSecurityTest {
     @DisplayName("BUG-04: Quản lý xem ticket với SĐT đầy đủ")
     void managerReadsFullCustomerPhone() throws Exception {
         UserSessionDto user = UserSessionDto.builder().userId(1L).role("QUAN_LY").centerId(1L).build();
-        when(ticketService.getTicketById(102L)).thenReturn(
+        when(ticketService.getTicketForManager(102L, 1L)).thenReturn(
                 TicketResponseDto.builder().ticketId(102L).customerPhone("0901234567").build());
 
         mockMvc.perform(get("/api/v1/tickets/102").sessionAttr("currentUser", user))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.customerPhone").value("0901234567"));
+    }
+
+    @Test
+    @DisplayName("BUG-06: Quản lý không được đọc phiếu thuộc trung tâm khác")
+    void managerCannotReadTicketFromOtherCenter() throws Exception {
+        UserSessionDto manager = UserSessionDto.builder().userId(1L).role("QUAN_LY").centerId(1L).build();
+        when(ticketService.getTicketForManager(102L, 1L)).thenThrow(
+                new com.mekongmobile.smartcrm.exceptions.AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập phiếu này"));
+
+        mockMvc.perform(get("/api/v1/tickets/102").sessionAttr("currentUser", manager))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("FORBIDDEN_OTHER_CENTER"));
+    }
+
+    @Test
+    @DisplayName("BUG-06: Quản lý trung tâm khác không sửa, gán hoặc xóa ticket qua REST")
+    void managerCannotMutateTicketFromOtherCenterThroughRest() throws Exception {
+        UserSessionDto manager = UserSessionDto.builder().userId(1L).role("QUAN_LY").centerId(1L).build();
+        var forbidden = new com.mekongmobile.smartcrm.exceptions.AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập phiếu này");
+        when(ticketService.updateTicket(eq(102L), any(), eq(1L))).thenThrow(forbidden);
+        when(ticketService.updateTicketStatus(eq(102L), any(), eq(1L), org.mockito.ArgumentMatchers.isNull(), eq(1L))).thenThrow(forbidden);
+        when(ticketService.assignTechnician(eq(102L), eq(5L), eq(1L), any(), eq(null), eq(1L))).thenThrow(forbidden);
+        org.mockito.Mockito.doThrow(forbidden).when(ticketService).deleteTicket(102L, 1L, 1L);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/tickets/102")
+                        .sessionAttr("currentUser", manager).contentType("application/json")
+                        .content("{\"issueDesc\":\"change\",\"priority\":\"CAO\",\"categoryId\":1}"))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.error").value("FORBIDDEN_OTHER_CENTER"));
+        mockMvc.perform(post("/api/v1/tickets/102/assign").sessionAttr("currentUser", manager)
+                        .contentType("application/json").content("{\"technicianId\":5,\"changeReason\":\"test reason long\"}"))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.error").value("FORBIDDEN_OTHER_CENTER"));
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/v1/tickets/102/status")
+                        .sessionAttr("currentUser", manager).contentType("application/json")
+                        .content("{\"newStatus\":\"DA_PHAN_CONG\",\"changedBy\":999}"))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.error").value("FORBIDDEN_OTHER_CENTER"));
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/v1/tickets/102")
+                        .sessionAttr("currentUser", manager))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.error").value("FORBIDDEN_OTHER_CENTER"));
+    }
+
+    @Test
+    @DisplayName("BUG-06: Quản lý trung tâm khác không đọc được lịch hẹn qua REST")
+    void managerCannotReadAppointmentFromOtherCenterThroughRest() throws Exception {
+        UserSessionDto manager = UserSessionDto.builder().userId(1L).role("QUAN_LY").centerId(1L).build();
+        when(appointmentService.getAppointmentById(99L, 1L)).thenThrow(
+                new com.mekongmobile.smartcrm.exceptions.AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập lịch hẹn này"));
+
+        mockMvc.perform(get("/api/v1/appointments/99").sessionAttr("currentUser", manager))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("FORBIDDEN_OTHER_CENTER"));
+    }
+
+    @Test
+    @DisplayName("BUG-06: Quản lý trung tâm khác không sửa hoặc hủy lịch hẹn qua REST")
+    void managerCannotMutateAppointmentFromOtherCenterThroughRest() throws Exception {
+        UserSessionDto manager = UserSessionDto.builder().userId(1L).role("QUAN_LY").centerId(1L).build();
+        var forbidden = new com.mekongmobile.smartcrm.exceptions.AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập lịch hẹn này");
+        when(appointmentService.updateAppointment(eq(99L), any(), eq(1L))).thenThrow(forbidden);
+        when(appointmentService.cancelAppointment(99L, 1L)).thenThrow(forbidden);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/v1/appointments/99")
+                        .sessionAttr("currentUser", manager).contentType("application/json")
+                        .content("{\"appointmentTime\":\"2026-12-01T10:00:00\"}"))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.error").value("FORBIDDEN_OTHER_CENTER"));
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/v1/appointments/99")
+                        .sessionAttr("currentUser", manager))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.error").value("FORBIDDEN_OTHER_CENTER"));
     }
 
     @Test

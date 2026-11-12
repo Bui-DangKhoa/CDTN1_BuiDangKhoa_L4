@@ -44,6 +44,8 @@ public interface TicketService {
      */
     TicketResponseDto getTicketById(Long ticketId);
 
+    TicketResponseDto getTicketForManager(Long ticketId, Long centerId);
+
     /** QT-15: Trả ticket của KTV hiện tại với SĐT đã che, từ chối nếu không phải chủ sở hữu. */
     TicketResponseDto getTicketForTechnician(Long ticketId, Long technicianId);
 
@@ -53,6 +55,8 @@ public interface TicketService {
      */
     TicketResponseDto updateTicket(Long ticketId, com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto requestDto);
 
+    TicketResponseDto updateTicket(Long ticketId, com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto requestDto, Long centerId);
+
     /**
      * QT-13: Xóa mềm phiếu bảo hành (deleted_at).
      * Chỉ được xóa khi status = 'MOI' và chưa có lịch hẹn còn hiệu lực (khác 'DA_HUY').
@@ -60,7 +64,10 @@ public interface TicketService {
      */
     void deleteTicket(Long ticketId, Long changedBy);
 
+    void deleteTicket(Long ticketId, Long changedBy, Long centerId);
+
     void deleteTicket(Long ticketId);
+
 
     /**
      * Lấy danh sách tất cả các ticket mới nhất.
@@ -90,6 +97,9 @@ public interface TicketService {
     Ticket assignTechnician(Long ticketId, Long technicianId, Long assignedBy, String changeReason,
                             LocalDateTime appointmentTime);
 
+    Ticket assignTechnician(Long ticketId, Long technicianId, Long assignedBy, String changeReason,
+                            LocalDateTime appointmentTime, Long centerId);
+
     /**
      * QT-08: Cập nhật trạng thái tiến độ ticket và ghi nhật ký kiểm toán.
      */
@@ -98,6 +108,9 @@ public interface TicketService {
     /** Cập nhật trạng thái dưới danh tính đã xác thực, kèm ràng buộc ticket thuộc KTV nếu có. */
     TicketResponseDto updateTicketStatus(Long ticketId, UpdateTicketStatusDto updateDto,
                                          Long changedBy, Long technicianId);
+
+    TicketResponseDto updateTicketStatus(Long ticketId, UpdateTicketStatusDto updateDto,
+                                         Long changedBy, Long technicianId, Long centerId);
 
     /**
      * Ngưỡng cảnh báo sắp quá hạn SLA (24 giờ).
@@ -137,6 +150,8 @@ public interface TicketService {
      */
     List<TicketResponseDto> getTicketsForManager(Long centerId);
 
+    List<TicketResponseDto> getTicketsForManagerByStatus(String status, Long centerId);
+
     /**
      * QT-15: Lấy danh sách phiếu được gán cho KTV cá nhân, tự động che 4 số giữa SĐT (090****567).
      */
@@ -171,6 +186,7 @@ public interface TicketService {
      * QT-08: Lấy danh sách KTV đủ điều kiện (cùng centerId, proficiency >= 3 cho danh mục sự cố).
      */
     List<com.mekongmobile.smartcrm.dto.TechnicianResponseDto> getEligibleTechniciansForTicket(Long ticketId);
+    List<com.mekongmobile.smartcrm.dto.TechnicianResponseDto> getEligibleTechniciansForTicket(Long ticketId, Long centerId);
     /**
      * US5 / FR5: Lấy lịch sử sửa chữa của thiết bị (các phiếu trước đó đã hoàn tất hoặc đóng).
      *

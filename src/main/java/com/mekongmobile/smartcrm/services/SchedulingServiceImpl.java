@@ -8,6 +8,7 @@ import com.mekongmobile.smartcrm.entities.Technician;
 import com.mekongmobile.smartcrm.entities.Ticket;
 import com.mekongmobile.smartcrm.entities.TicketStatusLog;
 import com.mekongmobile.smartcrm.exceptions.BusinessRuleException;
+import com.mekongmobile.smartcrm.exceptions.AppException;
 import com.mekongmobile.smartcrm.exceptions.ResourceNotFoundException;
 import com.mekongmobile.smartcrm.repositories.AppointmentRepository;
 import com.mekongmobile.smartcrm.repositories.TechnicianRepository;
@@ -52,6 +53,13 @@ public class SchedulingServiceImpl implements SchedulingService {
                 .filter(tech -> !appointmentRepository.existsActiveAppointmentAtTime(tech.getTechnicianId(), appointmentTime))
                 .map(this::mapTechnicianToDto)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TechnicianDto> findEligibleTechnicians(Long ticketId, LocalDateTime appointmentTime, Long centerId) {
+        requireTicketCenter(ticketId, centerId);
+        return findEligibleTechnicians(ticketId, appointmentTime);
     }
 
     @Override
@@ -127,6 +135,21 @@ public class SchedulingServiceImpl implements SchedulingService {
                 .dueDate(savedTicket.getDueDate())
                 .closedAt(savedTicket.getClosedAt())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public TicketResponseDto scheduleAppointment(ScheduleAppointmentDto scheduleDto, Long centerId) {
+        requireTicketCenter(scheduleDto.getTicketId(), centerId);
+        return scheduleAppointment(scheduleDto);
+    }
+
+    private void requireTicketCenter(Long ticketId, Long centerId) {
+        Ticket ticket = ticketRepository.findById(ticketId).filter(t -> t.getDeletedAt() == null)
+                .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu"));
+        if (centerId == null || !centerId.equals(ticket.getCenterId())) {
+            throw new AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập phiếu này");
+        }
     }
 
     private TechnicianDto mapTechnicianToDto(Technician tech) {

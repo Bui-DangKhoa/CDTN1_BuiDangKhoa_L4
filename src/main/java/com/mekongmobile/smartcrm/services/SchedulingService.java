@@ -21,9 +21,13 @@ public interface SchedulingService {
      */
     List<TechnicianDto> findEligibleTechnicians(Long ticketId, LocalDateTime appointmentTime);
 
+    List<TechnicianDto> findEligibleTechnicians(Long ticketId, LocalDateTime appointmentTime, Long centerId);
+
     /**
      * QT-07: Đặt lịch hẹn và điều phối kỹ thuật viên cho ticket.
      * Cập nhật technician cho ticket, chuyển trạng thái sang DA_PHAN_CONG, và ghi lịch sử trạng thái.
      */
     TicketResponseDto scheduleAppointment(ScheduleAppointmentDto scheduleDto);
+
+    TicketResponseDto scheduleAppointment(ScheduleAppointmentDto scheduleDto, Long centerId);
 }

@@ -161,8 +161,8 @@ public class ThymeleafViewsTest {
                                 .activeTicketsCount(3)
                                 .build();
 
-                when(ticketService.getTicketById(125L)).thenReturn(ticket);
-                when(ticketService.getEligibleTechniciansForTicket(125L)).thenReturn(List.of(tech));
+                when(ticketService.getTicketForManager(125L, 1L)).thenReturn(ticket);
+                when(ticketService.getEligibleTechniciansForTicket(125L, 1L)).thenReturn(List.of(tech));
 
                 com.mekongmobile.smartcrm.dto.UserSessionDto managerSession = com.mekongmobile.smartcrm.dto.UserSessionDto
                                 .builder()

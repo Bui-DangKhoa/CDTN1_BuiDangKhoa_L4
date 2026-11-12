@@ -33,8 +33,12 @@ public class TicketWebController {
     }
 
     @GetMapping("/tickets/{id}")
-    public String ticketDetail(@PathVariable("id") Long id, Model model) {
-        TicketResponseDto ticket = ticketService.getTicketById(id);
+    public String ticketDetail(@PathVariable("id") Long id, Model model, jakarta.servlet.http.HttpSession session) {
+        com.mekongmobile.smartcrm.dto.UserSessionDto user = session == null ? null
+                : (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
+        if (user == null || user.getUserId() == null) throw new com.mekongmobile.smartcrm.exceptions.AppException("UNAUTHORIZED", "Vui lòng đăng nhập");
+        if (!"QUAN_LY".equalsIgnoreCase(user.getRole())) throw new com.mekongmobile.smartcrm.exceptions.AppException("FORBIDDEN", "Chức năng chỉ dành cho quản lý");
+        TicketResponseDto ticket = ticketService.getTicketForManager(id, user.getCenterId());
         model.addAttribute("ticket", ticket);
         model.addAttribute("title", "Chi tiết Ticket - " + ticket.getTicketCode());
         return "redirect:/tickets/" + id + "/assign";

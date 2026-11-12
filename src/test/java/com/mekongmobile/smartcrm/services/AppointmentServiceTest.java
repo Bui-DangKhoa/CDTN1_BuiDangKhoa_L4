@@ -108,6 +108,39 @@ class AppointmentServiceTest {
     }
 
     @Test
+    @DisplayName("BUG-06: Quản lý khác trung tâm không thể đặt lịch cho ticket và không truy vấn KTV")
+    void managerFromOtherCenterCannotScheduleTicketAppointment() {
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+
+        AppException ex = assertThrows(AppException.class,
+                () -> appointmentService.scheduleAppointment(10L, 5L, appointmentTime, 2L));
+
+        assertEquals("FORBIDDEN_OTHER_CENTER", ex.getErrorCode());
+        verify(technicianRepository, never()).findById(any());
+        verify(appointmentRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("BUG-06: Quản lý khác trung tâm không thể đọc hoặc cập nhật lịch hẹn")
+    void managerFromOtherCenterCannotReadOrUpdateAppointment() {
+        Appointment appointment = Appointment.builder().appointmentId(77L).ticket(mockTicket)
+                .technician(mockTechnician).appointmentTime(appointmentTime).status("CHO_XAC_NHAN").build();
+        when(appointmentRepository.findById(77L)).thenReturn(Optional.of(appointment));
+        var request = new com.mekongmobile.smartcrm.dto.UpdateAppointmentRequest();
+        request.setAppointmentTime(appointmentTime.plusHours(1));
+
+        assertEquals("FORBIDDEN_OTHER_CENTER", assertThrows(AppException.class,
+                () -> appointmentService.getAppointmentById(77L, 2L)).getErrorCode());
+        assertEquals("FORBIDDEN_OTHER_CENTER", assertThrows(AppException.class,
+                () -> appointmentService.updateAppointment(77L, request, 2L)).getErrorCode());
+        assertEquals("FORBIDDEN_OTHER_CENTER", assertThrows(AppException.class,
+                () -> appointmentService.cancelAppointment(77L, 2L)).getErrorCode());
+
+        assertEquals(appointmentTime, appointment.getAppointmentTime());
+        verify(appointmentRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("QT-L4-01: Đặt lịch hẹn thành công khi KTV không có lịch trùng")
     void testScheduleAppointment_Success() {
         testCreateAppointment_Success();

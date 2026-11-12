@@ -186,6 +186,22 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional(readOnly = true)
+    public TicketResponseDto getTicketForManager(Long ticketId, Long centerId) {
+        return mapToDto(getManagerTicket(ticketId, centerId));
+    }
+
+    private Ticket getManagerTicket(Long ticketId, Long centerId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .filter(t -> t.getDeletedAt() == null)
+                .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu"));
+        if (centerId == null || !centerId.equals(ticket.getCenterId())) {
+            throw new AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập phiếu này");
+        }
+        return ticket;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public TicketResponseDto getTicketForTechnician(Long ticketId, Long technicianId) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .filter(t -> t.getDeletedAt() == null)
@@ -234,6 +250,13 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional
+    public TicketResponseDto updateTicket(Long ticketId, com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto requestDto, Long centerId) {
+        getManagerTicket(ticketId, centerId);
+        return updateTicket(ticketId, requestDto);
+    }
+
+    @Override
+    @Transactional
     public void deleteTicket(Long ticketId) {
         deleteTicket(ticketId, 1L);
     }
@@ -271,6 +294,13 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    @Transactional
+    public void deleteTicket(Long ticketId, Long changedBy, Long centerId) {
+        getManagerTicket(ticketId, centerId);
+        deleteTicket(ticketId, changedBy);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDto> getAllTickets() {
         return ticketRepository.findAllByDeletedAtIsNullOrderByReceivedAtDesc()
@@ -286,6 +316,14 @@ public class TicketServiceImpl implements TicketService {
                 .stream()
                 .map(this::mapToDto)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TicketResponseDto> getTicketsForManagerByStatus(String status, Long centerId) {
+        if (centerId == null) throw new AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập dữ liệu này");
+        return ticketRepository.findByStatusAndCenterIdOrderByDueDateAsc(status, centerId).stream()
+                .filter(t -> t.getDeletedAt() == null).map(this::mapToDto).toList();
     }
 
     @Override
@@ -333,6 +371,14 @@ public class TicketServiceImpl implements TicketService {
         }
         updateDto.setChangedBy(changedBy);
         return updateTicketStatus(ticketId, updateDto);
+    }
+
+    @Override
+    @Transactional
+    public TicketResponseDto updateTicketStatus(Long ticketId, UpdateTicketStatusDto updateDto,
+                                                Long changedBy, Long technicianId, Long centerId) {
+        if (technicianId == null) getManagerTicket(ticketId, centerId);
+        return updateTicketStatus(ticketId, updateDto, changedBy, technicianId);
     }
 
     @Override
@@ -421,6 +467,14 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    @Transactional
+    public Ticket assignTechnician(Long ticketId, Long technicianId, Long assignedBy, String changeReason,
+                                   LocalDateTime appointmentTime, Long centerId) {
+        getManagerTicket(ticketId, centerId);
+        return assignTechnician(ticketId, technicianId, assignedBy, changeReason, appointmentTime);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDto> getUnassignedTicketsSortedByDueDate() {
         return getUnassignedTicketsSortedByDueDate(null);
@@ -430,12 +484,9 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDto> getUnassignedTicketsSortedByDueDate(Long centerId) {
+        if (centerId == null) throw new AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập dữ liệu này");
         List<Ticket> tickets = ticketRepository.findUnassignedTicketsOrderByDueDateAsc();
-        if (centerId != null) {
-            tickets = tickets.stream()
-                    .filter(t -> centerId.equals(t.getCenterId()))
-                    .toList();
-        }
+        tickets = tickets.stream().filter(t -> centerId.equals(t.getCenterId())).toList();
         return tickets.stream().map(t -> mapToDto(t, false)).toList();
     }
 
@@ -443,9 +494,8 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDto> getTicketsForManager(Long centerId) {
-        List<Ticket> tickets = (centerId != null)
-                ? ticketRepository.findByCenterIdAndDeletedAtIsNull(centerId)
-                : ticketRepository.findAllByDeletedAtIsNullOrderByReceivedAtDesc();
+        if (centerId == null) throw new AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập dữ liệu này");
+        List<Ticket> tickets = ticketRepository.findByCenterIdAndDeletedAtIsNull(centerId);
         return tickets.stream().map(t -> mapToDto(t, false)).toList();
     }
 
@@ -556,6 +606,13 @@ public class TicketServiceImpl implements TicketService {
                             .build();
                 })
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<com.mekongmobile.smartcrm.dto.TechnicianResponseDto> getEligibleTechniciansForTicket(Long ticketId, Long centerId) {
+        getManagerTicket(ticketId, centerId);
+        return getEligibleTechniciansForTicket(ticketId);
     }
 
     private void validateStatusTransition(String current, String next) {

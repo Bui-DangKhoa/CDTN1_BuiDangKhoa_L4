@@ -43,13 +43,14 @@ public class AppointmentController {
     @GetMapping("/appointments/new")
     public String showScheduleForm(
             @RequestParam(value = "ticketId", required = false) Long ticketId,
-            Model model) {
+            Model model, jakarta.servlet.http.HttpSession session) {
+        var manager = requireManager(session);
         log.info("GET /appointments/new - Mở form đặt lịch hẹn cho ticketId: {}", ticketId);
 
         CreateAppointmentRequest request = new CreateAppointmentRequest();
         if (ticketId != null) {
             request.setTicketId(ticketId);
-            loadTicketAndTechnicians(ticketId, model);
+            loadTicketAndTechnicians(ticketId, manager.getCenterId(), model);
         }
 
         model.addAttribute("appointmentRequest", request);
@@ -65,20 +66,22 @@ public class AppointmentController {
             @Valid @ModelAttribute("appointmentRequest") CreateAppointmentRequest request,
             BindingResult bindingResult,
             Model model,
-            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes,
+            jakarta.servlet.http.HttpSession session) {
+        var manager = requireManager(session);
 
         log.info("POST /appointments - Tiếp nhận yêu cầu đặt lịch hẹn: {}", request);
 
         if (bindingResult.hasErrors()) {
             if (request.getTicketId() != null) {
-                loadTicketAndTechnicians(request.getTicketId(), model);
+                loadTicketAndTechnicians(request.getTicketId(), manager.getCenterId(), model);
             }
             return "appointments/schedule-form";
         }
 
         try {
             Appointment appointment = appointmentService.scheduleAppointment(
-                    request.getTicketId(), request.getTechnicianId(), request.getAppointmentTime());
+                    request.getTicketId(), request.getTechnicianId(), request.getAppointmentTime(), manager.getCenterId());
 
             redirectAttributes.addFlashAttribute("successMessage",
                     "Đặt lịch hẹn thành công cho phiếu #" + appointment.getTicket().getTicketCode()
@@ -87,17 +90,18 @@ public class AppointmentController {
 
             return "redirect:/tickets/unassigned";
         } catch (AppException ex) {
+            if ("FORBIDDEN_OTHER_CENTER".equals(ex.getErrorCode())) throw ex;
             log.warn("Nghiệp vụ từ chối đặt lịch hẹn: {}", ex.getMessage());
             model.addAttribute("errorMessage", ex.getMessage());
             if (request.getTicketId() != null) {
-                loadTicketAndTechnicians(request.getTicketId(), model);
+                loadTicketAndTechnicians(request.getTicketId(), manager.getCenterId(), model);
             }
             return "appointments/schedule-form";
         } catch (Exception ex) {
             log.error("Lỗi khi xử lý đặt lịch hẹn: {}", ex.getMessage(), ex);
             model.addAttribute("errorMessage", "Lỗi xử lý hệ thống: " + ex.getMessage());
             if (request.getTicketId() != null) {
-                loadTicketAndTechnicians(request.getTicketId(), model);
+                loadTicketAndTechnicians(request.getTicketId(), manager.getCenterId(), model);
             }
             return "appointments/schedule-form";
         }
@@ -109,12 +113,13 @@ public class AppointmentController {
     @PostMapping("/api/v1/appointments")
     @ResponseBody
     public ResponseEntity<ApiResponse<AppointmentResponseDto>> scheduleAppointmentApi(
-            @Valid @RequestBody CreateAppointmentRequest request) {
+            @Valid @RequestBody CreateAppointmentRequest request, jakarta.servlet.http.HttpSession session) {
+        var manager = requireManager(session);
         log.info("REST API POST /api/v1/appointments - {}", request);
         Appointment appointment = appointmentService.scheduleAppointment(
-                request.getTicketId(), request.getTechnicianId(), request.getAppointmentTime());
+                request.getTicketId(), request.getTechnicianId(), request.getAppointmentTime(), manager.getCenterId());
 
-        AppointmentResponseDto responseDto = appointmentService.getAppointmentById(appointment.getAppointmentId());
+        AppointmentResponseDto responseDto = appointmentService.getAppointmentById(appointment.getAppointmentId(), manager.getCenterId());
 
         return new ResponseEntity<>(
                 ApiResponse.of("Đặt lịch hẹn thành công (QT-L4-01)", responseDto),
@@ -127,9 +132,10 @@ public class AppointmentController {
      */
     @GetMapping("/api/v1/appointments/{id}")
     @ResponseBody
-    public ResponseEntity<ApiResponse<AppointmentResponseDto>> getAppointmentByIdApi(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponse<AppointmentResponseDto>> getAppointmentByIdApi(@PathVariable("id") Long id, jakarta.servlet.http.HttpSession session) {
+        var manager = requireManager(session);
         log.info("REST API GET /api/v1/appointments/{}", id);
-        AppointmentResponseDto dto = appointmentService.getAppointmentById(id);
+        AppointmentResponseDto dto = appointmentService.getAppointmentById(id, manager.getCenterId());
         return ResponseEntity.ok(ApiResponse.of(dto));
     }
 
@@ -140,9 +146,11 @@ public class AppointmentController {
     @ResponseBody
     public ResponseEntity<ApiResponse<List<AppointmentResponseDto>>> getAllAppointmentsApi(
             @RequestParam(value = "ticketId", required = false) Long ticketId,
-            @RequestParam(value = "technicianId", required = false) Long technicianId) {
+            @RequestParam(value = "technicianId", required = false) Long technicianId,
+            jakarta.servlet.http.HttpSession session) {
+        var manager = requireManager(session);
         log.info("REST API GET /api/v1/appointments - ticketId: {}, technicianId: {}", ticketId, technicianId);
-        List<AppointmentResponseDto> list = appointmentService.getAllAppointments(ticketId, technicianId);
+        List<AppointmentResponseDto> list = appointmentService.getAllAppointments(ticketId, technicianId, manager.getCenterId());
         return ResponseEntity.ok(ApiResponse.of(list));
     }
 
@@ -154,9 +162,11 @@ public class AppointmentController {
     @ResponseBody
     public ResponseEntity<ApiResponse<AppointmentResponseDto>> updateAppointmentApi(
             @PathVariable("id") Long id,
-            @Valid @RequestBody UpdateAppointmentRequest request) {
+            @Valid @RequestBody UpdateAppointmentRequest request,
+            jakarta.servlet.http.HttpSession session) {
+        var manager = requireManager(session);
         log.info("REST API PUT /api/v1/appointments/{} - {}", id, request);
-        AppointmentResponseDto updated = appointmentService.updateAppointment(id, request);
+        AppointmentResponseDto updated = appointmentService.updateAppointment(id, request, manager.getCenterId());
         return ResponseEntity.ok(ApiResponse.of("Cập nhật lịch hẹn thành công (QT-L4-01)", updated));
     }
 
@@ -166,20 +176,32 @@ public class AppointmentController {
      */
     @DeleteMapping("/api/v1/appointments/{id}")
     @ResponseBody
-    public ResponseEntity<ApiResponse<String>> cancelAppointmentApi(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponse<String>> cancelAppointmentApi(@PathVariable("id") Long id, jakarta.servlet.http.HttpSession session) {
+        var manager = requireManager(session);
         log.info("REST API DELETE /api/v1/appointments/{} - Hủy lịch hẹn", id);
-        appointmentService.cancelAppointment(id);
+        appointmentService.cancelAppointment(id, manager.getCenterId());
         return ResponseEntity.ok(ApiResponse.of("Hủy lịch hẹn thành công", "Lịch hẹn đã được hủy mềm (DA_HUY)"));
     }
 
-    private void loadTicketAndTechnicians(Long ticketId, Model model) {
+    private void loadTicketAndTechnicians(Long ticketId, Long centerId, Model model) {
         try {
-            TicketResponseDto ticket = ticketService.getTicketById(ticketId);
-            List<TechnicianResponseDto> eligibleTechs = ticketService.getEligibleTechniciansForTicket(ticketId);
+            TicketResponseDto ticket = ticketService.getTicketForManager(ticketId, centerId);
+            List<TechnicianResponseDto> eligibleTechs = ticketService.getEligibleTechniciansForTicket(ticketId, centerId);
             model.addAttribute("ticket", ticket);
             model.addAttribute("technicians", eligibleTechs);
+        } catch (AppException ex) {
+            if ("FORBIDDEN_OTHER_CENTER".equals(ex.getErrorCode())) throw ex;
+            log.warn("Không thể nạp thông tin ticket hoặc KTV cho ticketId {}: {}", ticketId, ex.getMessage());
         } catch (Exception ex) {
             log.warn("Không thể nạp thông tin ticket hoặc KTV cho ticketId {}: {}", ticketId, ex.getMessage());
         }
+    }
+
+    private com.mekongmobile.smartcrm.dto.UserSessionDto requireManager(jakarta.servlet.http.HttpSession session) {
+        var user = session == null ? null : (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
+        if (user == null || user.getUserId() == null) throw new AppException("UNAUTHORIZED", "Vui lòng đăng nhập");
+        if (!"QUAN_LY".equalsIgnoreCase(user.getRole())) throw new AppException("FORBIDDEN", "Chức năng chỉ dành cho quản lý");
+        if (user.getCenterId() == null) throw new AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập dữ liệu này");
+        return user;
     }
 }

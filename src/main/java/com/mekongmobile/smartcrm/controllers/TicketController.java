@@ -42,9 +42,8 @@ public class TicketController {
     public String getUnassignedTickets(Model model, jakarta.servlet.http.HttpSession session) {
         log.info("GET /tickets/unassigned - Tải danh sách phiếu chưa phân công theo SLA");
 
-        com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
-                (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
-        Long centerId = (currentUser != null) ? currentUser.getCenterId() : null;
+        com.mekongmobile.smartcrm.dto.UserSessionDto currentUser = requireManager(session);
+        Long centerId = currentUser.getCenterId();
 
         // QT-14: Phân vùng dữ liệu theo trung tâm phụ trách của Quản lý
         List<TicketResponseDto> unassignedTickets = ticketService.getUnassignedTicketsSortedByDueDate(centerId);
@@ -69,11 +68,12 @@ public class TicketController {
      * MÀN HÌNH 2: Hiển thị form phân công hoặc đổi Kỹ thuật viên (QT-07, QT-08).
      */
     @GetMapping("/{id}/assign")
-    public String showAssignForm(@PathVariable("id") Long id, Model model) {
+    public String showAssignForm(@PathVariable("id") Long id, Model model, jakarta.servlet.http.HttpSession session) {
+        var currentUser = requireManager(session);
         log.info("GET /tickets/{}/assign - Hiển thị form phân công KTV", id);
         try {
-            TicketResponseDto ticket = ticketService.getTicketById(id);
-            List<TechnicianResponseDto> eligibleTechnicians = ticketService.getEligibleTechniciansForTicket(id);
+            TicketResponseDto ticket = ticketService.getTicketForManager(id, currentUser.getCenterId());
+            List<TechnicianResponseDto> eligibleTechnicians = ticketService.getEligibleTechniciansForTicket(id, currentUser.getCenterId());
 
             AssignTechnicianRequest request = new AssignTechnicianRequest();
             if (ticket.getTechnicianId() != null) {
@@ -88,6 +88,7 @@ public class TicketController {
 
             return "tickets/assign-form";
         } catch (AppException ex) {
+            if ("FORBIDDEN_OTHER_CENTER".equals(ex.getErrorCode())) throw ex;
             log.error("Lỗi khi tải form phân công ticket id {}: {}", id, ex.getMessage());
             model.addAttribute("errorMessage", ex.getMessage());
             return "redirect:/tickets/unassigned";
@@ -100,9 +101,10 @@ public class TicketController {
      */
     @GetMapping(value = "/{id}/eligible-technicians", produces = "application/json")
     @ResponseBody
-    public List<TechnicianResponseDto> getEligibleTechnicians(@PathVariable("id") Long id) {
+    public List<TechnicianResponseDto> getEligibleTechnicians(@PathVariable("id") Long id, jakarta.servlet.http.HttpSession session) {
+        ticketService.getTicketForManager(id, requireManager(session).getCenterId());
         log.info("GET /tickets/{}/eligible-technicians - Nạp danh sách KTV đủ điều kiện (QT-08)", id);
-        return ticketService.getEligibleTechniciansForTicket(id);
+        return ticketService.getEligibleTechniciansForTicket(id, requireManager(session).getCenterId());
     }
 
     /**
@@ -120,6 +122,8 @@ public class TicketController {
             RedirectAttributes redirectAttributes) {
 
         log.info("POST /tickets/{}/assign - Tiếp nhận yêu cầu phân công KTV: {}", id, request);
+        com.mekongmobile.smartcrm.dto.UserSessionDto currentUser = requireManager(session);
+        Long centerId = currentUser.getCenterId();
         boolean fromModal = "modal".equalsIgnoreCase(request.getSource());
 
         if (bindingResult.hasErrors()) {
@@ -128,15 +132,10 @@ public class TicketController {
                 redirectAttributes.addFlashAttribute("errorMessage", message);
                 return "redirect:/tickets/unassigned";
             }
-            loadFormContext(id, model);
+            loadFormContext(id, centerId, model);
             return "tickets/assign-form";
         }
 
-        com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
-                (session != null) ? (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser") : null;
-        if (currentUser == null || currentUser.getUserId() == null) {
-            throw new AppException("UNAUTHORIZED", "Vui lòng đăng nhập để thực hiện thao tác phân công");
-        }
         Long assignedBy = currentUser.getUserId();
 
         try {
@@ -149,7 +148,7 @@ public class TicketController {
                 }
             }
             Ticket assignedTicket = ticketService.assignTechnician(
-                    id, request.getTechnicianId(), assignedBy, request.getChangeReason(), appointmentTime);
+                    id, request.getTechnicianId(), assignedBy, request.getChangeReason(), appointmentTime, centerId);
 
             String apptText = (appointmentTime != null)
                     ? " Lịch hẹn " + appointmentTime.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
@@ -161,13 +160,14 @@ public class TicketController {
 
             return "redirect:/tickets/unassigned?assigned=true";
         } catch (AppException ex) {
+            if ("FORBIDDEN_OTHER_CENTER".equals(ex.getErrorCode())) throw ex;
             log.warn("Nghiệp vụ từ chối phân công KTV cho ticket {}: {}", id, ex.getMessage());
             if (fromModal) {
                 redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
                 return "redirect:/tickets/unassigned";
             }
             model.addAttribute("errorMessage", ex.getMessage());
-            loadFormContext(id, model);
+            loadFormContext(id, centerId, model);
             return "tickets/assign-form";
         } catch (Exception ex) {
             log.error("Lỗi hệ thống khi phân công KTV cho ticket {}: {}", id, ex.getMessage(), ex);
@@ -177,19 +177,30 @@ public class TicketController {
                 return "redirect:/tickets/unassigned";
             }
             model.addAttribute("errorMessage", message);
-            loadFormContext(id, model);
+            loadFormContext(id, centerId, model);
             return "tickets/assign-form";
         }
     }
 
-    private void loadFormContext(Long ticketId, Model model) {
+    private void loadFormContext(Long ticketId, Long centerId, Model model) {
         try {
-            TicketResponseDto ticket = ticketService.getTicketById(ticketId);
-            List<TechnicianResponseDto> eligibleTechnicians = ticketService.getEligibleTechniciansForTicket(ticketId);
+            TicketResponseDto ticket = ticketService.getTicketForManager(ticketId, centerId);
+            List<TechnicianResponseDto> eligibleTechnicians = ticketService.getEligibleTechniciansForTicket(ticketId, centerId);
             model.addAttribute("ticket", ticket);
             model.addAttribute("technicians", eligibleTechnicians);
             model.addAttribute("timeSlots", DEFAULT_TIME_SLOTS);
             model.addAttribute("title", "Phân công Kỹ thuật viên - Phiếu #" + ticket.getTicketCode());
+        } catch (AppException ex) {
+            if ("FORBIDDEN_OTHER_CENTER".equals(ex.getErrorCode())) throw ex;
+            log.warn("Không thể nạp thông tin ticket hoặc KTV cho ticketId {}: {}", ticketId, ex.getMessage());
         } catch (Exception ex) { log.warn("Không thể nạp thông tin ticket hoặc KTV cho ticketId {}: {}", ticketId, ex.getMessage()); }
+    }
+
+    private com.mekongmobile.smartcrm.dto.UserSessionDto requireManager(jakarta.servlet.http.HttpSession session) {
+        var user = session == null ? null : (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser");
+        if (user == null || user.getUserId() == null) throw new AppException("UNAUTHORIZED", "Vui lòng đăng nhập");
+        if (!"QUAN_LY".equalsIgnoreCase(user.getRole())) throw new AppException("FORBIDDEN", "Chức năng chỉ dành cho quản lý");
+        if (user.getCenterId() == null) throw new AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập dữ liệu này");
+        return user;
     }
 }

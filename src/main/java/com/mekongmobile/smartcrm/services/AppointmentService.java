@@ -49,6 +49,29 @@ public class AppointmentService {
         return scheduleAppointment(ticket, technician, appointmentTime);
     }
 
+    public Appointment scheduleAppointment(Long ticketId, Long technicianId, LocalDateTime appointmentTime, Long centerId) {
+        Ticket ticket = findTicketForCenter(ticketId, centerId);
+        Technician technician = technicianRepository.findById(technicianId)
+                .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy kỹ thuật viên"));
+        return scheduleAppointment(ticket, technician, appointmentTime);
+    }
+
+    private Ticket findTicketForCenter(Long ticketId, Long centerId) {
+        Ticket ticket = ticketRepository.findById(ticketId).filter(t -> t.getDeletedAt() == null)
+                .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu"));
+        if (centerId == null || !centerId.equals(ticket.getCenterId())) {
+            throw new AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập phiếu này");
+        }
+        return ticket;
+    }
+
+    private void requireAppointmentCenter(Appointment appointment, Long centerId) {
+        if (centerId == null || appointment.getTicket() == null
+                || !centerId.equals(appointment.getTicket().getCenterId())) {
+            throw new AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập lịch hẹn này");
+        }
+    }
+
     /**
      * QT-L4-01 / NFR2: Đặt lịch hẹn cho KTV khi đã có sẵn thực thể Ticket và Technician
      * (dùng chung trong transaction phân công KTV của TicketServiceImpl.assignTechnician).
@@ -93,6 +116,14 @@ public class AppointmentService {
         return mapToDto(appointment);
     }
 
+    @Transactional(readOnly = true)
+    public AppointmentResponseDto getAppointmentById(Long appointmentId, Long centerId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new AppException("APPOINTMENT_NOT_FOUND", "Không tìm thấy lịch hẹn"));
+        requireAppointmentCenter(appointment, centerId);
+        return mapToDto(appointment);
+    }
+
     /**
      * Tra cứu danh sách lịch hẹn (lọc theo ticketId hoặc technicianId nếu có).
      */
@@ -107,6 +138,13 @@ public class AppointmentService {
             list = appointmentRepository.findAll();
         }
         return list.stream().map(this::mapToDto).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentResponseDto> getAllAppointments(Long ticketId, Long technicianId, Long centerId) {
+        if (centerId == null) throw new AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập dữ liệu này");
+        return getAllAppointments(ticketId, technicianId).stream()
+                .filter(dto -> dto.getTicket() != null && centerId.equals(dto.getTicket().getCenterId())).toList();
     }
 
     /**
@@ -158,6 +196,21 @@ public class AppointmentService {
         return mapToDto(saved);
     }
 
+    @Transactional
+    public AppointmentResponseDto updateAppointment(Long appointmentId, UpdateAppointmentRequest request, Long centerId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new AppException("APPOINTMENT_NOT_FOUND", "Không tìm thấy lịch hẹn"));
+        requireAppointmentCenter(appointment, centerId);
+        if (request.getTechnicianId() != null) {
+            Technician replacement = technicianRepository.findById(request.getTechnicianId())
+                    .orElseThrow(() -> new AppException("NOT_FOUND", "Không tìm thấy kỹ thuật viên"));
+            if (!centerId.equals(replacement.getCenterId())) {
+                throw new AppException("FORBIDDEN_OTHER_CENTER", "Không có quyền truy cập dữ liệu này");
+            }
+        }
+        return updateAppointment(appointmentId, request);
+    }
+
     /**
      * Hủy toàn bộ lịch hẹn còn hiệu lực của một phiếu (dùng khi đổi KTV – QT-07),
      * giải phóng khung giờ của KTV cũ trước khi tạo lịch hẹn mới.
@@ -201,6 +254,14 @@ public class AppointmentService {
         Appointment saved = appointmentRepository.save(appointment);
         log.info("Hủy lịch hẹn ID: {} thành công, đã giải phóng khung giờ cho KTV", appointmentId);
         return saved;
+    }
+
+    @Transactional
+    public Appointment cancelAppointment(Long appointmentId, Long centerId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new AppException("APPOINTMENT_NOT_FOUND", "Không tìm thấy lịch hẹn"));
+        requireAppointmentCenter(appointment, centerId);
+        return cancelAppointment(appointmentId);
     }
 
     /**
