@@ -44,6 +44,9 @@ public interface TicketService {
      */
     TicketResponseDto getTicketById(Long ticketId);
 
+    /** QT-15: Trả ticket của KTV hiện tại với SĐT đã che, từ chối nếu không phải chủ sở hữu. */
+    TicketResponseDto getTicketForTechnician(Long ticketId, Long technicianId);
+
     /**
      * Cập nhật thông tin phiếu bảo hành (issueDesc, priority, categoryId, customerPhone).
      * Thay đổi priority sẽ tự động tính lại hạn xử lý (due_date) theo SLA (QT-04).
@@ -91,6 +94,10 @@ public interface TicketService {
      * QT-08: Cập nhật trạng thái tiến độ ticket và ghi nhật ký kiểm toán.
      */
     TicketResponseDto updateTicketStatus(Long ticketId, UpdateTicketStatusDto updateDto);
+
+    /** Cập nhật trạng thái dưới danh tính đã xác thực, kèm ràng buộc ticket thuộc KTV nếu có. */
+    TicketResponseDto updateTicketStatus(Long ticketId, UpdateTicketStatusDto updateDto,
+                                         Long changedBy, Long technicianId);
 
     /**
      * Ngưỡng cảnh báo sắp quá hạn SLA (24 giờ).

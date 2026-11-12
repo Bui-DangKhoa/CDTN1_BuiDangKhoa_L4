@@ -169,7 +169,7 @@ public class GlobalExceptionHandler {
             case "SCHEDULE_CONFLICT", "CONFLICT" -> HttpStatus.CONFLICT;
             case "BUSINESS_RULE_VIOLATION", "TICKET_NOT_DELETABLE", "APPOINTMENT_NOT_DELETABLE" -> HttpStatus.UNPROCESSABLE_ENTITY;
             case "UNAUTHORIZED", "INVALID_CREDENTIALS" -> HttpStatus.UNAUTHORIZED;
-            case "FORBIDDEN", "ACCESS_DENIED" -> HttpStatus.FORBIDDEN;
+            case "FORBIDDEN", "FORBIDDEN_NOT_OWNER", "ACCESS_DENIED" -> HttpStatus.FORBIDDEN;
             case "KTV_NOT_QUALIFIED", "INVALID_CHANGE_REASON", "INVALID_STATUS_TRANSITION",
                  "INVALID_APPOINTMENT_TIME", "BAD_REQUEST", "VALIDATION_ERROR" -> HttpStatus.BAD_REQUEST;
             default -> HttpStatus.BAD_REQUEST;

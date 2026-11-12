@@ -3,6 +3,8 @@ package com.mekongmobile.smartcrm.controllers;
 import com.mekongmobile.smartcrm.dto.UserSessionDto;
 import com.mekongmobile.smartcrm.entities.Appointment;
 import com.mekongmobile.smartcrm.entities.Ticket;
+import com.mekongmobile.smartcrm.entities.Technician;
+import com.mekongmobile.smartcrm.dto.TicketResponseDto;
 import com.mekongmobile.smartcrm.services.AppointmentService;
 import com.mekongmobile.smartcrm.services.AuthService;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +41,9 @@ class AuthAndSecurityTest {
 
     @MockBean
     private com.mekongmobile.smartcrm.services.TicketService ticketService;
+
+    @MockBean
+    private com.mekongmobile.smartcrm.services.TechnicianService technicianService;
 
     @Test
     @DisplayName("TC-SEC-01: Truy cập public /lookup không cần đăng nhập -> Trả về 200 OK")
@@ -185,7 +190,7 @@ class AuthAndSecurityTest {
     @Test
     @DisplayName("TC-SEC-09: DELETE /api/v1/tickets/{id} - Không có người dùng trong session -> Ném AppException UNAUTHORIZED")
     void testDeleteTicketWithoutUserInSessionThrowsUnauthorized() throws Exception {
-        TicketRestController controller = new TicketRestController(ticketService);
+        TicketRestController controller = new TicketRestController(ticketService, technicianService);
         org.springframework.test.web.servlet.MockMvc standaloneMockMvc = org.springframework.test.web.servlet.setup.MockMvcBuilders
                 .standaloneSetup(controller)
                 .setControllerAdvice(new com.mekongmobile.smartcrm.exceptions.GlobalExceptionHandler())
@@ -231,4 +236,83 @@ class AuthAndSecurityTest {
         );
         org.junit.jupiter.api.Assertions.assertEquals("UNAUTHORIZED", ex.getErrorCode());
     }
+
+    @Test
+    @DisplayName("BUG-04: KTV không được đổi ticket của KTV khác")
+    void technicianCannotUpdateOtherTechnicianTicket() throws Exception {
+        UserSessionDto user = UserSessionDto.builder().userId(2L).username("ktv1")
+                .role("KY_THUAT_VIEN").build();
+        Technician ownTech = Technician.builder().technicianId(1L).build();
+        when(technicianService.resolveTechnicianForUser(user)).thenReturn(java.util.Optional.of(ownTech));
+        when(ticketService.getTicketById(102L)).thenReturn(TicketResponseDto.builder().ticketId(102L).technicianId(2L).build());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/v1/tickets/102/status")
+                        .sessionAttr("currentUser", user)
+                        .contentType("application/json")
+                        .content("{\"newStatus\":\"DANG_XU_LY\",\"changedBy\":99}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("FORBIDDEN_NOT_OWNER"));
+
+        org.mockito.Mockito.verify(ticketService, org.mockito.Mockito.never())
+                .updateTicketStatus(eq(102L), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("BUG-04: KTV đổi phiếu của mình bằng userId từ session, bỏ qua changedBy client")
+    void technicianUpdatesOwnTicketWithSessionUserId() throws Exception {
+        UserSessionDto user = UserSessionDto.builder().userId(2L).username("ktv1")
+                .role("KY_THUAT_VIEN").build();
+        Technician ownTech = Technician.builder().technicianId(1L).build();
+        when(technicianService.resolveTechnicianForUser(user)).thenReturn(java.util.Optional.of(ownTech));
+        TicketResponseDto current = TicketResponseDto.builder().ticketId(102L).technicianId(1L).build();
+        when(ticketService.getTicketById(102L)).thenReturn(current);
+        when(ticketService.updateTicketStatus(eq(102L), any(), eq(2L), eq(1L))).thenReturn(current);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/v1/tickets/102/status")
+                        .sessionAttr("currentUser", user)
+                        .contentType("application/json")
+                        .content("{\"newStatus\":\"DANG_XU_LY\",\"changedBy\":99}"))
+                .andExpect(status().isOk());
+
+        org.mockito.ArgumentCaptor<com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto> dtoCaptor =
+                org.mockito.ArgumentCaptor.forClass(com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto.class);
+        org.mockito.Mockito.verify(ticketService).updateTicketStatus(eq(102L), dtoCaptor.capture(), eq(2L), eq(1L));
+        org.junit.jupiter.api.Assertions.assertEquals(2L, dtoCaptor.getValue().getChangedBy());
+    }
+
+    @Test
+    @DisplayName("BUG-04: API ticket không cho truy cập ẩn danh và trả JSON 401")
+    void anonymousTicketApiReturnsJson401() throws Exception {
+        mockMvc.perform(get("/api/v1/tickets/102"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$.error").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    @DisplayName("BUG-04: KTV chỉ xem ticket của mình và SĐT được che")
+    void technicianReadsOwnTicketWithMaskedPhone() throws Exception {
+        UserSessionDto user = UserSessionDto.builder().userId(2L).role("KY_THUAT_VIEN").build();
+        Technician ownTech = Technician.builder().technicianId(1L).build();
+        when(technicianService.resolveTechnicianForUser(user)).thenReturn(java.util.Optional.of(ownTech));
+        when(ticketService.getTicketForTechnician(102L, 1L)).thenReturn(
+                TicketResponseDto.builder().ticketId(102L).technicianId(1L).customerPhone("090****567").build());
+
+        mockMvc.perform(get("/api/v1/tickets/102").sessionAttr("currentUser", user))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.customerPhone").value("090****567"));
+    }
+
+    @Test
+    @DisplayName("BUG-04: Quản lý xem ticket với SĐT đầy đủ")
+    void managerReadsFullCustomerPhone() throws Exception {
+        UserSessionDto user = UserSessionDto.builder().userId(1L).role("QUAN_LY").centerId(1L).build();
+        when(ticketService.getTicketById(102L)).thenReturn(
+                TicketResponseDto.builder().ticketId(102L).customerPhone("0901234567").build());
+
+        mockMvc.perform(get("/api/v1/tickets/102").sessionAttr("currentUser", user))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.customerPhone").value("0901234567"));
+    }
+
 }

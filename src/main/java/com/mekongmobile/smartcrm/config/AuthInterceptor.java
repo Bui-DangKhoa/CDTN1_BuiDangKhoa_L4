@@ -35,6 +35,13 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         if (currentUser == null) {
             log.warn("Chưa đăng nhập! Chặn truy cập tới {} và chuyển hướng về /login", path);
+            if (path.startsWith("/api/")) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"error\":\"UNAUTHORIZED\",\"message\":\"Vui lòng đăng nhập\",\"requestId\":\""
+                        + com.mekongmobile.smartcrm.config.RequestIdFilter.getCurrentRequestId() + "\"}");
+                return false;
+            }
             response.sendRedirect(contextPath + "/login");
             return false;
         }

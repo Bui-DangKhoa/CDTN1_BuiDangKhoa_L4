@@ -5,7 +5,12 @@ import com.mekongmobile.smartcrm.dto.TicketRequestDto;
 import com.mekongmobile.smartcrm.dto.TicketResponseDto;
 import com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto;
 import com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto;
+import com.mekongmobile.smartcrm.dto.UserSessionDto;
+import com.mekongmobile.smartcrm.entities.Technician;
+import com.mekongmobile.smartcrm.exceptions.AppException;
 import com.mekongmobile.smartcrm.services.TicketService;
+import com.mekongmobile.smartcrm.services.TechnicianService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,12 +28,15 @@ import java.util.List;
 public class TicketRestController {
 
     private final TicketService ticketService;
+    private final TechnicianService technicianService;
 
     /**
      * QT-04: API tiếp nhận và tạo mới yêu cầu sự cố kỹ thuật.
      */
     @PostMapping
-    public ResponseEntity<ApiResponse<TicketResponseDto>> createTicket(@Valid @RequestBody TicketRequestDto requestDto) {
+    public ResponseEntity<ApiResponse<TicketResponseDto>> createTicket(@Valid @RequestBody TicketRequestDto requestDto,
+                                                                        HttpSession session) {
+        requireManager(session);
         TicketResponseDto createdTicket = ticketService.createTicket(requestDto);
         return new ResponseEntity<>(
                 ApiResponse.of("Tiếp nhận phiếu yêu cầu thành công (QT-04)", createdTicket),
@@ -40,8 +48,12 @@ public class TicketRestController {
      * API tra cứu chi tiết ticket theo ID.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<TicketResponseDto>> getTicketById(@PathVariable("id") Long id) {
-        TicketResponseDto ticket = ticketService.getTicketById(id);
+    public ResponseEntity<ApiResponse<TicketResponseDto>> getTicketById(@PathVariable("id") Long id,
+                                                                         HttpSession session) {
+        UserSessionDto user = requireUser(session);
+        TicketResponseDto ticket = isTechnician(user)
+                ? ticketService.getTicketForTechnician(id, requireTechnician(user).getTechnicianId())
+                : ticketService.getTicketById(id);
         return ResponseEntity.ok(ApiResponse.of(ticket));
     }
 
@@ -50,10 +62,19 @@ public class TicketRestController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<TicketResponseDto>>> getAllTickets(
-            @RequestParam(value = "status", required = false) String status) {
-        List<TicketResponseDto> tickets = (status != null && !status.isBlank())
-                ? ticketService.getTicketsByStatus(status)
-                : ticketService.getAllTickets();
+            @RequestParam(value = "status", required = false) String status, HttpSession session) {
+        UserSessionDto user = requireUser(session);
+        List<TicketResponseDto> tickets;
+        if (isTechnician(user)) {
+            tickets = ticketService.getTicketsForTechnician(requireTechnician(user).getTechnicianId());
+            if (status != null && !status.isBlank()) {
+                tickets = tickets.stream().filter(ticket -> status.equalsIgnoreCase(ticket.getStatus())).toList();
+            }
+        } else {
+            tickets = (status != null && !status.isBlank())
+                    ? ticketService.getTicketsByStatus(status)
+                    : ticketService.getAllTickets();
+        }
         return ResponseEntity.ok(ApiResponse.of(tickets));
     }
 
@@ -61,8 +82,11 @@ public class TicketRestController {
      * API lấy danh sách phiếu chưa phân công xếp theo SLA dueDate tăng dần.
      */
     @GetMapping("/unassigned")
-    public ResponseEntity<ApiResponse<List<TicketResponseDto>>> getUnassignedTickets() {
-        List<TicketResponseDto> tickets = ticketService.getUnassignedTicketsSortedByDueDate();
+    public ResponseEntity<ApiResponse<List<TicketResponseDto>>> getUnassignedTickets(HttpSession session) {
+        UserSessionDto user = requireUser(session);
+        List<TicketResponseDto> tickets = isTechnician(user)
+                ? ticketService.getTicketsForTechnician(requireTechnician(user).getTechnicianId())
+                : ticketService.getUnassignedTicketsSortedByDueDate();
         return ResponseEntity.ok(ApiResponse.of("Danh sách phiếu chưa phân công theo SLA", tickets));
     }
 
@@ -72,8 +96,9 @@ public class TicketRestController {
     @PostMapping("/{id}/assign")
     public ResponseEntity<ApiResponse<TicketResponseDto>> assignTechnician(
             @PathVariable("id") Long id,
-            @Valid @RequestBody com.mekongmobile.smartcrm.dto.AssignTechnicianRequest request) {
-        Long assignedBy = 1L; // Quản lý đăng nhập
+            @Valid @RequestBody com.mekongmobile.smartcrm.dto.AssignTechnicianRequest request,
+            HttpSession session) {
+        Long assignedBy = requireManager(session).getUserId();
         com.mekongmobile.smartcrm.entities.Ticket ticket = ticketService.assignTechnician(
                 id, request.getTechnicianId(), assignedBy, request.getChangeReason());
         TicketResponseDto responseDto = ticketService.getTicketById(ticket.getTicketId());
@@ -86,9 +111,19 @@ public class TicketRestController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<TicketResponseDto>> updateTicketStatus(
             @PathVariable("id") Long id,
-            @Valid @RequestBody UpdateTicketStatusDto updateDto) {
-        TicketResponseDto updatedTicket = ticketService.updateTicketStatus(id, updateDto);
-        return ResponseEntity.ok(ApiResponse.of("Cập nhật trạng thái ticket thành công (QT-08)", updatedTicket));
+            @Valid @RequestBody UpdateTicketStatusDto updateDto,
+            HttpSession session) {
+        UserSessionDto user = requireUser(session);
+        Long technicianId = isTechnician(user) ? requireTechnician(user).getTechnicianId() : null;
+        if (technicianId != null) {
+            TicketResponseDto current = ticketService.getTicketById(id);
+            if (!technicianId.equals(current.getTechnicianId())) {
+                throw new AppException("FORBIDDEN_NOT_OWNER", "Phiếu này không thuộc kỹ thuật viên đang đăng nhập");
+            }
+        }
+        updateDto.setChangedBy(user.getUserId());
+        TicketResponseDto updatedTicket = ticketService.updateTicketStatus(id, updateDto, user.getUserId(), technicianId);
+        return ResponseEntity.ok(ApiResponse.of("Cập nhật trạng thái ticket thành công (QT-06)", updatedTicket));
     }
 
     /**
@@ -97,7 +132,9 @@ public class TicketRestController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TicketResponseDto>> updateTicket(
             @PathVariable("id") Long id,
-            @Valid @RequestBody UpdateTicketRequestDto requestDto) {
+            @Valid @RequestBody UpdateTicketRequestDto requestDto,
+            HttpSession session) {
+        requireManager(session);
         TicketResponseDto updated = ticketService.updateTicket(id, requestDto);
         return ResponseEntity.ok(ApiResponse.of("Cập nhật thông tin phiếu thành công", updated));
     }
@@ -109,14 +146,38 @@ public class TicketRestController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteTicket(
             @PathVariable("id") Long id,
-            jakarta.servlet.http.HttpSession session) {
-        com.mekongmobile.smartcrm.dto.UserSessionDto currentUser =
-                (session != null) ? (com.mekongmobile.smartcrm.dto.UserSessionDto) session.getAttribute("currentUser") : null;
-        if (currentUser == null || currentUser.getUserId() == null) {
-            throw new com.mekongmobile.smartcrm.exceptions.AppException("UNAUTHORIZED", "Vui lòng đăng nhập để thực hiện thao tác xóa mềm phiếu");
-        }
-        Long changedBy = currentUser.getUserId();
+            HttpSession session) {
+        Long changedBy = requireManager(session).getUserId();
         ticketService.deleteTicket(id, changedBy);
         return ResponseEntity.ok(ApiResponse.of("Xóa mềm phiếu bảo hành thành công (QT-13)", null));
+    }
+
+    private UserSessionDto requireUser(HttpSession session) {
+        UserSessionDto user = session != null ? (UserSessionDto) session.getAttribute("currentUser") : null;
+        if (user == null || user.getUserId() == null) {
+            throw new AppException("UNAUTHORIZED", "Vui lòng đăng nhập");
+        }
+        return user;
+    }
+
+    private UserSessionDto requireManager(HttpSession session) {
+        UserSessionDto user = requireUser(session);
+        if (!"QUAN_LY".equalsIgnoreCase(user.getRole())) {
+            throw new AppException("FORBIDDEN", "Chức năng này chỉ dành cho quản lý");
+        }
+        return user;
+    }
+
+    private boolean isTechnician(UserSessionDto user) {
+        if ("KY_THUAT_VIEN".equalsIgnoreCase(user.getRole())) return true;
+        if (!"QUAN_LY".equalsIgnoreCase(user.getRole())) {
+            throw new AppException("FORBIDDEN", "Vai trò không được phép truy cập API ticket");
+        }
+        return false;
+    }
+
+    private Technician requireTechnician(UserSessionDto user) {
+        return technicianService.resolveTechnicianForUser(user)
+                .orElseThrow(() -> new AppException("FORBIDDEN", "Tài khoản chưa được liên kết với hồ sơ kỹ thuật viên"));
     }
 }

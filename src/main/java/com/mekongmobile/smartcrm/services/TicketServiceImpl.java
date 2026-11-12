@@ -52,6 +52,7 @@ public class TicketServiceImpl implements TicketService {
             "DANG_XU_LY", java.util.Set.of("CHO_LINH_KIEN", "HOAN_TAT"),
             "CHO_LINH_KIEN", java.util.Set.of("DANG_XU_LY", "HOAN_TAT"),
             "HOAN_TAT", java.util.Set.of("DONG"));
+
     /** MH3 / US4: Trạng thái phiếu hiển thị trên màn hình cá nhân của KTV. */
     private static final List<String> TECHNICIAN_ACTIVE_STATUSES = List.of("DA_PHAN_CONG", "DANG_XU_LY");
 
@@ -182,6 +183,19 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
         return mapToDto(ticket);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TicketResponseDto getTicketForTechnician(Long ticketId, Long technicianId) {
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .filter(t -> t.getDeletedAt() == null)
+                .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
+        if (technicianId == null || ticket.getTechnician() == null
+                || !technicianId.equals(ticket.getTechnician().getTechnicianId())) {
+            throw new AppException("FORBIDDEN_NOT_OWNER", "Phiếu này không thuộc kỹ thuật viên đang đăng nhập");
+        }
+        return mapToDto(ticket, true);
+    }
     @Override
     @Transactional
     public TicketResponseDto updateTicket(Long ticketId, com.mekongmobile.smartcrm.dto.UpdateTicketRequestDto requestDto) {
@@ -303,6 +317,22 @@ public class TicketServiceImpl implements TicketService {
                 updateDto.getChangeReason() != null ? updateDto.getChangeReason() : "Cập nhật tiến độ ticket (QT-08)");
 
         return mapToDto(updatedTicket);
+    }
+
+    @Override
+    public TicketResponseDto updateTicketStatus(Long ticketId, UpdateTicketStatusDto updateDto,
+                                                Long changedBy, Long technicianId) {
+        if (technicianId != null) {
+            Ticket ticket = ticketRepository.findById(ticketId)
+                    .filter(t -> t.getDeletedAt() == null)
+                    .orElseThrow(() -> new AppException("TICKET_NOT_FOUND", "Không tìm thấy phiếu yêu cầu với ID: " + ticketId));
+            if (ticket.getTechnician() == null
+                    || !technicianId.equals(ticket.getTechnician().getTechnicianId())) {
+                throw new AppException("FORBIDDEN_NOT_OWNER", "Phiếu này không thuộc kỹ thuật viên đang đăng nhập");
+            }
+        }
+        updateDto.setChangedBy(changedBy);
+        return updateTicketStatus(ticketId, updateDto);
     }
 
     @Override
@@ -477,7 +507,9 @@ public class TicketServiceImpl implements TicketService {
         }
         if ("KY_THUAT_VIEN".equalsIgnoreCase(currentUser.getRole())) {
             // QT-15: Kỹ thuật viên xem danh sách cá nhân và che SĐT
-            return getTicketsForTechnician(currentUser.getUserId());
+            return technicianRepository.findByUserId(currentUser.getUserId())
+                    .map(technician -> getTicketsForTechnician(technician.getTechnicianId()))
+                    .orElse(List.of());
         } else {
             // QT-14: Quản lý xem danh sách phiếu của trung tâm phụ trách, xem đầy đủ SĐT
             return getUnassignedTicketsSortedByDueDate(currentUser.getCenterId());
@@ -527,6 +559,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private void validateStatusTransition(String current, String next) {
+        // Trạng thái đã đóng thì không thể đổi tiếp
         if ("DONG".equalsIgnoreCase(current) || "DA_HUY".equalsIgnoreCase(current)) {
             throw new BusinessRuleException("Ticket ở trạng thái " + current + " không thể chuyển đổi trạng thái nữa");
         }
@@ -538,6 +571,7 @@ public class TicketServiceImpl implements TicketService {
                     + " (Quy tắc QT-06: chuyển trạng thái không hợp lệ)");
         }
     }
+
     private TicketResponseDto mapToDto(Ticket ticket) {
         return mapToDto(ticket, false);
     }
@@ -558,9 +592,6 @@ public class TicketServiceImpl implements TicketService {
         }
 
         String phone = ticket.getCustomerPhone();
-        if (phone == null || phone.isBlank()) {
-            phone = "0901234567";
-        }
 
         if (maskPhone) {
             // QT-15: Che 4 số giữa SĐT khách hàng dạng 090****567
