@@ -66,9 +66,6 @@ public interface TicketService {
 
     void deleteTicket(Long ticketId, Long changedBy, Long centerId);
 
-    void deleteTicket(Long ticketId);
-
-
     /**
      * Lấy danh sách tất cả các ticket mới nhất.
      */

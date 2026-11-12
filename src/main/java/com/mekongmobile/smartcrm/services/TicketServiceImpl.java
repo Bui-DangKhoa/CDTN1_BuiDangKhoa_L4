@@ -257,12 +257,6 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional
-    public void deleteTicket(Long ticketId) {
-        deleteTicket(ticketId, 1L);
-    }
-
-    @Override
-    @Transactional
     public void deleteTicket(Long ticketId, Long changedBy) {
         if (changedBy == null) {
             throw new AppException("UNAUTHORIZED", "Thiếu người thao tác khi xóa mềm phiếu");
