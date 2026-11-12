@@ -6,6 +6,8 @@ import com.mekongmobile.smartcrm.entities.Technician;
 import com.mekongmobile.smartcrm.entities.Ticket;
 import com.mekongmobile.smartcrm.entities.TicketStatusLog;
 import com.mekongmobile.smartcrm.exceptions.AppException;
+import com.mekongmobile.smartcrm.exceptions.BusinessRuleException;
+import com.mekongmobile.smartcrm.dto.UpdateTicketStatusDto;
 import com.mekongmobile.smartcrm.repositories.DeviceRepository;
 import com.mekongmobile.smartcrm.repositories.IssueCategoryRepository;
 import com.mekongmobile.smartcrm.repositories.TechnicianRepository;
@@ -572,5 +574,45 @@ class TicketServiceTest {
             assertEquals("DA_PHAN_CONG", result.getStatus());
             verify(appointmentService, times(1)).scheduleAppointment(any(Ticket.class), eq(mockTechnician), eq(futureTime));
         }
+    }
+    @Test
+    @DisplayName("TC-08 | QT-06 | Nhảy cóc DA_PHAN_CONG -> HOAN_TAT bị từ chối, không lưu, không ghi log")
+    void TC08_updateStatus_skipStep_rejected() {
+        mockTicket.setStatus("DA_PHAN_CONG");
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+        UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder().newStatus("HOAN_TAT").changedBy(2L).build();
+
+        assertThrows(BusinessRuleException.class, () -> ticketService.updateTicketStatus(10L, dto));
+        assertEquals("DA_PHAN_CONG", mockTicket.getStatus());
+        verify(ticketRepository, never()).save(any(Ticket.class));
+        verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
+    }
+
+    @Test
+    @DisplayName("QT-06 | Từ chối trạng thái đích không nằm trong quy trình")
+    void updateStatus_unknownTarget_rejected() {
+        mockTicket.setStatus("DA_PHAN_CONG");
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+        UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder().newStatus("ABC").changedBy(2L).build();
+
+        assertThrows(BusinessRuleException.class, () -> ticketService.updateTicketStatus(10L, dto));
+        assertEquals("DA_PHAN_CONG", mockTicket.getStatus());
+        verify(ticketRepository, never()).save(any(Ticket.class));
+        verify(statusLogRepository, never()).save(any(TicketStatusLog.class));
+    }
+
+    @Test
+    @DisplayName("QT-06 | DA_PHAN_CONG -> DANG_XU_LY hợp lệ và ghi đúng một log")
+    void updateStatus_nextAllowedStep_succeedsAndLogsOnce() {
+        mockTicket.setStatus("DA_PHAN_CONG");
+        when(ticketRepository.findById(10L)).thenReturn(Optional.of(mockTicket));
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(i -> i.getArgument(0));
+        UpdateTicketStatusDto dto = UpdateTicketStatusDto.builder().newStatus("DANG_XU_LY").changedBy(2L).build();
+
+        ticketService.updateTicketStatus(10L, dto);
+
+        assertEquals("DANG_XU_LY", mockTicket.getStatus());
+        verify(ticketRepository, times(1)).save(mockTicket);
+        verify(statusLogRepository, times(1)).save(any(TicketStatusLog.class));
     }
 }

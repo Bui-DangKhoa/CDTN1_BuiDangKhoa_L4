@@ -45,15 +45,13 @@ public class TicketServiceImpl implements TicketService {
 
     public static final List<String> CLOSED_STATUSES = List.of("HOAN_TAT", "HOAN_THANH", "DONG");
 
-    /** QT-06: Thứ tự vòng đời trạng thái đơn hướng MOI → DA_PHAN_CONG → DANG_XU_LY → HOAN_TAT → DONG. */
-    private static final java.util.Map<String, Integer> STATUS_ORDER = java.util.Map.of(
-            "MOI", 0,
-            "DA_PHAN_CONG", 1,
-            "DANG_XU_LY", 2,
-            "HOAN_TAT", 3,
-            "HOAN_THANH", 3,
-            "DONG", 4);
-
+    /** QT-06: Chỉ cho phép các cạnh được liệt kê trong quy trình nghiệp vụ. */
+    private static final java.util.Map<String, java.util.Set<String>> ALLOWED_STATUS_TRANSITIONS = java.util.Map.of(
+            "MOI", java.util.Set.of("DA_PHAN_CONG"),
+            "DA_PHAN_CONG", java.util.Set.of("DANG_XU_LY"),
+            "DANG_XU_LY", java.util.Set.of("CHO_LINH_KIEN", "HOAN_TAT"),
+            "CHO_LINH_KIEN", java.util.Set.of("DANG_XU_LY", "HOAN_TAT"),
+            "HOAN_TAT", java.util.Set.of("DONG"));
     /** MH3 / US4: Trạng thái phiếu hiển thị trên màn hình cá nhân của KTV. */
     private static final List<String> TECHNICIAN_ACTIVE_STATUSES = List.of("DA_PHAN_CONG", "DANG_XU_LY");
 
@@ -529,19 +527,17 @@ public class TicketServiceImpl implements TicketService {
     }
 
     private void validateStatusTransition(String current, String next) {
-        // Trạng thái đã đóng thì không thể đổi tiếp
         if ("DONG".equalsIgnoreCase(current) || "DA_HUY".equalsIgnoreCase(current)) {
             throw new BusinessRuleException("Ticket ở trạng thái " + current + " không thể chuyển đổi trạng thái nữa");
         }
-        // QT-06: Vòng đời đơn hướng – chỉ được tiến lên, không được quay lùi
-        Integer currentRank = current != null ? STATUS_ORDER.get(current.toUpperCase()) : null;
-        Integer nextRank = next != null ? STATUS_ORDER.get(next.toUpperCase()) : null;
-        if (currentRank != null && nextRank != null && nextRank <= currentRank) {
-            throw new BusinessRuleException("Không thể chuyển trạng thái từ " + current + " về " + next
-                    + " (Quy tắc QT-06: vòng đời đơn hướng)");
+        String normalizedCurrent = current != null ? current.toUpperCase(java.util.Locale.ROOT) : null;
+        String normalizedNext = next != null ? next.toUpperCase(java.util.Locale.ROOT) : null;
+        if (normalizedCurrent == null || normalizedNext == null
+                || !ALLOWED_STATUS_TRANSITIONS.getOrDefault(normalizedCurrent, java.util.Set.of()).contains(normalizedNext)) {
+            throw new BusinessRuleException("Không thể chuyển trạng thái từ " + current + " sang " + next
+                    + " (Quy tắc QT-06: chuyển trạng thái không hợp lệ)");
         }
     }
-
     private TicketResponseDto mapToDto(Ticket ticket) {
         return mapToDto(ticket, false);
     }
